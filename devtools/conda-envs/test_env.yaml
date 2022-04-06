@@ -9,6 +9,10 @@ dependencies:
   - python
   - pip
 
+  - pymbar
+  - openMM
+  - openff
+
     # Testing
   - pytest
   - pytest-cov
