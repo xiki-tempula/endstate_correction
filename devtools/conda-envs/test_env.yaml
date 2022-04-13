@@ -14,7 +14,8 @@ dependencies:
   - openmm-torch
   - openff-toolkit
   - openmmtools
-
+  - tqdm
+  
     # Testing
   - pytest
   - pytest-cov
