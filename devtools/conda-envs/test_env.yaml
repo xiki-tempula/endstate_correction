@@ -1,8 +1,6 @@
 name: test
 channels:
-
   - conda-forge
-
   - defaults
 dependencies:
     # Base depends
@@ -11,7 +9,11 @@ dependencies:
 
   - pymbar
   - openMM
-  - openff
+  - torchani
+  - pytorch
+  - openmm-torch
+  - openff-toolkit
+  - openmmtools
 
     # Testing
   - pytest
