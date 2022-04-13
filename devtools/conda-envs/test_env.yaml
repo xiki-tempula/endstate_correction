@@ -21,6 +21,7 @@ dependencies:
   - codecov
 
     # Pip-only installs
-  #- pip:
+  - pip:
+     - git+https://github.com/openmm/openmm-ml.git
   #  - codecov
 
