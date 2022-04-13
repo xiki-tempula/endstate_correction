@@ -9,13 +9,11 @@ from openmm.app import Simulation
 from openmmml import MLPotential
 from tqdm import tqdm
 
-forcefield = ForceField('openff_unconstrained-2.0.0.offxml')
-
 from endstate_rew.constant import collision_rate, stepsize, temperature
 
 forcefield = ForceField('openff_unconstrained-2.0.0.offxml')
 
-def generate_molecule(smiles:str):
+def generate_molecule(smiles:str)->Molecule:
     # generate a molecule using openff
     molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
     molecule.generate_conformers()
@@ -24,6 +22,11 @@ def generate_molecule(smiles:str):
 def get_positions(sim):
     """get position of system in a state"""
     return sim.context.getState(getPositions=True).getPositions(asNumpy=True)
+
+def get_energy(sim):
+    """get energy of system in a state"""
+    return sim.context.getState(getEnergy=True).getPotentialEnergy()
+
 
 def collect_samples(sim, n_samples:int=1_000, n_steps_per_sample:int=10_000):
     """generate samples using a defined system"""
@@ -42,7 +45,19 @@ def create_mm_system(molecule):
     return system, topology
 
 
-def initialize_simulation(molecule, at_endstate:str='', platform:str='CPU'):
+def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='CPU'):
+    """Initialize a simulation instance
+
+    Args:
+        molecule (Molecule): _description_
+        at_endstate (str, optional): _description_. Defaults to ''.
+        platform (str, optional): _description_. Defaults to 'CPU'.
+
+    Returns:
+        _type_: _description_
+    """
+    assert molecule.n_conformers > 0
+    
     # initialize potential
     potential = MLPotential('ani2x')
     # generate a molecule using openff
