@@ -1,7 +1,14 @@
-from typing import Tuple
-from endstate_rew.system import generate_molecule, initialize_simulation
-from openmm.app import Simulation
 import pickle
+from typing import Tuple
+
+import numpy as np
+from endstate_rew.neq import perform_switching
+from endstate_rew.system import (_get_masses, _seed_velocities,
+                                 create_mm_system, generate_molecule,
+                                 initialize_simulation)
+from openmm import unit
+from openmm.app import Simulation
+
 
 def load_system_and_samples(name:str, smiles:str)->Tuple[Simulation, list,list]:
     # initialize simulation and load pre-generated samples
@@ -17,11 +24,34 @@ def load_system_and_samples(name:str, smiles:str)->Tuple[Simulation, list,list]:
 
     return sim, samples_mm, samples_qml
 
+def test_mass_list():
 
+    molecule = generate_molecule(smiles='ClCCOCCCl')    
+    system, _ = create_mm_system(molecule)
 
-def test_neq_switchging():
+    # make sure that mass list generated from system and molecuel are the same
+    m_list = _get_masses(system)
+    masses = np.array([a.mass/unit.dalton for a in molecule.atoms]) * unit.daltons
+    print(m_list) 
+    print(masses) 
+    assert np.allclose(m_list.value_in_unit(unit.daltons), masses.value_in_unit(unit.daltons))
+
+def test_seed_velocities():
+    
+    # test that manual velocity seeding works
+    molecule = generate_molecule(smiles='ClCCOCCCl')    
+    system, _ = create_mm_system(molecule)
+    _seed_velocities(_get_masses(system))
+    
+
+def test_switchging():
     
     # load simulation and samples for 2cle
     sim, samples_mm, samples_qml = load_system_and_samples(name='2cle', smiles='ClCCOCCCl')
+    # perform instantaneous switching
+    lambs = np.linspace(0,1,2)
+    dE_list = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1)
+    assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), -3167768.70831208)
     
-    
+    # perform switching
+    #perform_switching(sim, lambdas=lambs, samples=samples_mm, nr_of_switches=1)
