@@ -83,3 +83,32 @@ def test_generate_simulation_instance():
     
     assert not np.isclose(e_sim_mm_endstate, e_sim_qml_endstate)
 
+def test_charmm_system_generation():
+    from endstate_rew.system import get_charmm_system
+    
+  # list of all the charmm systems with the zinc id
+    zinc_systems = [ 
+    'ZINC00079729', 
+    'ZINC00086442', 
+    'ZINC00087557', 
+    'ZINC00095858', 
+    'ZINC00107550', 
+    'ZINC00107778',
+    'ZINC00123162', 
+    'ZINC00133435', 
+    'ZINC00138607', 
+    'ZINC00140610', 
+    'ZINC00164361', 
+    'ZINC00167648', 
+    'ZINC00169358', 
+    'ZINC01036618', 
+    'ZINC01755198', 
+    'ZINC01867000', 
+    'ZINC03127671', 
+    'ZINC04344392', 
+    'ZINC04363792', 
+    'ZINC06568023', 
+    'ZINC33381936']
+    
+    for zinc_id in zinc_systems:
+       get_charmm_system(zinc_id)
