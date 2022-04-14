@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
 
+
 forcefield = ForceField('openff_unconstrained-2.0.0.offxml')
 
 def generate_molecule(smiles:str)->Molecule:
