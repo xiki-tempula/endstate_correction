@@ -4,7 +4,7 @@ import numpy as np
 from openmm import unit
 from tqdm import tqdm
 
-from endstate_rew.constant import distance_unit
+from endstate_rew.constant import distance_unit, temperature
 
 
 def perform_switching(sim, lambdas:list, samples:list, nr_of_switches:int=50)->list:
@@ -16,11 +16,12 @@ def perform_switching(sim, lambdas:list, samples:list, nr_of_switches:int=50)->l
     for _ in tqdm(range(nr_of_switches)):
         # select a random sample
         x = np.array(random.choice(samples).value_in_unit(distance_unit)) * distance_unit
-        # initialize work
-        w = 0.0
         # set position    
         sim.context.setPositions(x)
-        
+        # reseed velocities
+        sim.context.setVelocitiesToTemperature(temperature)
+        # initialize work
+        w = 0.0
         # perform NEQ switching
         for idx_lamb in range(1,len(lambdas)):
             # set lambda parameter

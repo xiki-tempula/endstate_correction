@@ -1,15 +1,13 @@
-# Imports from the openff toolkit
+import numpy as np
 import openmm as mm
-# Imports from the openff toolkit
 from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
 from openmm.app import Simulation
-# import from openmm and ecosystem
 from openmmml import MLPotential
 from tqdm import tqdm
 
-from endstate_rew.constant import collision_rate, stepsize, temperature
+from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
 
 forcefield = ForceField('openff_unconstrained-2.0.0.offxml')
 
@@ -43,6 +41,23 @@ def create_mm_system(molecule):
     topology = molecule.to_topology()
     system = forcefield.create_openmm_system(topology)
     return system, topology
+
+def _seed_velocities(sim: Simulation, molecule: Molecule)->np.ndarray:
+    
+    # should only take
+    # sim.context.setVelocitiesToTemperature(temperature)
+    # but currently this returns a pytorch error
+    # instead seed manually from boltzmann distribution
+    
+    # generate mass arrays
+    masses = np.array([a.mass/unit.dalton for a in molecule.atoms]) * unit.daltons
+    sigma_v = (
+        np.array([unit.sqrt(kBT / m) / speed_unit for m in masses])
+        * speed_unit
+    )
+
+    return np.random.randn(len(sigma_v), 3) * sigma_v[:, None]
+    
 
 
 def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='CPU'):
@@ -80,4 +95,13 @@ def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='C
         print('Initializing MM system')
     
     sim.context.setPositions(molecule.conformers[0])
+    #NOTE: minimizing the energy of the interpolating potential leeds to very high energies,
+    # for now avoiding call to minimizer    
+    #sim.minimizeEnergy(maxIterations=100)
+    
+    #NOTE: velocities are seeded manually right now (otherwise pytorch error) -- 
+    # this will be fiexed in the future 
+    #FIXME: revert back to openMM velovity call 
+    #sim.context.setVelocitiesToTemperature(temperature)
+    sim.context.setVelocities(_seed_velocities(sim, molecule))
     return sim

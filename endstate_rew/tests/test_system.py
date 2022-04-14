@@ -61,6 +61,7 @@ def test_generate_simulation_instance():
     sim = initialize_simulation(m)
     sim.context.setParameter('lambda', 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
+    print(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
     assert np.isclose(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
     
     # at lambda=1.0 (qml endpoint)
