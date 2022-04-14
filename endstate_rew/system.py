@@ -43,15 +43,16 @@ def create_mm_system(molecule):
     system = forcefield.create_openmm_system(topology)
     return system, topology
 
-def _seed_velocities(sim: Simulation, molecule: Molecule)->np.ndarray:
+def _get_masses(system)->np.array:
+    return np.array([system.getParticleMass(atom_idx)/unit.dalton for atom_idx in range(system.getNumParticles())]) * unit.daltons
+
+def _seed_velocities(masses: np.array)->np.ndarray:
     
     # should only take
     # sim.context.setVelocitiesToTemperature(temperature)
     # but currently this returns a pytorch error
     # instead seed manually from boltzmann distribution
     
-    # generate mass arrays
-    masses = np.array([a.mass/unit.dalton for a in molecule.atoms]) * unit.daltons
     sigma_v = (
         np.array([unit.sqrt(kBT / m) / speed_unit for m in masses])
         * speed_unit
@@ -96,13 +97,13 @@ def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='C
         print('Initializing MM system')
     
     sim.context.setPositions(molecule.conformers[0])
-    #NOTE: minimizing the energy of the interpolating potential leeds to very high energies,
+    #NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
     # for now avoiding call to minimizer    
     #sim.minimizeEnergy(maxIterations=100)
     
-    #NOTE: velocities are seeded manually right now (otherwise pytorch error) -- 
+    #NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) -- 
     # this will be fiexed in the future 
-    #FIXME: revert back to openMM velovity call 
+    # revert back to openMM velovity call 
     #sim.context.setVelocitiesToTemperature(temperature)
-    sim.context.setVelocities(_seed_velocities(sim, molecule))
+    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
     return sim
