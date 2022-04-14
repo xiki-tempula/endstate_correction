@@ -6,6 +6,9 @@ from openmm import unit
 from openmm.app import Simulation
 from openmmml import MLPotential
 from tqdm import tqdm
+from openmm.app import CharmmPsfFile, CharmmCrdFile, CharmmParameterSet
+from openmm.app import NoCutoff
+from openmm.unit import unit
 
 from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
 
@@ -106,45 +109,19 @@ def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='C
     sim.context.setVelocities(_seed_velocities(sim, molecule))
     return sim
 
-#creating all ZINC systems
-
-base = '../data/hipen_data/'
-zinc_systems = [ 
-'ZINC00079729', 
-'ZINC00086442', 
-'ZINC00087557', 
-'ZINC00095858', 
-'ZINC00107550', 
-'ZINC00107778',
-'ZINC00123162', 
-'ZINC00133435', 
-'ZINC00138607', 
-'ZINC00140610', 
-'ZINC00164361', 
-'ZINC00167648', 
-'ZINC00169358', 
-'ZINC01036618', 
-'ZINC01755198', 
-'ZINC01867000', 
-'ZINC03127671', 
-'ZINC04344392', 
-'ZINC04363792', 
-'ZINC06568023', 
-'ZINC33381936']
-
+#creating charmm systems from zinc data
 def get_charmm_system(name:str):
+    
+    #define base of the path
+    base = '../data/hipen_data/'
     
     # get psf, crd and prm files
     psf = CharmmPsfFile(f'{base}/{name}/{name}.psf')
     crd = CharmmCrdFile(f'{base}/{name}/{name}.crd')
     params = CharmmParameterSet(f'{base}/top_all36_cgenff.rtf', f'{base}/par_all36_cgenff.prm', f'{base}/{name}/{name}.str')
     
-    # define and return system object
+    # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
     
     # return system object
     return system
-
-# create all systems which are contained in the 'zinc_systems' list
-for zinc_id in zinc_systems:
-    get_charmm_system(zinc_id)
