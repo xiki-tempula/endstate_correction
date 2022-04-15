@@ -111,4 +111,4 @@ def test_charmm_system_generation():
     'ZINC33381936']
     
     for zinc_id in zinc_systems:
-       get_charmm_system(zinc_id)
+       get_charmm_system(zinc_id, base = 'data/hipen_data')
