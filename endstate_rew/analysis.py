@@ -36,8 +36,6 @@ def collect_results(name:str, smiles: str)->NamedTuple:
     ws_from_mm_to_qml = np.array(_collect_samples(w_dir, name, 'mm_to_qml')/ kBT)[:500]
     ws_from_qml_to_mm = np.array(_collect_samples(w_dir, name,'qml_to_mm')/ kBT)[:500]
     
-    #print(f"Crooks' equation: {BAR(ws_from_mm_to_qml, ws_from_qml_to_mm)}")
-    #print(f"Jarzynski's equation: {EXP(ws_from_mm_to_qml)}")
     
     # instantenious swichting (FEP)
 
@@ -47,15 +45,26 @@ def collect_results(name:str, smiles: str)->NamedTuple:
     molecule = generate_molecule(smiles)
     sim = initialize_simulation(molecule)
     lambs = np.linspace(0,1,switching_length)
-    dEs_from_mm_to_qml = perform_switching(sim, lambs, samples=mm_samples,nr_of_switches=nr_of_switches)
+    dEs_from_mm_to_qml = np.array(
+        perform_switching(sim, lambs, samples=mm_samples,nr_of_switches=nr_of_switches)/kBT)
     lambs = np.linspace(1,0,switching_length)
-    dEs_from_qml_to_mm = perform_switching(sim,lambs, samples=qml_samples,nr_of_switches=nr_of_switches)
+    dEs_from_qml_to_mm = np.array(
+        perform_switching(sim,lambs, samples=qml_samples,nr_of_switches=nr_of_switches)/kBT)
 
     results = Results(ws_from_mm_to_qml, ws_from_qml_to_mm, dEs_from_mm_to_qml, dEs_from_qml_to_mm)
     return results
 
 
 def plot_resutls_of_switching_experiments(name:str, results:NamedTuple):
+    
+    
+    print('################################')
+    print(f"Crooks' equation: {BAR(results.dWs_from_mm_to_qml, results.dWs_from_qml_to_mm)}")
+    print(f"Jarzynski's equation: {EXP(results.dWs_from_mm_to_qml)}")
+    print(f"Zwanzig's equation: {EXP(results.dEs_from_mm_to_qml)}")
+    print(f"Zwanzig's equation bidirectional: {BAR(results.dEs_from_mm_to_qml, results.dEs_from_qml_to_mm)}")
+    print('################################')
+    
     
     sns.set_context("talk")
     fig, axs = plt.subplots(3,1, figsize=(11.0, 9), dpi=600)
