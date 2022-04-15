@@ -8,8 +8,9 @@ from openmmml import MLPotential
 from tqdm import tqdm
 from openmm.app import CharmmPsfFile, CharmmCrdFile, CharmmParameterSet
 from openmm.app import NoCutoff
-from openmm.unit import unit
-
+from openmm import unit
+from os import path
+from glob import glob
 from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
 
 forcefield = ForceField('openff_unconstrained-2.0.0.offxml')
@@ -109,11 +110,16 @@ def initialize_simulation(molecule:Molecule, at_endstate:str='', platform:str='C
     sim.context.setVelocities(_seed_velocities(sim, molecule))
     return sim
 
-#creating charmm systems from zinc data
-def get_charmm_system(name:str):
+# creating charmm systems from zinc data
+def get_charmm_system(name:str, base = '../data/hipen_data'):
     
-    #define base of the path
-    base = '../data/hipen_data/'
+    # check if input directory exists
+    if not path.isdir(base):
+        raise RuntimeError('Path is not a directory.')
+    
+    # check if input directory contains at least one directory with the name 'ZINC'
+    if len(glob(base + '/ZINC*')) < 1:
+        raise RuntimeError('No ZINC directory found.')
     
     # get psf, crd and prm files
     psf = CharmmPsfFile(f'{base}/{name}/{name}.psf')
