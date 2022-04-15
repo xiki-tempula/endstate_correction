@@ -112,7 +112,7 @@ def plot_resutls_of_switching_experiments(name:str, results:NamedTuple):
 
     # plot cummulative stddev of dE and dW
     #########################################
-    axs[2].set_title(fr'{name} - cummulative stddev of $\Delta$ W and $\Delta$ E')
+    axs[2].set_title(fr'{name} - cummulative stddev of $\Delta$W and $\Delta$E')
 
     cum_stddev_ws_from_mm_to_qml = [results.dWs_from_mm_to_qml[:x].std() for x in range(1,len(results.dWs_from_mm_to_qml)+1)]
     cum_stddev_ws_from_qml_to_mm = [results.dWs_from_qml_to_mm[:x].std() for x in range(1,len(results.dWs_from_qml_to_mm)+1)]
