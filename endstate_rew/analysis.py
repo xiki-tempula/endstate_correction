@@ -31,14 +31,13 @@ def collect_results(name:str, smiles: str)->NamedTuple:
     # load samples
     mm_samples = pickle.load(open(f'../data/{name}/sampling/{name}_mm_samples_2000_1000.pickle', 'rb'))
     qml_samples = pickle.load(open(f'../data/{name}/sampling/{name}_qml_samples_2000_1000.pickle', 'rb'))
-    Results = namedtuple('Results', 'dWs_from_mm_to_qml dWs_from_qml_to_mm dEs_from_mm_to_qml dEs_from_qml_to_mm')
+    
     # get pregenerated work values
-    ws_from_mm_to_qml = np.array(_collect_samples(w_dir, name, 'mm_to_qml')/ kBT)[:500]
-    ws_from_qml_to_mm = np.array(_collect_samples(w_dir, name,'qml_to_mm')/ kBT)[:500]
+    ws_from_mm_to_qml = np.array(_collect_samples(w_dir, name, 'mm_to_qml')/ kBT)
+    ws_from_qml_to_mm = np.array(_collect_samples(w_dir, name,'qml_to_mm')/ kBT)
     
     
-    # instantenious swichting (FEP)
-
+    # perform instantenious swichting (FEP) to get dE values
     switching_length = 2
     nr_of_switches = 500
     # create molecule
@@ -51,6 +50,8 @@ def collect_results(name:str, smiles: str)->NamedTuple:
     dEs_from_qml_to_mm = np.array(
         perform_switching(sim,lambs, samples=qml_samples,nr_of_switches=nr_of_switches)/kBT)
 
+    # pack everything in a namedtuple
+    Results = namedtuple('Results', 'dWs_from_mm_to_qml dWs_from_qml_to_mm dEs_from_mm_to_qml dEs_from_qml_to_mm')
     results = Results(ws_from_mm_to_qml, ws_from_qml_to_mm, dEs_from_mm_to_qml, dEs_from_qml_to_mm)
     return results
 
@@ -111,16 +112,17 @@ def plot_resutls_of_switching_experiments(name:str, results:NamedTuple):
 
     # plot cummulative stddev of dE and dW
     #########################################
+    axs[2].set_title(fr'{name} - cummulative stddev of $\Delta$ W and $\Delta$ E')
 
     cum_stddev_ws_from_mm_to_qml = [results.dWs_from_mm_to_qml[:x].std() for x in range(1,len(results.dWs_from_mm_to_qml)+1)]
     cum_stddev_ws_from_qml_to_mm = [results.dWs_from_qml_to_mm[:x].std() for x in range(1,len(results.dWs_from_qml_to_mm)+1)]
 
     cum_stddev_dEs_from_mm_to_qml = [results.dEs_from_mm_to_qml[:x].std() for x in range(1,len(results.dEs_from_mm_to_qml)+1)]
     cum_stddev_dEs_from_qml_to_mm = [results.dEs_from_qml_to_mm[:x].std() for x in range(1,len(results.dEs_from_qml_to_mm)+1)]
-    axs[2].plot(cum_stddev_ws_from_mm_to_qml, label=r'$\Delta$W(MM$\rightarrow$QML)')
-    axs[2].plot(cum_stddev_ws_from_qml_to_mm , label=r'$\Delta$W(QML$\rightarrow$MM)')
-    axs[2].plot(cum_stddev_dEs_from_mm_to_qml, label=r'$\Delta$E(MM$\rightarrow$QML)')
-    axs[2].plot(cum_stddev_dEs_from_qml_to_mm , label=r'$\Delta$E(QML$\rightarrow$MM)')
+    axs[2].plot(cum_stddev_ws_from_mm_to_qml, label=r'stddev $\Delta$W(MM$\rightarrow$QML)')
+    axs[2].plot(cum_stddev_ws_from_qml_to_mm , label=r'stddev $\Delta$W(QML$\rightarrow$MM)')
+    axs[2].plot(cum_stddev_dEs_from_mm_to_qml, label=r'stddev $\Delta$E(MM$\rightarrow$QML)')
+    axs[2].plot(cum_stddev_dEs_from_qml_to_mm , label=r'stddev $\Delta$E(QML$\rightarrow$MM)')
     # plot 1 kT limit
     axs[2].axhline(y = 1, color = 'r', linestyle = '-')
 
