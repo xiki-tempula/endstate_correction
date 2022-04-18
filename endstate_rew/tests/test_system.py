@@ -20,6 +20,7 @@ def test_generate_molecule():
                     [ 1.22661485e+00,  9.61738002e-01, -2.68072775e-01],
                     [ 1.20189300e+00, -3.23076234e-01,  9.53158295e-01]]
 
+    assert len(m.conformers) == 1
     compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom)
     assert np.allclose(compare_coordinates_to, coordinates)
     
