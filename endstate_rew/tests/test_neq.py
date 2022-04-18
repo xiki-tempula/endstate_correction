@@ -44,14 +44,23 @@ def test_seed_velocities():
     _seed_velocities(_get_masses(system))
     
 
-def test_switchging():
+def test_switching():
     
     # load simulation and samples for 2cle
     sim, samples_mm, samples_qml = load_system_and_samples(name='2cle', smiles='ClCCOCCCl')
-    # perform instantaneous switching
+    # perform instantaneous switching with predetermined coordinate set
+    # here, we evaluate dU_forw = dU(x)_qml - dU(x)_mm and make sure that it is the same as 
+    # dU_rev = dU(x)_mm - dU(x)_qml
     lambs = np.linspace(0,1,2)
+    print(lambs)
     dE_list = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1)
     assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), -3167768.70831208)
+    lambs = np.linspace(1,0,2)
+    print(lambs)
+    dE_list = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1)
+    assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), 3167768.70831208)
     
-    # perform switching
-    #perform_switching(sim, lambdas=lambs, samples=samples_mm, nr_of_switches=1)
+    
+    # perform NEQ switching
+    lambs = np.linspace(0,1,21)
+    dW_forw = perform_switching(sim, lambdas=lambs, samples=samples_mm, nr_of_switches=1)
