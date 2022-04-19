@@ -2,7 +2,7 @@ endstate_rew
 ==============================
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/wiederm/endstate_rew/workflows/CI/badge.svg)](https://github.com/wiederm/endstate_rew/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/wiederm/endstate_rew/branch/master/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_rew/branch/master)
+[![codecov](https://codecov.io/gh/wiederm/endstate_rew/branch/main/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_rew/branch/main)
 
 
 Endstate reweighting from MM to QML potential
