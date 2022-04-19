@@ -97,7 +97,7 @@ def test_generate_simulation_instance():
 
 
 def test_charmm_system_generation():
-    from endstate_rew.system import get_charmm_system
+    from endstate_rew.system import create_charmm_system
 
     # list of all the charmm systems with the zinc id
     zinc_systems = [
@@ -125,7 +125,7 @@ def test_charmm_system_generation():
     ]
 
     for zinc_id in zinc_systems:
-        get_charmm_system(zinc_id, base="data/hipen_data")
+        create_charmm_system(zinc_id, base="data/hipen_data")
 
 
 def test_initialize_simulation_charmm():
@@ -135,19 +135,21 @@ def test_initialize_simulation_charmm():
     zinc_id = "ZINC00079729"
 
     # initialize simulation for all thre cases
-    _ = initialize_simulation_charmm(zinc_id, at_endstate="mm")
-    _ = initialize_simulation_charmm(zinc_id, at_endstate="qml")
-    _ = initialize_simulation_charmm(zinc_id)
+    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data", at_endstate="mm")
+    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data", at_endstate="qml")
+    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
 
     # check that potential that interpolates
     # returns the same values for the endstates
     # than the pure endstate implementation
 
     # at lambda=0.0 (mm endpoint)
-    sim = initialize_simulation_charmm(zinc_id, at_endstate="mm")
+    sim = initialize_simulation_charmm(
+        zinc_id, base="data/hipen_data", at_endstate="mm"
+    )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(zinc_id)
+    sim = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
     sim.context.setParameter("lambda", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -156,10 +158,12 @@ def test_initialize_simulation_charmm():
     assert np.isclose(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
 
     # at lambda=1.0 (qml endpoint)
-    sim = initialize_simulation_charmm(zinc_id, at_endstate="qml")
+    sim = initialize_simulation_charmm(
+        zinc_id, base="data/hipen_data", at_endstate="qml"
+    )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(zinc_id)
+    sim = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
     sim.context.setParameter("lambda", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -168,10 +172,14 @@ def test_initialize_simulation_charmm():
     assert np.isclose(e_sim_qml_endstate, e_sim_qml_interpolate_endstate)
 
     # double check that QML and MM endpoint have different energies
-    sim = initialize_simulation_charmm(zinc_id, at_endstate="mm")
+    sim = initialize_simulation_charmm(
+        zinc_id, base="data/hipen_data", at_endstate="mm"
+    )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(zinc_id, at_endstate="qml")
+    sim = initialize_simulation_charmm(
+        zinc_id, base="data/hipen_data", at_endstate="qml"
+    )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     assert not np.isclose(e_sim_mm_endstate, e_sim_qml_endstate)
