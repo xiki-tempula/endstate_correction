@@ -6,7 +6,11 @@ from openmm import unit
 from openmm.app import Simulation
 from openmmml import MLPotential
 from tqdm import tqdm
-
+from openmm.app import CharmmPsfFile, CharmmCrdFile, CharmmParameterSet
+from openmm.app import NoCutoff
+from openmm import unit
+from os import path
+from glob import glob
 from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
 
 
@@ -121,3 +125,25 @@ def initialize_simulation(
     # sim.context.setVelocitiesToTemperature(temperature)
     sim.context.setVelocities(_seed_velocities(_get_masses(system)))
     return sim
+
+# creating charmm systems from zinc data
+def get_charmm_system(name:str, base = '../data/hipen_data'):
+    
+    # check if input directory exists
+    if not path.isdir(base):
+        raise RuntimeError('Path is not a directory.')
+    
+    # check if input directory contains at least one directory with the name 'ZINC'
+    if len(glob(base + '/ZINC*')) < 1:
+        raise RuntimeError('No ZINC directory found.')
+    
+    # get psf, crd and prm files
+    psf = CharmmPsfFile(f'{base}/{name}/{name}.psf')
+    crd = CharmmCrdFile(f'{base}/{name}/{name}.crd')
+    params = CharmmParameterSet(f'{base}/top_all36_cgenff.rtf', f'{base}/par_all36_cgenff.prm', f'{base}/{name}/{name}.str')
+    
+    # define system object
+    system = psf.createSystem(params, nonbondedMethod=NoCutoff)
+    
+    # return system object
+    return system
