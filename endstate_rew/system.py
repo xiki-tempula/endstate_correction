@@ -126,24 +126,85 @@ def initialize_simulation(
     sim.context.setVelocities(_seed_velocities(_get_masses(system)))
     return sim
 
+
 # creating charmm systems from zinc data
-def get_charmm_system(name:str, base = '../data/hipen_data'):
-    
+def create_charmm_system(name: str, base="../data/hipen_data"):
+
     # check if input directory exists
     if not path.isdir(base):
-        raise RuntimeError('Path is not a directory.')
-    
+        raise RuntimeError("Path is not a directory.")
+
     # check if input directory contains at least one directory with the name 'ZINC'
-    if len(glob(base + '/ZINC*')) < 1:
-        raise RuntimeError('No ZINC directory found.')
-    
+    if len(glob(base + "/ZINC*")) < 1:
+        raise RuntimeError("No ZINC directory found.")
+
     # get psf, crd and prm files
-    psf = CharmmPsfFile(f'{base}/{name}/{name}.psf')
-    crd = CharmmCrdFile(f'{base}/{name}/{name}.crd')
-    params = CharmmParameterSet(f'{base}/top_all36_cgenff.rtf', f'{base}/par_all36_cgenff.prm', f'{base}/{name}/{name}.str')
-    
+    psf = CharmmPsfFile(f"{base}/{name}/{name}.psf")
+    crd = CharmmCrdFile(f"{base}/{name}/{name}.crd")
+    params = CharmmParameterSet(
+        f"{base}/top_all36_cgenff.rtf",
+        f"{base}/par_all36_cgenff.prm",
+        f"{base}/{name}/{name}.str",
+    )
+
     # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-    
+
     # return system object
-    return system
+    return system, psf.topology, crd.positions
+
+
+# initialize simulation charmm system
+def initialize_simulation_charmm(
+    zinc_id: str,
+    base: str = "../data/hipen_data",
+    at_endstate: str = "",
+    platform: str = "CPU",
+):
+    """Initialize a simulation instance
+
+    Args:
+        zinc_id (str): _description_
+        base (str, optional): _description_. Defaults to '../data/hipen_data'
+        at_endstate (str, optional): _description_. Defaults to ''.
+        platform (str, optional): _description_. Defaults to 'CPU'.
+
+    Returns:
+        _type_: _description_
+    """
+
+    # initialize potential
+    potential = MLPotential("ani2x")
+    # generate the charmm system
+    system, topology, crds = create_charmm_system(zinc_id, base)
+    # define integrator
+    integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
+    platform = mm.Platform.getPlatformByName(platform)
+
+    # define the atoms that are calculated using both potentials
+    if not at_endstate:
+        ml_atoms = [atom.index for atom in topology.atoms()]
+
+        ml_system = potential.createMixedSystem(
+            topology, system, ml_atoms, interpolate=True
+        )
+        sim = Simulation(topology, ml_system, integrator, platform=platform)
+    elif at_endstate.upper() == "QML":
+        system = potential.createSystem(topology)
+        sim = Simulation(topology, system, integrator, platform=platform)
+        print("Initializing QML system")
+    elif at_endstate.upper() == "MM":
+        sim = Simulation(topology, system, integrator, platform=platform)
+        print("Initializing MM system")
+
+    sim.context.setPositions(crds)
+    # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
+    # for now avoiding call to minimizer
+    # sim.minimizeEnergy(maxIterations=100)
+
+    # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
+    # this will be fiexed in the future
+    # revert back to openMM velovity call
+    # sim.context.setVelocitiesToTemperature(temperature)
+    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+    return sim
