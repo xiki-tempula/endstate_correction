@@ -93,3 +93,59 @@ def test_switching():
     dW_forw = perform_switching(
         sim, lambdas=lambs, samples=samples_mm, nr_of_switches=1
     )
+
+
+def load_system_and_samples_charmmff(name: str) -> Tuple[Simulation, list, list]:
+    # initialize simulation and load pre-generated samples
+
+    n_samples = 5_000
+    n_steps_per_sample = 2_000
+    ###########################################################################################
+    system = create_charmm_system(name)
+    sim = initialize_simulation_charmm(name)
+
+    samples_mm = pickle.load(
+        open(
+            f"data/{name}/sampling/{name}_mm_samples_{n_samples}_{n_steps_per_sample}.pickle",
+            "rb",
+        )
+    )
+    samples_qml = pickle.load(
+        open(
+            f"data/{name}/sampling/{name}_qml_samples_{n_samples}_{n_steps_per_sample}.pickle",
+            "rb",
+        )
+    )
+
+    return sim, samples_mm, samples_qml
+
+
+def test_switching_charmmff():
+
+    # load simulation and samples for ZINC00077329
+    sim, samples_mm, samples_qml = load_system_and_samples_charmmff(name="ZINC00077329")
+    # perform instantaneous switching with predetermined coordinate set
+    # here, we evaluate dU_forw = dU(x)_qml - dU(x)_mm and make sure that it is the same as
+    # dU_rev = dU(x)_mm - dU(x)_qml
+    lambs = np.linspace(0, 1, 2)
+    print(lambs)
+    dE_list = perform_switching(
+        sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
+    )
+    assert np.isclose(
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -3167768.70831208
+    )
+    lambs = np.linspace(1, 0, 2)
+    print(lambs)
+    dE_list = perform_switching(
+        sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
+    )
+    assert np.isclose(
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 3167768.70831208
+    )
+
+    # perform NEQ switching
+    lambs = np.linspace(0, 1, 21)
+    dW_forw = perform_switching(
+        sim, lambdas=lambs, samples=samples_mm, nr_of_switches=1
+    )
