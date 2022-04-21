@@ -103,7 +103,7 @@ def load_system_and_samples_charmmff(name: str) -> Tuple[Simulation, list, list]
     n_samples = 5_000
     n_steps_per_sample = 2_000
     ###########################################################################################
-    system = create_charmm_system(name)
+    system = create_charmm_system(zinc_id=name, base="data/hipen_data")
     sim = initialize_simulation_charmm(name)
 
     samples_mm = pickle.load(
