@@ -12,9 +12,10 @@ from pymbar import BAR, EXP
 from endstate_rew.constant import kBT
 
 
-def _collect_samples(path: str, name: str, direction: str = "mm_to_qml") -> list:
-    
-    files = glob.glob(f"{path}/{name}_*_{direction}_{name}_*.pickle")
+def _collect_samples(
+    path: str, name: str, switching_length: int, direction: str = "mm_to_qml"
+) -> list:
+    files = glob.glob(f"{path}/{name}*{direction}*{switching_length}*.pickle")
     ws = []
     for f in files:
         w_ = pickle.load(open(f, "rb")).value_in_unit(unit.kilojoule_per_mole)
@@ -24,22 +25,38 @@ def _collect_samples(path: str, name: str, direction: str = "mm_to_qml") -> list
     return ws * unit.kilojoule_per_mole
 
 
-def collect_results(name: str, smiles: str) -> NamedTuple:
+def collect_results(
+    w_dir: str, switching_length: int, run_id: int, name: str, smiles: str
+) -> NamedTuple:
     from endstate_rew.neq import perform_switching
     from endstate_rew.system import initialize_simulation, generate_molecule
 
-    w_dir = f"../data/{name}/switching/run1"
     # load samples
     mm_samples = pickle.load(
-        open(f"../data/{name}/sampling/{name}_mm_samples_2000_1000.pickle", "rb")
+        open(
+            f"{w_dir}/{name}/sampling/{run_id}/{name}_mm_samples_5000_2000.pickle", "rb"
+        )
     )
     qml_samples = pickle.load(
-        open(f"../data/{name}/sampling/{name}_qml_samples_2000_1000.pickle", "rb")
+        open(
+            f"{w_dir}/{name}/sampling/{run_id}/{name}_qml_samples_5000_2000.pickle",
+            "rb",
+        )
     )
 
     # get pregenerated work values
-    ws_from_mm_to_qml = np.array(_collect_samples(w_dir, name, "mm_to_qml") / kBT)
-    ws_from_qml_to_mm = np.array(_collect_samples(w_dir, name, "qml_to_mm") / kBT)
+    ws_from_mm_to_qml = np.array(
+        _collect_samples(
+            f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "mm_to_qml"
+        )
+        / kBT
+    )
+    ws_from_qml_to_mm = np.array(
+        _collect_samples(
+            f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "qml_to_mm"
+        )
+        / kBT
+    )
 
     # perform instantenious swichting (FEP) to get dE values
     switching_length = 2
@@ -203,7 +220,8 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
         cum_stddev_dEs_from_qml_to_mm, label=r"stddev $\Delta$E(QML$\rightarrow$MM)"
     )
     # plot 1 kT limit
-    axs[2].axhline(y=1, color="r", linestyle="-")
+    axs[2].axhline(y=1., color="yellow", linestyle=":")
+    axs[2].axhline(y=2., color="orange", linestyle=":")
 
     axs[2].set_ylabel("kT")
 
