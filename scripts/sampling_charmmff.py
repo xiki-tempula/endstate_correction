@@ -5,7 +5,7 @@ import torch
 from endstate_rew.system import (
     collect_samples,
     create_charmm_system,
-    initialize_simulation_charmm
+    initialize_simulation_charmm,
 )
 from endstate_rew.constant import zinc_systems
 
@@ -19,8 +19,8 @@ if len(sys.argv) > 1:
     zink_id = int(sys.argv[1])
     name, smiles = zinc_systems[zink_id]
 else:
-    name = "2cle"
-    smiles = "ClCCOCCCl"
+    name = "ZINC00061095"
+    smiles = "CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1"
 
 print(name)
 print(smiles)
