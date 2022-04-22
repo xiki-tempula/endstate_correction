@@ -97,14 +97,15 @@ def test_switching():
     )
 
 
-def load_system_and_samples_charmmff(name: str) -> Tuple[Simulation, list, list]:
+def load_system_and_samples_charmmff(
+    name: str, base: str = "data/hipen_data"
+) -> Tuple[Simulation, list, list]:
     # initialize simulation and load pre-generated samples
 
     n_samples = 5_000
     n_steps_per_sample = 2_000
     ###########################################################################################
-    system = create_charmm_system(name, base="data/hipen_data")
-    sim = initialize_simulation_charmm(name)
+    sim = initialize_simulation_charmm(name, base)
 
     samples_mm = pickle.load(
         open(
@@ -125,7 +126,9 @@ def load_system_and_samples_charmmff(name: str) -> Tuple[Simulation, list, list]
 def test_switching_charmmff():
 
     # load simulation and samples for ZINC00077329
-    sim, samples_mm, samples_qml = load_system_and_samples_charmmff(name="ZINC00077329")
+    sim, samples_mm, samples_qml = load_system_and_samples_charmmff(
+        name="ZINC00077329", base="data/hipen_data"
+    )
     # perform instantaneous switching with predetermined coordinate set
     # here, we evaluate dU_forw = dU(x)_qml - dU(x)_mm and make sure that it is the same as
     # dU_rev = dU(x)_mm - dU(x)_qml
