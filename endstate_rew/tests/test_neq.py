@@ -138,7 +138,9 @@ def test_switching_charmmff():
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -3167768.70831208
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole),
+        -2848853.4142631683
+        # -3167768.70831208
     )
     lambs = np.linspace(1, 0, 2)
     print(lambs)
@@ -146,7 +148,9 @@ def test_switching_charmmff():
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 3167768.70831208
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole),
+        2848853.4142631683
+        # 3167768.70831208
     )
 
     # perform NEQ switching
