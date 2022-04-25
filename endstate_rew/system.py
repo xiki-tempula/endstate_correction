@@ -1,3 +1,6 @@
+import pickle
+from os import path
+
 import numpy as np
 import openmm as mm
 from openff.toolkit.topology import Molecule
@@ -7,8 +10,7 @@ from openmm.app import Simulation
 from openmmml import MLPotential
 from tqdm import tqdm
 
-from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
-
+from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
@@ -73,7 +75,7 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 
 
 def initialize_simulation(
-    molecule: Molecule, at_endstate: str = "", platform: str = "CPU"
+    molecule: Molecule, at_endstate: str = "", platform: str = "CPU", w_dir=""
 ):
     """Initialize a simulation instance
 
@@ -89,8 +91,19 @@ def initialize_simulation(
 
     # initialize potential
     potential = MLPotential("ani2x")
-    # generate a molecule using openff
-    system, topology = create_mm_system(molecule)
+    # initialize openMM system and topology
+    if w_dir:
+        mol_path = f"{w_dir}/system.openff"
+        if path.isfile(mol_path):  # if already generated, load it
+            print("load system ...")
+            system, topology = pickle.load(open(mol_path, "rb"))
+        else:  # if not generated, generate it and save it
+            print("generate and save system ...")
+            system, topology = create_mm_system(molecule)
+            pickle.dump((system, topology), open(mol_path, "wb+"))
+    else:
+        system, topology = create_mm_system(molecule)
+
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
     platform = mm.Platform.getPlatformByName(platform)
