@@ -16,9 +16,9 @@ torch.set_num_threads(num_threads)
 # define run
 if len(sys.argv) == 3:
     print("Simulating zink system")
-    zink_id = int(sys.argv[1])
+    run_id = sys.argv[1]
+    zink_id = int(sys.argv[2])
     name, smiles = zinc_systems[zink_id]
-    run_id = sys.argv[2]
 elif len(sys.argv) == 2:
     name = "2cle"
     smiles = "ClCCOCCCl"
@@ -36,7 +36,7 @@ n_samples = 5_000
 n_steps_per_sample = 2_000
 #############
 # NEQ
-switching_length = 10_001
+switching_length = 5_001
 nr_of_switches = 10
 #############
 w_dir = f"/data/shared/projects/endstate_rew/{name}/"
@@ -45,10 +45,14 @@ run = "run01"
 mm_to_qml_filename = f"{w_dir}/switching/{run}/{name}_neq_ws_from_mm_to_qml_{nr_of_switches}_{switching_length}_{run_id}.pickle"
 qml_to_mm_filename = f"{w_dir}/switching/{run}/{name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}_{run_id}.pickle"
 
+if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
+    sys.exit()
+
 ###########################################################################################
 ###########################################################################################
+# generate mol
 molecule = generate_molecule(smiles)
-sim = initialize_simulation(molecule)
+sim = initialize_simulation(molecule, w_dir=w_dir)
 ###########################################################################################
 # create folder
 os.makedirs(f"{w_dir}/switching/{run}", exist_ok=True)

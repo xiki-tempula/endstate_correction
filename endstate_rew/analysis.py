@@ -2,6 +2,8 @@ import glob
 import pickle
 from collections import namedtuple
 from typing import NamedTuple
+from os import path
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,7 +65,8 @@ def collect_results(
     nr_of_switches = 500
     # create molecule
     molecule = generate_molecule(smiles)
-    sim = initialize_simulation(molecule)
+
+    sim = initialize_simulation(molecule, w_dir=f"{w_dir}/{name}")
     lambs = np.linspace(0, 1, switching_length)
     dEs_from_mm_to_qml = np.array(
         perform_switching(sim, lambs, samples=mm_samples, nr_of_switches=nr_of_switches)
@@ -161,18 +164,42 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
     # Crooks' equation
     ddG_list, dddG_list = [], []
     ddG, dddG = BAR(results.dWs_from_mm_to_qml, results.dWs_from_qml_to_mm)
+    if np.isnan(dddG):
+        print("#######################")
+        print("BEWARE: dddG is nan!")
+        print("WILL BE REPLACED BY 1. for plotting")
+        print("#######################")
+        dddG = 1.0
     ddG_list.append(ddG)
     dddG_list.append(dddG)
     # Jarzynski's equation
     ddG, dddG = EXP(results.dWs_from_mm_to_qml)
+    if np.isnan(dddG):
+        print("#######################")
+        print("BEWARE: dddG is nan!")
+        print("WILL BE REPLACED BY 1. for plotting")
+        print("#######################")
+        dddG = 1.0
     ddG_list.append(ddG)
     dddG_list.append(dddG)
     # FEP
     ddG, dddG = EXP(results.dEs_from_mm_to_qml)
+    if np.isnan(dddG):
+        print("#######################")
+        print("BEWARE: dddG is nan!")
+        print("WILL BE REPLACED BY 1. for plotting")
+        print("#######################")
+        dddG = 1.0
     ddG_list.append(ddG)
     dddG_list.append(dddG)
     # FEP + BAR
     ddG, dddG = BAR(results.dEs_from_mm_to_qml, results.dEs_from_qml_to_mm)
+    if np.isnan(dddG):
+        print("#######################")
+        print("BEWARE: dddG is nan!")
+        print("WILL BE REPLACED BY 1. for plotting")
+        print("#######################")
+        dddG = 1.0
     ddG_list.append(ddG)
     dddG_list.append(dddG)
 
@@ -184,7 +211,7 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
     )
     axs[1].set_xticklabels(["", "Crooks", "", "Jazynski", "", "FEP+EXP", "", "FEP+BAR"])
     axs[1].set_ylabel("kT")
-    axs[1].legend()
+    # axs[1].legend()
 
     # plot cummulative stddev of dE and dW
     #########################################
@@ -220,12 +247,13 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
         cum_stddev_dEs_from_qml_to_mm, label=r"stddev $\Delta$E(QML$\rightarrow$MM)"
     )
     # plot 1 kT limit
-    axs[2].axhline(y=1., color="yellow", linestyle=":")
-    axs[2].axhline(y=2., color="orange", linestyle=":")
+    axs[2].axhline(y=1.0, color="yellow", linestyle=":")
+    axs[2].axhline(y=2.0, color="orange", linestyle=":")
 
     axs[2].set_ylabel("kT")
 
     axs[2].legend()
 
     plt.tight_layout()
+    plt.savefig(f"{name}_r_10ps.png")
     plt.show()

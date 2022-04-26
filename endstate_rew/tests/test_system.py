@@ -2,6 +2,16 @@ from openmm import unit
 import numpy as np
 
 
+def test_conf_selection():
+    from endstate_rew.system import generate_molecule
+    from endstate_rew.constant import zinc_systems
+    
+    for zinc_name, smiles in zinc_systems:
+        print(zinc_name)
+        m = generate_molecule(smiles)
+        assert len(m.conformers) >= 1
+
+
 def test_generate_molecule():
     from endstate_rew.system import generate_molecule
 

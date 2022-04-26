@@ -1,3 +1,6 @@
+import pickle
+from os import path
+
 import numpy as np
 import openmm as mm
 from openff.toolkit.topology import Molecule
@@ -5,22 +8,22 @@ from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
 from openmm.app import Simulation
 from openmmml import MLPotential
+from torch import randint
 from tqdm import tqdm
+from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
 from openmm.app import CharmmPsfFile, CharmmCrdFile, CharmmParameterSet
 from openmm.app import NoCutoff
 from openmm import unit
 from os import path
 from glob import glob
-from endstate_rew.constant import collision_rate, stepsize, temperature, kBT, speed_unit
-
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 
-def generate_molecule(smiles: str) -> Molecule:
+def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
     # generate a molecule using openff
     molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-    molecule.generate_conformers()
+    molecule.generate_conformers(n_conformers=nr_of_conformations)
     return molecule
 
 
@@ -77,7 +80,11 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 
 
 def initialize_simulation(
-    molecule: Molecule, at_endstate: str = "", platform: str = "CPU"
+    molecule: Molecule,
+    at_endstate: str = "",
+    platform: str = "CPU",
+    w_dir="",
+    conf_id: int = 0,
 ):
     """Initialize a simulation instance
 
@@ -89,12 +96,24 @@ def initialize_simulation(
     Returns:
         _type_: _description_
     """
+
     assert molecule.n_conformers > 0
 
     # initialize potential
     potential = MLPotential("ani2x")
-    # generate a molecule using openff
-    system, topology = create_mm_system(molecule)
+    # initialize openMM system and topology
+    if w_dir:
+        mol_path = f"{w_dir}/system.openff"
+        if path.isfile(mol_path):  # if already generated, load it
+            print("load system ...")
+            system, topology = pickle.load(open(mol_path, "rb"))
+        else:  # if not generated, generate it and save it
+            print("generate and save system ...")
+            system, topology = create_mm_system(molecule)
+            pickle.dump((system, topology), open(mol_path, "wb+"))
+    else:
+        system, topology = create_mm_system(molecule)
+
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
     platform = mm.Platform.getPlatformByName(platform)
@@ -114,7 +133,7 @@ def initialize_simulation(
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
 
-    sim.context.setPositions(molecule.conformers[0])
+    sim.context.setPositions(molecule.conformers[conf_id])
     # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
     # for now avoiding call to minimizer
     # sim.minimizeEnergy(maxIterations=100)
