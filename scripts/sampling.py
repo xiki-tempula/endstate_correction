@@ -9,12 +9,15 @@ from endstate_rew.system import (
     collect_samples,
     generate_molecule,
     initialize_simulation,
+    create_charmm_system,
+    initialize_simulation_charmm,
 )
 
 ### define units
 num_threads = 2
 torch.set_num_threads(num_threads)
 
+###################
 ###################
 if len(sys.argv) > 1:
     print("Simulating zink system")
@@ -23,18 +26,24 @@ if len(sys.argv) > 1:
 else:
     name = "2cle"
     smiles = "ClCCOCCCl"
-run_id = 2
+###################
+###################
+ff = "openff"
+run_id = "03"
+###################
 ###################
 print(zink_id)
 print(name)
 print(smiles)
 print(run_id)
-
+assert ff == "openff" or ff == "charmmff"
 n_samples = 5_000
 n_steps_per_sample = 2_000
 ###################
+# generate mol
 molecule = generate_molecule(smiles)
-w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling/run{run_id}/"
+# initialize working directory
+w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id}/"
 os.makedirs(w_dir, exist_ok=True)
 
 # select a random conformation
@@ -43,14 +52,19 @@ from random import randint
 conf_id = randint(0, molecule.n_conformers - 1)
 print(f"select conf_id: {conf_id}")
 
+if ff == "openff":
+    sim = initialize_simulation(
+        molecule,
+        at_endstate="MM",
+        platform="CPU",
+        w_dir=f"/data/shared/projects/endstate_rew/{name}/",
+        conf_id=conf_id,
+    )
+elif ff == "charmmff":
+    sim = initialize_simulation_charmm(zinc_id=name, at_endstate="MM", platform="CPU")
+else:
+    raise RuntimeError("Either openff or charmmff. Abort.")
 
-sim = initialize_simulation(
-    molecule,
-    at_endstate="MM",
-    platform="CPU",
-    w_dir=f"/data/shared/projects/endstate_rew/{name}/",
-    conf_id=conf_id,
-)
 mm_samples = collect_samples(
     sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
 )
@@ -59,13 +73,19 @@ pickle.dump(
     open(f"{w_dir}/{name}_mm_samples_{n_samples}_{n_steps_per_sample}.pickle", "wb+"),
 )
 
-sim = initialize_simulation(
-    molecule,
-    at_endstate="QML",
-    platform="CPU",
-    w_dir=f"/data/shared/projects/endstate_rew/{name}/",
-    conf_id=conf_id,
-)
+if ff == "openff":
+    sim = initialize_simulation(
+        molecule,
+        at_endstate="QML",
+        platform="CPU",
+        w_dir=f"/data/shared/projects/endstate_rew/{name}/",
+        conf_id=conf_id,
+    )
+elif ff == "charmmff":
+    sim = initialize_simulation_charmm(zinc_id=name, at_endstate="QML", platform="CPU")
+else:
+    raise RuntimeError("Either openff or charmmff. Abort.")
+
 qml_samples = collect_samples(
     sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
 )
