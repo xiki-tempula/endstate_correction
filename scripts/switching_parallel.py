@@ -50,8 +50,9 @@ if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
 
 ###########################################################################################
 ###########################################################################################
+# generate mol
 molecule = generate_molecule(smiles)
-sim = initialize_simulation(molecule)
+sim = initialize_simulation(molecule, w_dir=w_dir)
 ###########################################################################################
 # create folder
 os.makedirs(f"{w_dir}/switching/{run}", exist_ok=True)

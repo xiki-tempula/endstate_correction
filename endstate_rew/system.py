@@ -8,6 +8,7 @@ from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
 from openmm.app import Simulation
 from openmmml import MLPotential
+from torch import randint
 from tqdm import tqdm
 
 from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
@@ -15,10 +16,10 @@ from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, tem
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 
-def generate_molecule(smiles: str) -> Molecule:
+def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
     # generate a molecule using openff
     molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-    molecule.generate_conformers()
+    molecule.generate_conformers(n_conformers=nr_of_conformations)
     return molecule
 
 
@@ -75,7 +76,11 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 
 
 def initialize_simulation(
-    molecule: Molecule, at_endstate: str = "", platform: str = "CPU", w_dir=""
+    molecule: Molecule,
+    at_endstate: str = "",
+    platform: str = "CPU",
+    w_dir="",
+    conf_id: int = 0,
 ):
     """Initialize a simulation instance
 
@@ -87,6 +92,7 @@ def initialize_simulation(
     Returns:
         _type_: _description_
     """
+
     assert molecule.n_conformers > 0
 
     # initialize potential
@@ -123,7 +129,7 @@ def initialize_simulation(
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
 
-    sim.context.setPositions(molecule.conformers[0])
+    sim.context.setPositions(molecule.conformers[conf_id])
     # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
     # for now avoiding call to minimizer
     # sim.minimizeEnergy(maxIterations=100)

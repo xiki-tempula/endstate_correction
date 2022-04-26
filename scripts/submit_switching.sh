@@ -2,7 +2,7 @@
 #$ -M marcus.wieder@univie.ac.at
 #$ -m e
 #$ -j y
-#$ -p -500
+#$ -p -200
 #$ -o /data/shared/projects/SGE_LOG/
 #$ -pe smp 2
 #$ -cwd
