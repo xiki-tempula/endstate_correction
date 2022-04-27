@@ -27,8 +27,8 @@ else:
     smiles = "ClCCOCCCl"
 ###################
 ###################
-ff = "openff"
-run_id = "03"
+ff = "openff" # charmmff
+run_id = "05"
 n_samples = 5_000
 n_steps_per_sample = 2_000
 ###################
