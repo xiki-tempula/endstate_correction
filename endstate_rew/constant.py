@@ -14,7 +14,10 @@ temperature = 300 * unit.kelvin
 kBT = kB * temperature
 
 zinc_systems = [
-    ("ZINC00061095", "CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1"),
+    (
+        "ZINC00061095",
+        "CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
+    ),  # NOTE: this system has a wrong topology in the psf file
     ("ZINC00077329", "Cn1cc(Cl)c(/C=N/O)n1"),
     ("ZINC00079729", "S=c1cc(-c2ccc(Cl)cc2)ss1"),
     ("ZINC00086442", "CN1C(=O)C/C(=N\O)N(C)C1=O"),
