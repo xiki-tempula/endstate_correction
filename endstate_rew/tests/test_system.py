@@ -128,35 +128,26 @@ def test_generate_simulation_instances_with_openff():
 
 
 def test_charmm_system_generation():
-    from endstate_rew.system import create_charmm_system
+    from endstate_rew.system import (
+        create_charmm_system,
+        generate_molecule,
+        initialize_simulation_with_charmmff,
+    )
+    from endstate_rew.constant import zinc_systems
 
     # list of all the charmm systems with the zinc id
-    zinc_systems = [
-        "ZINC00079729",
-        "ZINC00086442",
-        "ZINC00087557",
-        "ZINC00095858",
-        "ZINC00107550",
-        "ZINC00107778",
-        "ZINC00123162",
-        "ZINC00133435",
-        "ZINC00138607",
-        "ZINC00140610",
-        "ZINC00164361",
-        "ZINC00167648",
-        "ZINC00169358",
-        "ZINC01036618",
-        "ZINC01755198",
-        "ZINC01867000",
-        "ZINC03127671",
-        "ZINC04344392",
-        "ZINC04363792",
-        "ZINC06568023",
-        "ZINC33381936",
-    ]
 
-    for zinc_id in zinc_systems:
-        create_charmm_system(zinc_id, base="data/hipen_data")
+    for zinc_name, smiles in zinc_systems:
+        print(zinc_name)
+        if (
+            zinc_name == "ZINC00061095" or zinc_name == "ZINC00095858" or zinc_name == 'ZINC00138607'
+        ):  # skip system that has wrong topology
+            continue
+        molecule = generate_molecule(smiles)
+        create_charmm_system(zinc_name, base="data/hipen_data")
+        _ = initialize_simulation_with_charmmff(
+            molecule, zinc_name, base="data/hipen_data", at_endstate="mm"
+        )
 
 
 def test_generate_simulation_instances_with_charmmff():
