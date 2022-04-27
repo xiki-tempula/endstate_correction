@@ -8,9 +8,8 @@ from endstate_rew.constant import zinc_systems
 from endstate_rew.system import (
     collect_samples,
     generate_molecule,
-    initialize_simulation,
-    create_charmm_system,
-    initialize_simulation_charmm,
+    initialize_simulation_with_charmmff,
+    initialize_simulation_with_openff,
 )
 
 ### define units
@@ -30,15 +29,18 @@ else:
 ###################
 ff = "openff"
 run_id = "03"
-###################
-###################
-print(zink_id)
-print(name)
-print(smiles)
-print(run_id)
-assert ff == "openff" or ff == "charmmff"
 n_samples = 5_000
 n_steps_per_sample = 2_000
+###################
+###################
+print(f"{zink_id=}")
+print(f"{name=}")
+print(f"{smiles=}")
+print(f"{run_id=}")
+print(f"{ff=}")
+
+assert ff == "openff" or ff == "charmmff"
+
 ###################
 # generate mol
 molecule = generate_molecule(smiles)
@@ -51,9 +53,11 @@ from random import randint
 
 conf_id = randint(0, molecule.n_conformers - 1)
 print(f"select conf_id: {conf_id}")
+###################
 
+# initialize simulation depending on ff keyword
 if ff == "openff":
-    sim = initialize_simulation(
+    sim = initialize_simulation_with_openff(
         molecule,
         at_endstate="MM",
         platform="CPU",
@@ -61,20 +65,25 @@ if ff == "openff":
         conf_id=conf_id,
     )
 elif ff == "charmmff":
-    sim = initialize_simulation_charmm(zinc_id=name, at_endstate="MM", platform="CPU")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id=name, at_endstate="MM", platform="CPU"
+    )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
-
+# collect samples
 mm_samples = collect_samples(
     sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
 )
+# save samples
 pickle.dump(
     mm_samples,
     open(f"{w_dir}/{name}_mm_samples_{n_samples}_{n_steps_per_sample}.pickle", "wb+"),
 )
 
+
+# initialize simulation depending on ff keyword
 if ff == "openff":
-    sim = initialize_simulation(
+    sim = initialize_simulation_with_openff(
         molecule,
         at_endstate="QML",
         platform="CPU",
@@ -82,13 +91,16 @@ if ff == "openff":
         conf_id=conf_id,
     )
 elif ff == "charmmff":
-    sim = initialize_simulation_charmm(zinc_id=name, at_endstate="QML", platform="CPU")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id=name, at_endstate="QML", platform="CPU"
+    )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
-
+# collect samples
 qml_samples = collect_samples(
     sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
 )
+# save samples
 pickle.dump(
     qml_samples,
     open(f"{w_dir}/{name}_qml_samples_{n_samples}_{n_steps_per_sample}.pickle", "wb+"),
