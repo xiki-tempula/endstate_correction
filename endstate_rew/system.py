@@ -1,4 +1,5 @@
 import pickle
+from glob import glob
 from os import path
 
 import numpy as np
@@ -6,16 +7,18 @@ import openmm as mm
 from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
-from openmm.app import Simulation
+from openmm.app import (
+    CharmmCrdFile,
+    CharmmParameterSet,
+    CharmmPsfFile,
+    NoCutoff,
+    Simulation,
+)
 from openmmml import MLPotential
 from torch import randint
 from tqdm import tqdm
+
 from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
-from openmm.app import CharmmPsfFile, CharmmCrdFile, CharmmParameterSet
-from openmm.app import NoCutoff
-from openmm import unit
-from os import path
-from glob import glob
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
@@ -79,7 +82,43 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
     return np.random.randn(len(sigma_v), 3) * sigma_v[:, None]
 
 
-def initialize_simulation(
+def _initialize_simulation(
+    at_endstate: str, topology, potential, molecule, conf_id: int, platform, system
+):
+    # define integrator
+    integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
+    platform = mm.Platform.getPlatformByName(platform)
+
+    # define the atoms that are calculated using both potentials
+    if not at_endstate:
+        # ml_atoms = [atom.topology_atom_index for atom in topology.topology_atoms]
+        ml_atoms = [atom.index for atom in topology.atoms()]
+        ml_system = potential.createMixedSystem(
+            topology, system, ml_atoms, interpolate=True
+        )
+        sim = Simulation(topology, ml_system, integrator, platform=platform)
+    elif at_endstate.upper() == "QML":
+        system = potential.createSystem(topology)
+        sim = Simulation(topology, system, integrator, platform=platform)
+        print("Initializing QML system")
+    elif at_endstate.upper() == "MM":
+        sim = Simulation(topology, system, integrator, platform=platform)
+        print("Initializing MM system")
+
+    sim.context.setPositions(molecule.conformers[conf_id])
+    # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
+    # for now avoiding call to minimizer
+    # sim.minimizeEnergy(maxIterations=100)
+
+    # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
+    # this will be fiexed in the future
+    # revert back to openMM velovity call
+    # sim.context.setVelocitiesToTemperature(temperature)
+    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+    return sim
+
+
+def initialize_simulation_with_openff(
     molecule: Molecule,
     at_endstate: str = "",
     platform: str = "CPU",
@@ -98,7 +137,7 @@ def initialize_simulation(
     """
 
     assert molecule.n_conformers > 0
-
+    print("Using openff ...")
     # initialize potential
     potential = MLPotential("ani2x")
     # initialize openMM system and topology
@@ -114,36 +153,15 @@ def initialize_simulation(
     else:
         system, topology = create_mm_system(molecule)
 
-    # define integrator
-    integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
-    platform = mm.Platform.getPlatformByName(platform)
-
-    # define the atoms that are calculated using both potentials
-    if not at_endstate:
-        ml_atoms = [atom.topology_atom_index for atom in topology.topology_atoms]
-        ml_system = potential.createMixedSystem(
-            topology.to_openmm(), system, ml_atoms, interpolate=True
-        )
-        sim = Simulation(topology, ml_system, integrator, platform=platform)
-    elif at_endstate.upper() == "QML":
-        system = potential.createSystem(topology.to_openmm())
-        sim = Simulation(topology, system, integrator, platform=platform)
-        print("Initializing QML system")
-    elif at_endstate.upper() == "MM":
-        sim = Simulation(topology, system, integrator, platform=platform)
-        print("Initializing MM system")
-
-    sim.context.setPositions(molecule.conformers[conf_id])
-    # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
-    # for now avoiding call to minimizer
-    # sim.minimizeEnergy(maxIterations=100)
-
-    # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
-    # this will be fiexed in the future
-    # revert back to openMM velovity call
-    # sim.context.setVelocitiesToTemperature(temperature)
-    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
-    return sim
+    return _initialize_simulation(
+        at_endstate,
+        topology.to_openmm(),
+        potential,
+        molecule,
+        conf_id,
+        platform,
+        system,
+    )
 
 
 # creating charmm systems from zinc data
@@ -174,11 +192,13 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
 
 # initialize simulation charmm system
-def initialize_simulation_charmm(
+def initialize_simulation_with_charmmff(
+    molecule: Molecule,
     zinc_id: str,
     base: str = "../data/hipen_data",
     at_endstate: str = "",
     platform: str = "CPU",
+    conf_id: int = 0,
 ):
     """Initialize a simulation instance
 
@@ -191,39 +211,13 @@ def initialize_simulation_charmm(
     Returns:
         _type_: _description_
     """
+    assert molecule.n_conformers > 0
 
     # initialize potential
     potential = MLPotential("ani2x")
     # generate the charmm system
-    system, topology, crds = create_charmm_system(zinc_id, base)
-    # define integrator
-    integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
-    platform = mm.Platform.getPlatformByName(platform)
+    system, topology, _ = create_charmm_system(zinc_id, base)
 
-    # define the atoms that are calculated using both potentials
-    if not at_endstate:
-        ml_atoms = [atom.index for atom in topology.atoms()]
-
-        ml_system = potential.createMixedSystem(
-            topology, system, ml_atoms, interpolate=True
-        )
-        sim = Simulation(topology, ml_system, integrator, platform=platform)
-    elif at_endstate.upper() == "QML":
-        system = potential.createSystem(topology)
-        sim = Simulation(topology, system, integrator, platform=platform)
-        print("Initializing QML system")
-    elif at_endstate.upper() == "MM":
-        sim = Simulation(topology, system, integrator, platform=platform)
-        print("Initializing MM system")
-
-    sim.context.setPositions(crds)
-    # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
-    # for now avoiding call to minimizer
-    # sim.minimizeEnergy(maxIterations=100)
-
-    # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
-    # this will be fiexed in the future
-    # revert back to openMM velovity call
-    # sim.context.setVelocitiesToTemperature(temperature)
-    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
-    return sim
+    return _initialize_simulation(
+        at_endstate, topology, potential, molecule, conf_id, platform, system
+    )
