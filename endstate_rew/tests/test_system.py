@@ -1,11 +1,11 @@
-from openmm import unit
 import numpy as np
+from openmm import unit
 
 
 def test_conf_selection():
-    from endstate_rew.system import generate_molecule
     from endstate_rew.constant import zinc_systems
-    
+    from endstate_rew.system import generate_molecule
+
     for zinc_name, smiles in zinc_systems:
         print(zinc_name)
         m = generate_molecule(smiles)
@@ -42,41 +42,62 @@ def test_sampling():
     from endstate_rew.system import (
         collect_samples,
         generate_molecule,
-        initialize_simulation,
+        initialize_simulation_with_charmmff,
+        initialize_simulation_with_openff,
     )
 
+    # sample with openff
     # sampling for ethanol
     # initialize molecule
     smiles = "CCO"
     molecule = generate_molecule(smiles)
     # initialize simulation and start sampling at MM endstate
-    sim = initialize_simulation(molecule, at_endstate="MM", platform="CPU")
+    sim = initialize_simulation_with_openff(molecule, at_endstate="MM", platform="CPU")
     mm_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
     # initialize simulation and start sampling at QML endstate
-    sim = initialize_simulation(molecule, at_endstate="QML", platform="CPU")
+    sim = initialize_simulation_with_openff(molecule, at_endstate="QML", platform="CPU")
+    qml_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+
+    # sample with charmmff
+    # generate zinc mol
+    zinc_id = "ZINC00079729"
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
+    molecule = generate_molecule(smiles)
+    # initialize simulation for all thre cases
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
+    )
+    mm_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="qml"
+    )
     qml_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
 
 
-def test_generate_simulation_instance():
-    from endstate_rew.system import get_energy, generate_molecule, initialize_simulation
+def test_generate_simulation_instances_with_openff():
+    from endstate_rew.system import (
+        generate_molecule,
+        get_energy,
+        initialize_simulation_with_openff,
+    )
 
     # generate molecule
     ethane_smiles = "CC"
     m = generate_molecule(ethane_smiles)
-    # initialize simulation for all thre cases
-    _ = initialize_simulation(m, at_endstate="mm")
-    _ = initialize_simulation(m, at_endstate="qml")
-    _ = initialize_simulation(m)
+    # initialize simulation for all three cases
+    _ = initialize_simulation_with_openff(m, at_endstate="mm")
+    _ = initialize_simulation_with_openff(m, at_endstate="qml")
+    _ = initialize_simulation_with_openff(m)
 
     # check that potential that interpolats
     # returns the same values for the endstates
     # than the pure endstate implementation
 
     # at lambda=0.0 (mm endpoint)
-    sim = initialize_simulation(m, at_endstate="mm")
+    sim = initialize_simulation_with_openff(m, at_endstate="mm")
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation(m)
+    sim = initialize_simulation_with_openff(m)
     sim.context.setParameter("lambda", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -85,10 +106,10 @@ def test_generate_simulation_instance():
     assert np.isclose(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
 
     # at lambda=1.0 (qml endpoint)
-    sim = initialize_simulation(m, at_endstate="qml")
+    sim = initialize_simulation_with_openff(m, at_endstate="qml")
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation(m)
+    sim = initialize_simulation_with_openff(m)
     sim.context.setParameter("lambda", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -97,69 +118,69 @@ def test_generate_simulation_instance():
     assert np.isclose(e_sim_qml_endstate, e_sim_qml_interpolate_endstate)
 
     # double check that QML and MM endpoint have different energies
-    sim = initialize_simulation(m, at_endstate="mm")
+    sim = initialize_simulation_with_openff(m, at_endstate="mm")
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation(m, at_endstate="qml")
+    sim = initialize_simulation_with_openff(m, at_endstate="qml")
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     assert not np.isclose(e_sim_mm_endstate, e_sim_qml_endstate)
 
 
 def test_charmm_system_generation():
-    from endstate_rew.system import create_charmm_system
+    from endstate_rew.system import (
+        create_charmm_system,
+        generate_molecule,
+        initialize_simulation_with_charmmff,
+    )
+    from endstate_rew.constant import zinc_systems
 
     # list of all the charmm systems with the zinc id
-    zinc_systems = [
-        "ZINC00079729",
-        "ZINC00086442",
-        "ZINC00087557",
-        "ZINC00095858",
-        "ZINC00107550",
-        "ZINC00107778",
-        "ZINC00123162",
-        "ZINC00133435",
-        "ZINC00138607",
-        "ZINC00140610",
-        "ZINC00164361",
-        "ZINC00167648",
-        "ZINC00169358",
-        "ZINC01036618",
-        "ZINC01755198",
-        "ZINC01867000",
-        "ZINC03127671",
-        "ZINC04344392",
-        "ZINC04363792",
-        "ZINC06568023",
-        "ZINC33381936",
-    ]
 
-    for zinc_id in zinc_systems:
-        create_charmm_system(zinc_id, base="data/hipen_data")
+    for zinc_name, smiles in zinc_systems:
+        print(zinc_name)
+        if (
+            zinc_name == "ZINC00061095" or zinc_name == "ZINC00095858" or zinc_name == 'ZINC00138607'
+        ):  # skip system that has wrong topology
+            continue
+        molecule = generate_molecule(smiles)
+        create_charmm_system(zinc_name, base="data/hipen_data")
+        _ = initialize_simulation_with_charmmff(
+            molecule, zinc_name, base="data/hipen_data", at_endstate="mm"
+        )
 
 
-def test_initialize_simulation_charmm():
-    from endstate_rew.system import get_energy, initialize_simulation_charmm
+def test_generate_simulation_instances_with_charmmff():
+    from endstate_rew.system import (
+        generate_molecule,
+        get_energy,
+        initialize_simulation_with_charmmff,
+    )
 
     # get zinc_id
     zinc_id = "ZINC00079729"
-
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
+    molecule = generate_molecule(smiles)
     # initialize simulation for all thre cases
-    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data", at_endstate="mm")
-    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data", at_endstate="qml")
-    _ = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
+    _ = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
+    )
+    _ = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="qml"
+    )
+    _ = initialize_simulation_with_charmmff(molecule, zinc_id, base="data/hipen_data")
 
     # check that potential that interpolates
     # returns the same values for the endstates
     # than the pure endstate implementation
 
     # at lambda=0.0 (mm endpoint)
-    sim = initialize_simulation_charmm(
-        zinc_id, base="data/hipen_data", at_endstate="mm"
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
     )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
+    sim = initialize_simulation_with_charmmff(molecule, zinc_id, base="data/hipen_data")
     sim.context.setParameter("lambda", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -168,12 +189,12 @@ def test_initialize_simulation_charmm():
     assert np.isclose(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
 
     # at lambda=1.0 (qml endpoint)
-    sim = initialize_simulation_charmm(
-        zinc_id, base="data/hipen_data", at_endstate="qml"
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="qml"
     )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(zinc_id, base="data/hipen_data")
+    sim = initialize_simulation_with_charmmff(molecule, zinc_id, base="data/hipen_data")
     sim.context.setParameter("lambda", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
@@ -182,13 +203,13 @@ def test_initialize_simulation_charmm():
     assert np.isclose(e_sim_qml_endstate, e_sim_qml_interpolate_endstate)
 
     # double check that QML and MM endpoint have different energies
-    sim = initialize_simulation_charmm(
-        zinc_id, base="data/hipen_data", at_endstate="mm"
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
     )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_charmm(
-        zinc_id, base="data/hipen_data", at_endstate="qml"
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, base="data/hipen_data", at_endstate="qml"
     )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 

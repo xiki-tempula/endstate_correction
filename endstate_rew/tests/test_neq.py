@@ -8,22 +8,50 @@ from endstate_rew.system import (
     _seed_velocities,
     create_mm_system,
     generate_molecule,
-    initialize_simulation,
+    initialize_simulation_with_openff,
     create_charmm_system,
-    initialize_simulation_charmm,
+    initialize_simulation_with_charmmff,
 )
 from openmm import unit
 from openmm.app import Simulation
 
 
-def load_system_and_samples(name: str, smiles: str) -> Tuple[Simulation, list, list]:
+def load_system_and_samples_charmmff(
+    molecule, name: str, base: str = "data/hipen_data"
+) -> Tuple[Simulation, list, list]:
+    # initialize simulation and load pre-generated samples
+
+    n_samples = 5_000
+    n_steps_per_sample = 2_000
+    ###########################################################################################
+    sim = initialize_simulation_with_charmmff(molecule, name, base)
+
+    samples_mm = pickle.load(
+        open(
+            f"data/{name}/sampling/{name}_mm_samples_{n_samples}_{n_steps_per_sample}.pickle",
+            "rb",
+        )
+    )
+    samples_qml = pickle.load(
+        open(
+            f"data/{name}/sampling/{name}_qml_samples_{n_samples}_{n_steps_per_sample}.pickle",
+            "rb",
+        )
+    )
+
+    return sim, samples_mm, samples_qml
+
+
+def load_system_and_samples_openff(
+    name: str, smiles: str
+) -> Tuple[Simulation, list, list]:
     # initialize simulation and load pre-generated samples
 
     n_samples = 2_000
     n_steps_per_sample = 1_000
     ###########################################################################################
     molecule = generate_molecule(smiles)
-    sim = initialize_simulation(molecule)
+    sim = initialize_simulation_with_openff(molecule)
 
     samples_mm = pickle.load(
         open(
@@ -64,10 +92,10 @@ def test_seed_velocities():
     _seed_velocities(_get_masses(system))
 
 
-def test_switching():
+def test_switching_openff():
 
     # load simulation and samples for 2cle
-    sim, samples_mm, samples_qml = load_system_and_samples(
+    sim, samples_mm, samples_qml = load_system_and_samples_openff(
         name="2cle", smiles="ClCCOCCCl"
     )
     # perform instantaneous switching with predetermined coordinate set
@@ -97,37 +125,14 @@ def test_switching():
     )
 
 
-def load_system_and_samples_charmmff(
-    name: str, base: str = "data/hipen_data"
-) -> Tuple[Simulation, list, list]:
-    # initialize simulation and load pre-generated samples
-
-    n_samples = 5_000
-    n_steps_per_sample = 2_000
-    ###########################################################################################
-    sim = initialize_simulation_charmm(name, base)
-
-    samples_mm = pickle.load(
-        open(
-            f"data/{name}/sampling/{name}_mm_samples_{n_samples}_{n_steps_per_sample}.pickle",
-            "rb",
-        )
-    )
-    samples_qml = pickle.load(
-        open(
-            f"data/{name}/sampling/{name}_qml_samples_{n_samples}_{n_steps_per_sample}.pickle",
-            "rb",
-        )
-    )
-
-    return sim, samples_mm, samples_qml
-
-
 def test_switching_charmmff():
+
+    name, smiles = "ZINC00077329", "Cn1cc(Cl)c(/C=N/O)n1"
+    molecule = generate_molecule(smiles)
 
     # load simulation and samples for ZINC00077329
     sim, samples_mm, samples_qml = load_system_and_samples_charmmff(
-        name="ZINC00077329", base="data/hipen_data"
+        molecule=molecule, name=name, base="data/hipen_data"
     )
     # perform instantaneous switching with predetermined coordinate set
     # here, we evaluate dU_forw = dU(x)_qml - dU(x)_mm and make sure that it is the same as

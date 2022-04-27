@@ -14,17 +14,26 @@ temperature = 300 * unit.kelvin
 kBT = kB * temperature
 
 zinc_systems = [
-    ("ZINC00061095", "CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1"),
+    (
+        "ZINC00061095",
+        "CCOc1ccc2nc(/N=C\c3ccccc3O)sc2c1",
+    ),  # NOTE: this system has a wrong topology in the psf file
     ("ZINC00077329", "Cn1cc(Cl)c(/C=N/O)n1"),
     ("ZINC00079729", "S=c1cc(-c2ccc(Cl)cc2)ss1"),
     ("ZINC00086442", "CN1C(=O)C/C(=N\O)N(C)C1=O"),
     ("ZINC00087557", "NNC(=O)[C@H]1C(c2ccccc2)[C@@H]1C(=O)NN"),
-    ("ZINC00095858", "CCO/C(O)=N/S(=O)(=O)c1ccccc1Cl"),
+    (
+        "ZINC00095858",
+        "CCO/C(O)=N/S(=O)(=O)c1ccccc1Cl",
+    ),  # NOTE: this system has a wrong topology in the psf file
     ("ZINC00107550", "C/C(=N\O)c1oc(C)nc1C"),
     ("ZINC00107778", "O/N=C/C1=C(Cl)c2cc(Cl)ccc2OC1"),
     ("ZINC00123162", "CC(=O)/C(=N/Nc1ccc(Cl)cc1)C(=O)c1ccccc1"),
     ("ZINC00133435", "c1ccc(-c2nc3ccccc3nc2-c2ccccn2)nc1"),
-    ("ZINC00138607", "O=C(CC1=NO[C@H](c2ccccc2O)N1)N1CCCC1"),
+    (
+        "ZINC00138607",
+        "O=C(CC1=NO[C@H](c2ccccc2O)N1)N1CCCC1",
+    ),  # NOTE: this system has a wrong topology in the psf file
     ("ZINC00140610", "Cc1cc(C)c2c(=O)[nH]sc2n1"),
     ("ZINC00164361", "CCON1C(=O)c2ccccc2C1=O"),
     ("ZINC00167648", "Cc1ccc(COn2c(-c3ccccc3)nc3ccccc3c2=O)cc1"),
