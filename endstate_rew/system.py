@@ -27,6 +27,7 @@ def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
     # generate a molecule using openff
     molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
     molecule.generate_conformers(n_conformers=nr_of_conformations)
+    molecule.max_conf = nr_of_conformations
     return molecule
 
 
@@ -166,6 +167,7 @@ def initialize_simulation_with_openff(
 
 # creating charmm systems from zinc data
 def create_charmm_system(name: str, base="../data/hipen_data"):
+    from openmm.app import PDBFile
 
     # check if input directory exists
     if not path.isdir(base):
@@ -186,9 +188,17 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
     # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-
+    PDBFile.writeFile(psf.topology, crd.positions, open("tmp.pdb", "w+"))
     # return system object
     return system, psf.topology, crd.positions
+
+
+def remap_atoms(zinc_id: str, base: str, molecule):
+
+    _, _, _ = create_charmm_system(zinc_id, base)
+    new_m = Molecule.from_pdb_and_smiles("tmp.pdb", molecule.to_smiles())
+    new_m.generate_conformers(n_conformers=molecule.max_conf)
+    return new_m
 
 
 # initialize simulation charmm system
@@ -211,6 +221,8 @@ def initialize_simulation_with_charmmff(
     Returns:
         _type_: _description_
     """
+    from openff.toolkit.topology import Molecule
+
     assert molecule.n_conformers > 0
 
     # initialize potential

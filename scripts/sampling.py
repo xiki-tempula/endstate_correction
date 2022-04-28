@@ -10,6 +10,7 @@ from endstate_rew.system import (
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
+    remap_atoms,
 )
 
 ### define units
@@ -27,8 +28,8 @@ else:
     smiles = "ClCCOCCCl"
 ###################
 ###################
-ff = "openff"
-run_id = "03"
+ff = "openff"  # charmmff
+run_id = "05"
 n_samples = 5_000
 n_steps_per_sample = 2_000
 ###################
@@ -44,6 +45,9 @@ assert ff == "openff" or ff == "charmmff"
 ###################
 # generate mol
 molecule = generate_molecule(smiles)
+# for charmm, reaorder atoms
+if ff == "charmmff":
+    molecule = remap_atoms(name, base="data/hipen_data", molecule=molecule)
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id}/"
 os.makedirs(w_dir, exist_ok=True)
