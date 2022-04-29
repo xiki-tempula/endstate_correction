@@ -29,7 +29,7 @@ else:
 ###################
 ###################
 ff = "openff"  # charmmff
-run_id = "05"
+run_id = "01"
 n_samples = 5_000
 n_steps_per_sample = 2_000
 ###################
@@ -70,7 +70,7 @@ if ff == "openff":
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, at_endstate="MM", platform="CPU"
+        molecule, zinc_id=name, at_endstate="MM", platform="CPU", conf_id=conf_id
     )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
@@ -96,7 +96,7 @@ if ff == "openff":
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, at_endstate="QML", platform="CPU"
+        molecule, zinc_id=name, at_endstate="QML", platform="CPU", conf_id=conf_id
     )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
