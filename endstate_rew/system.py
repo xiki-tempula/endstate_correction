@@ -92,17 +92,18 @@ def _initialize_simulation(
 
     # define the atoms that are calculated using both potentials
     if not at_endstate:
-        # ml_atoms = [atom.topology_atom_index for atom in topology.topology_atoms]
         ml_atoms = [atom.index for atom in topology.atoms()]
         ml_system = potential.createMixedSystem(
             topology, system, ml_atoms, interpolate=True
         )
         sim = Simulation(topology, ml_system, integrator, platform=platform)
     elif at_endstate.upper() == "QML":
+        print('BEWARE! Using only enstate system. This should only be used for debugging.')
         system = potential.createSystem(topology)
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing QML system")
     elif at_endstate.upper() == "MM":
+        print('BEWARE! Using only enstate system. This should only be used for debugging.')
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
 
@@ -153,6 +154,7 @@ def initialize_simulation_with_openff(
             pickle.dump((system, topology), open(mol_path, "wb+"))
     else:
         system, topology = create_mm_system(molecule)
+
 
     return _initialize_simulation(
         at_endstate,
@@ -221,8 +223,6 @@ def initialize_simulation_with_charmmff(
     Returns:
         _type_: _description_
     """
-    from openff.toolkit.topology import Molecule
-
     assert molecule.n_conformers > 0
 
     # initialize potential
