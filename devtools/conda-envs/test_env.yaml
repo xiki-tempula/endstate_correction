@@ -10,9 +10,9 @@ dependencies:
   - pymbar
   - openMM
   - torchani
-  - pytorch
   - openmm-torch
   - openff-toolkit
+  #- pytorch
   - openmmtools
   - tqdm
   
