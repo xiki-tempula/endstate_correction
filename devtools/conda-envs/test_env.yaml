@@ -9,11 +9,12 @@ dependencies:
 
   - pymbar
   - openMM
-  - torchani
+
   - openmm-torch
   - openff-toolkit
-  #- pytorch
+  - pytorch==1.9.0
   - openmmtools
+  - torchani
   - tqdm
   
     # Testing
