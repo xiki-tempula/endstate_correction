@@ -7,16 +7,14 @@ dependencies:
   - python
   - pip
 
-  - pymbar
   - openMM
   - torchani
-
   - openmm-torch
   - openff-toolkit
-  - pytorch==1.9.0
   - openmmtools
   - tqdm
-  
+  - pymbar
+
     # Testing
   - pytest
   - pytest-cov
