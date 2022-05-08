@@ -7,7 +7,7 @@ dependencies:
   - python
   - pip
 
-  - openMM
+  - openmm
   - torchani
   - openmm-torch
   - openff-toolkit
@@ -19,6 +19,7 @@ dependencies:
   - pytest
   - pytest-cov
   - codecov
+  - black
 
     # Pip-only installs
   - pip:
