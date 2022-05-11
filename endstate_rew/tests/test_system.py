@@ -4,13 +4,48 @@ from openmm import unit
 
 def test_conf_selection():
     from endstate_rew.constant import zinc_systems
-    from endstate_rew.system import generate_molecule
+    from endstate_rew.system import generate_molecule, remap_atoms
 
     for zinc_name, smiles in zinc_systems:
         print(zinc_name)
         m = generate_molecule(smiles)
         assert len(m.conformers) >= 1
 
+    for zinc_name, smiles in zinc_systems:
+        print(zinc_name)
+        if (
+            zinc_name == "ZINC00061095"
+            or zinc_name == "ZINC00095858"
+            or zinc_name == "ZINC00138607"
+        ):  # skip system that has wrong topology
+            continue
+
+        print(zinc_name)
+        m = generate_molecule(smiles)
+        m = remap_atoms(zinc_name, base="data/hipen_data", molecule=m)
+
+        assert len(m.conformers) >= 1
+
+
+def test_confs():
+    from endstate_rew.constant import zinc_systems
+    from endstate_rew.system import generate_molecule, remap_atoms
+
+    for zinc_name, smiles in zinc_systems:
+        print(zinc_name)
+        if (
+            zinc_name == "ZINC00061095"
+            or zinc_name == "ZINC00095858"
+            or zinc_name == "ZINC00138607"
+        ):  # skip system that has wrong topology
+            continue
+
+        m = generate_molecule(smiles)
+        m = remap_atoms(zinc_name, base="data/hipen_data", molecule=m)
+
+        compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom)
+
+        
 
 def test_generate_molecule():
     from endstate_rew.system import generate_molecule
@@ -167,6 +202,7 @@ def test_charmm_system_generation():
         create_charmm_system,
         generate_molecule,
         initialize_simulation_with_charmmff,
+        remap_atoms,
     )
 
     # list of all the charmm systems with the zinc id
@@ -180,6 +216,8 @@ def test_charmm_system_generation():
         ):  # skip system that has wrong topology
             continue
         molecule = generate_molecule(smiles)
+        molecule = remap_atoms(zinc_name, base="data/hipen_data", molecule=molecule)
+
         create_charmm_system(zinc_name, base="data/hipen_data")
         _ = initialize_simulation_with_charmmff(
             molecule, zinc_name, base="data/hipen_data", at_endstate="mm"
@@ -191,12 +229,14 @@ def test_generate_simulation_instances_with_charmmff():
         generate_molecule,
         get_energy,
         initialize_simulation_with_charmmff,
+        remap_atoms,
     )
 
     # get zinc_id
     zinc_id = "ZINC00079729"
     smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
     molecule = generate_molecule(smiles)
+    molecule = remap_atoms(zinc_id, base="data/hipen_data", molecule=molecule)
     # initialize simulation for all thre cases
     _ = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="mm"

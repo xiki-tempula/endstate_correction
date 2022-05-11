@@ -15,7 +15,6 @@ from openmm.app import (
     Simulation,
 )
 from openmmml import MLPotential
-from torch import randint
 from tqdm import tqdm
 
 from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
