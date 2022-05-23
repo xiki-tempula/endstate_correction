@@ -17,17 +17,57 @@ from openmm.app import (
 from openmmml import MLPotential
 from tqdm import tqdm
 
-from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
+from endstate_rew.constant import (
+    collision_rate,
+    kBT,
+    speed_unit,
+    stepsize,
+    temperature,
+    zinc_systems,
+)
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 
-def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
-    # generate a molecule using openff
-    molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-    molecule.generate_conformers(n_conformers=nr_of_conformations)
-    molecule.max_conf = nr_of_conformations
-    return molecule
+def generate_molecule(
+    name: str,
+    forcefield: str,
+    base="../data/hipen_data",
+    nr_of_conformations: int = 10,
+) -> Molecule:
+
+    # check which ff
+    if forcefield == "openff":
+        for zinc_id, smiles_str in zinc_systems:
+            if zinc_id == name:
+                smiles = smiles_str
+
+        if len(smiles) == 0:
+            raise RuntimeError(f"Smiles string for {name} cannot be found.")
+
+        # generate a molecule using openff
+        molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
+        molecule.generate_conformers(n_conformers=nr_of_conformations)
+        # molecule.max_conf = nr_of_conformations
+        return molecule
+
+    elif forcefield == "charmmff":
+        # check if input directory exists
+        if not path.isdir(base):
+            raise RuntimeError(f"Path {base} is not a directory.")
+
+        # check if input directory contains at least one directory with the name 'ZINC'
+        if len(glob(base + "/ZINC*")) < 1:
+            raise RuntimeError(f"No {name} directory found.")
+
+        # generate openff molecule object from sdf file
+        molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
+        molecule.generate_conformers(n_conformers=nr_of_conformations)
+        # molecule.max_conf = nr_of_conformations
+        return molecule
+
+    else:
+        raise RuntimeError("Either openff or charmmff. Abort.")
 
 
 def get_positions(sim):
@@ -97,12 +137,16 @@ def _initialize_simulation(
         )
         sim = Simulation(topology, ml_system, integrator, platform=platform)
     elif at_endstate.upper() == "QML":
-        print('BEWARE! Using only enstate system. This should only be used for debugging.')
+        print(
+            "BEWARE! Using only enstate system. This should only be used for debugging."
+        )
         system = potential.createSystem(topology)
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing QML system")
     elif at_endstate.upper() == "MM":
-        print('BEWARE! Using only enstate system. This should only be used for debugging.')
+        print(
+            "BEWARE! Using only enstate system. This should only be used for debugging."
+        )
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
 
@@ -154,7 +198,6 @@ def initialize_simulation_with_openff(
     else:
         system, topology = create_mm_system(molecule)
 
-
     return _initialize_simulation(
         at_endstate,
         topology.to_openmm(),
@@ -168,7 +211,7 @@ def initialize_simulation_with_openff(
 
 # creating charmm systems from zinc data
 def create_charmm_system(name: str, base="../data/hipen_data"):
-    from openmm.app import PDBFile
+    # from openmm.app import PDBFile
 
     # check if input directory exists
     if not path.isdir(base):
@@ -180,7 +223,7 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
     # get psf, crd and prm files
     psf = CharmmPsfFile(f"{base}/{name}/{name}.psf")
-    crd = CharmmCrdFile(f"{base}/{name}/{name}.crd")
+    # crd = CharmmCrdFile(f"{base}/{name}/{name}.crd")
     params = CharmmParameterSet(
         f"{base}/top_all36_cgenff.rtf",
         f"{base}/par_all36_cgenff.prm",
@@ -189,17 +232,17 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
     # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-    PDBFile.writeFile(psf.topology, crd.positions, open("tmp.pdb", "w+"))
+    # PDBFile.writeFile(psf.topology, crd.positions, open("tmp.pdb", "w+"))
     # return system object
-    return system, psf.topology, crd.positions
+    return system, psf.topology  # , crd.positions
 
 
-def remap_atoms(zinc_id: str, base: str, molecule):
+""" def remap_atoms(zinc_id: str, base: str, molecule):
 
     _, _, _ = create_charmm_system(zinc_id, base)
     new_m = Molecule.from_pdb_and_smiles("tmp.pdb", molecule.to_smiles())
     new_m.generate_conformers(n_conformers=molecule.max_conf)
-    return new_m
+    return new_m """
 
 
 # initialize simulation charmm system
@@ -227,7 +270,7 @@ def initialize_simulation_with_charmmff(
     # initialize potential
     potential = MLPotential("ani2x")
     # generate the charmm system
-    system, topology, _ = create_charmm_system(zinc_id, base)
+    system, topology = create_charmm_system(zinc_id, base)
 
     return _initialize_simulation(
         at_endstate, topology, potential, molecule, conf_id, platform, system
