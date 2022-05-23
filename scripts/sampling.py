@@ -11,7 +11,7 @@ from endstate_rew.system import (
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
-    remap_atoms,
+    #remap_atoms,
 )
 
 ### set number of CPU threads used by pytorch
@@ -51,10 +51,8 @@ assert lambs[0] == 0.0
 assert lambs[-1] == 1.0
 ###################
 # generate mol
-molecule = generate_molecule(smiles)
-# for charmm, reaorder atoms
-if ff == "charmmff":
-    molecule = remap_atoms(name, base="data/hipen_data", molecule=molecule)
+molecule = generate_molecule(name=name, forcefield=ff, base="../data/hipen_data")
+# molecule = remap_atoms(name, base="data/hipen_data", molecule=molecule)
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
 os.makedirs(w_dir, exist_ok=True)
