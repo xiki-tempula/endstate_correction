@@ -6,10 +6,9 @@ def test_sampling_with_openff():
     )
 
     # generate molecule
-    # ethane_smiles = "CC"
-    zinc_id = "ZINC00077329"
-    # m = generate_molecule(ethane_smiles)
-    m = generate_molecule(name=zinc_id, forcefield="openff")
+    ethane_smiles = "CC"
+    m = generate_molecule(forcefield = 'openff', smiles = ethane_smiles)
+
     # initialize simulation for all three cases
     sim = initialize_simulation_with_openff(m, at_endstate="mm")
     collect_samples(sim, 1, 50)
@@ -29,12 +28,8 @@ def test_sampling_with_charmmff():
 
     # get zinc_id
     zinc_id = "ZINC00077329"
-    # smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    # molecule = generate_molecule(smiles)
-    molecule = generate_molecule(
-        name=zinc_id, forcefield="charmmff", base="data/hipen_data"
-    )
-    # molecule = remap_atoms(zinc_id, base="data/hipen_data", molecule=molecule)
+    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
+    molecule = generate_molecule(forcefield = 'charmmff', smiles = smiles, base = 'data/hipen_data')
 
     from random import randint
 
