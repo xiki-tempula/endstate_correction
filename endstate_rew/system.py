@@ -48,7 +48,8 @@ def generate_molecule(
         # generate a molecule using openff
         molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
         molecule.generate_conformers(n_conformers=nr_of_conformations)
-        # molecule.max_conf = nr_of_conformations
+        assert molecule.n_conformers > 0 # check that confomations are generated
+        
         return molecule
 
     elif forcefield == "charmmff":
@@ -57,13 +58,13 @@ def generate_molecule(
             raise RuntimeError(f"Path {base} is not a directory.")
 
         # check if input directory contains at least one directory with the name 'ZINC'
-        if len(glob(base + "/ZINC*")) < 1:
+        if len(glob(base + "/ZINC*")) == 0 :
             raise RuntimeError(f"No {name} directory found.")
 
         # generate openff molecule object from sdf file
         molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
         molecule.generate_conformers(n_conformers=nr_of_conformations)
-        # molecule.max_conf = nr_of_conformations
+        assert molecule.n_conformers > 0 # check that confomations are generated
         return molecule
 
     else:
