@@ -7,7 +7,7 @@ def test_conf_selection():
     from endstate_rew.system import generate_molecule  # , remap_atoms
 
     for ff in ["openff", "charmmff"]:
-        for zinc_name, _ in zinc_systems:
+        for zinc_name, smiles_str in zinc_systems:
             print(zinc_name)
             if (
                 zinc_name == "ZINC00061095"
@@ -16,24 +16,15 @@ def test_conf_selection():
             ):  # skip system that has wrong topology
                 continue
 
-            # m = generate_molecule(smiles)
-            m = generate_molecule(name=zinc_name, forcefield=ff, base="data/hipen_data")
+            # molecule generation with smiles
+            m = generate_molecule(
+                forcefield=ff, smiles=smiles_str, base="data/hipen_data"
+            )
             assert len(m.conformers) >= 1
 
-        """ for zinc_name, smiles in zinc_systems:
-        print(zinc_name)
-        if (
-            zinc_name == "ZINC00061095"
-            or zinc_name == "ZINC00095858"
-            or zinc_name == "ZINC00138607"
-        ):  # skip system that has wrong topology
-            continue
-
-        print(zinc_name)
-        m = generate_molecule(smiles)
-        m = remap_atoms(zinc_name, base="data/hipen_data", molecule=m) 
-
-        assert len(m.conformers) >= 1 """
+            # molecule generation with name
+            m = generate_molecule(forcefield=ff, name=zinc_name, base="data/hipen_data")
+            assert len(m.conformers) >= 1
 
 
 """ def test_confs():
@@ -55,27 +46,18 @@ def test_conf_selection():
         compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom) """
 
 
-def test_generate_molecule():
+def test_openff_conformations():
     from endstate_rew.constant import zinc_systems
     from endstate_rew.system import generate_molecule
 
-    # check that we can generate molecule and assert smiles before and after (openff)
-    # ethane_smiles = "CC"
-    zinc_id = zinc_systems[1][0]
-    smiles = zinc_systems[1][1]
-    # m = generate_molecule(ethane_smiles)
-    m_openff = generate_molecule(name=zinc_id, forcefield="openff")
-    # assert ethane_smiles == m.to_smiles(explicit_hydrogens=False)
-    assert smiles == m_openff.to_smiles(explicit_hydrogens=False)
-
-    # make sure that atom indexing of charmm molecule is the same as in the psf file
-    m_charmmff = generate_molecule(
-        name=zinc_id, forcefield="charmmff", base="data/hipen_data"
-    )
-
     # we require deterministic conformations, here we check that
     # coordinate set 0 is always the same
-    """ coordinates = [
+
+    # test with simple smiles string
+    ethane_smiles = "CC"
+    m = generate_molecule(forcefield="openff", smiles=ethane_smiles)
+
+    coordinates = [
         [-7.45523175e-01, 4.14444551e-02, 1.17060656e-02],
         [7.47339732e-01, 2.87860116e-03, 1.22331042e-03],
         [-1.12970717e00, -6.37431527e-01, 8.14421395e-01],
@@ -84,7 +66,15 @@ def test_generate_molecule():
         [1.08415333e00, -7.36520284e-01, -7.73193261e-01],
         [1.22661485e00, 9.61738002e-01, -2.68072775e-01],
         [1.20189300e00, -3.23076234e-01, 9.53158295e-01],
-    ] """
+    ]
+
+    assert len(m.conformers) == 1
+    compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom)
+    assert np.allclose(compare_coordinates_to, coordinates)
+
+    # test with zinc system
+    zinc_id = zinc_systems[1][0]
+    m = generate_molecule(forcefield="openff", name=zinc_id)
 
     coordinates = [
         [-2.75987995, -0.69053967, 0.36029375],
@@ -105,20 +95,54 @@ def test_generate_molecule():
         [4.31655976, -2.21480533, 0.20783536],
     ]
 
-    # for mol in [m_openff, m_charmmff]:
-    assert len(m_openff.conformers) == 1
-    compare_coordinates_to = m_openff.conformers[0].value_in_unit(unit.angstrom)
+    assert len(m.conformers) == 1
+    compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom)
     assert np.allclose(compare_coordinates_to, coordinates)
 
 
-def test_atom_indices():
+def test_smiles():
+    from endstate_rew.constant import zinc_systems
+    from endstate_rew.system import generate_molecule
+
+    # check that we can generate molecule and assert smiles before and after (openff)
+
+    # test with simple smiles string
+    ethane_smiles = "CC"
+    m = generate_molecule(forcefield="openff", smiles=ethane_smiles)
+    assert ethane_smiles == m.to_smiles(explicit_hydrogens=False)
+
+    # test with zinc system
+    zinc_id = zinc_systems[1][0]
+    smiles = zinc_systems[1][1]
+    m = generate_molecule(forcefield="openff", name=zinc_id)
+    assert smiles == m.to_smiles(explicit_hydrogens=False)
+
+
+def test_generate_molecule():
+    from endstate_rew.system import generate_molecule
+
+    smiles_zinc = "Cn1cc(Cl)c(/C=N/O)n1"
+    name_zinc = "ZINC00077329"
+    smiles_test = "ClCCOCCCl"
+
+    # test molecule generation with zinc systems
+    for ff in ["openff", "charmmff"]:
+        generate_molecule(forcefield=ff, smiles=smiles_zinc, base="data/hipen_data")
+        generate_molecule(forcefield=ff, name=name_zinc, base="data/hipen_data")
+
+    # test molecule generation with small test system
+    # (only openff possible, charmmff requires .sdf file for molecule generation)
+    generate_molecule(forcefield="openff", smiles=smiles_test)
+
+
+def test_atom_indices_charmmff():
     from endstate_rew.constant import zinc_systems
     from endstate_rew.system import generate_molecule
 
     # collect atom indices of psf file
     base = "data/hipen_data"
     name = zinc_systems[1][0]
-    mol = generate_molecule(name=name, forcefield="charmmff", base="data/hipen_data")
+    mol = generate_molecule(forcefield="charmmff", name=name, base="data/hipen_data")
     n_atoms = mol.n_atoms
 
     # get psf file
@@ -169,15 +193,13 @@ def test_sampling():
         initialize_simulation_with_charmmff,
         initialize_simulation_with_openff,
     )
-    from endstate_rew.constant import zinc_systems
 
     # sample with openff
     # sampling for ethanol
     # initialize molecule
-    # smiles = "CCO"
-    # molecule = generate_molecule(smiles)
-    zinc_id = zinc_systems[1][0]
-    molecule = generate_molecule(name=zinc_id, forcefield="openff")
+    smiles = "CCO"
+    molecule = generate_molecule(forcefield="openff", smiles=smiles)
+
     # initialize simulation and start sampling at MM endstate
     sim = initialize_simulation_with_openff(molecule, at_endstate="MM", platform="CPU")
     mm_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
@@ -187,12 +209,12 @@ def test_sampling():
 
     # sample with charmmff
     # generate zinc mol
-    # zinc_id = "ZINC00079729"
-    # smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    # molecule = generate_molecule(smiles)
+    zinc_id = "ZINC00079729"
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
     molecule = generate_molecule(
-        name=zinc_id, forcefield="openff", base="data/hipen_data"
+        forcefield="charmmff", smiles=smiles, base="data/hipen_data"
     )
+
     # initialize simulation for all thre cases
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
@@ -213,16 +235,15 @@ def test_generate_simulation_instances_with_openff():
     from endstate_rew.constant import zinc_systems
 
     # generate molecule
-    # ethane_smiles = "CC"
-    zinc_id = zinc_systems[1][0]
-    # m = generate_molecule(ethane_smiles)
-    m = generate_molecule(name=zinc_id, forcefield="openff")
+    ethane_smiles = "CC"
+    m = generate_molecule(forcefield="openff", smiles=ethane_smiles)
+
     # initialize simulation for all three cases
     _ = initialize_simulation_with_openff(m, at_endstate="mm")
     _ = initialize_simulation_with_openff(m, at_endstate="qml")
     _ = initialize_simulation_with_openff(m)
 
-    # check that potential that interpolats
+    # check that potential that interpolates
     # returns the same values for the endstates
     # than the pure endstate implementation
 
@@ -300,12 +321,10 @@ def test_charmm_system_generation():
         create_charmm_system,
         generate_molecule,
         initialize_simulation_with_charmmff,
-        # remap_atoms,
     )
 
     # list of all the charmm systems with the zinc id
-
-    for zinc_name, smiles in zinc_systems:
+    for zinc_name, smiles_str in zinc_systems:
         print(zinc_name)
         if (
             zinc_name == "ZINC00061095"
@@ -313,10 +332,9 @@ def test_charmm_system_generation():
             or zinc_name == "ZINC00138607"
         ):  # skip system that has wrong topology
             continue
-        # molecule = generate_molecule(smiles)
-        # molecule = remap_atoms(zinc_name, base="data/hipen_data", molecule=molecule)
+
         molecule = generate_molecule(
-            name=zinc_name, forcefield="charmmff", base="data/hipen_data"
+            forcefield="charmmff", smiles=smiles_str, base="data/hipen_data"
         )
 
         create_charmm_system(zinc_name, base="data/hipen_data")
@@ -331,18 +349,13 @@ def test_generate_simulation_instances_with_charmmff():
         generate_molecule,
         get_energy,
         initialize_simulation_with_charmmff,
-        # remap_atoms,
     )
 
     # get zinc_id
-
-    # zinc_id = "ZINC00079729"
-    # smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    # molecule = generate_molecule(smiles)
-    # molecule = remap_atoms(zinc_id, base="data/hipen_data", molecule=molecule)
-    zinc_id = zinc_systems[1][0]
+    zinc_id = "ZINC00079729"
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
     molecule = generate_molecule(
-        name=zinc_id, forcefield="charmmff", base="data/hipen_data"
+        forcefield="charmmff", smiles=smiles, base="data/hipen_data"
     )
 
     # initialize simulation for all thre cases
