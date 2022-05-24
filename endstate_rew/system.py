@@ -30,43 +30,109 @@ forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 
 def generate_molecule(
-    name: str,
     forcefield: str,
-    base="../data/hipen_data",
+    name: str = "",
+    smiles: str = "",
+    base: str = "../data/hipen_data",
     nr_of_conformations: int = 10,
 ) -> Molecule:
 
     # check which ff
     if forcefield == "openff":
-        for zinc_id, smiles_str in zinc_systems:
-            if zinc_id == name:
-                smiles = smiles_str
 
-        if len(smiles) == 0:
-            raise RuntimeError(f"Smiles string for {name} cannot be found.")
+        # if smiles string is not provided but zinc name is
+        if len(smiles) == 0 and len(name) > 0:
+            # look for zinc_id in zinc_systems list and get the correct smiles string
+            for zinc_id, smiles_str in zinc_systems:
+                if zinc_id == name:
+                    smiles = smiles_str
+            # if zinc name cannot be found in the list
+            if len(smiles) == 0:
+                raise RuntimeError(
+                    f"Smiles string for {name} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
+                )
 
-        # generate a molecule using openff
-        molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-        molecule.generate_conformers(n_conformers=nr_of_conformations)
-        assert molecule.n_conformers > 0 # check that confomations are generated
-        
-        return molecule
+            # if zinc name is found: generate a molecule using openff
+            molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if smiles string is provided but zinc name is not
+        elif len(smiles) > 0 and len(name) == 0:
+            molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if both, smiles and name are provided
+        elif len(smiles) > 0 and len(name) > 0:
+            raise RuntimeError(
+                "Please provide only one argument (either smiles string or zinc system name)."
+            )
+
+        # if neither smiles nor name are provided
+        elif len(smiles) == 0 and len(name) == 0:
+            raise RuntimeError(
+                "Please provide either smiles string or zinc system name."
+            )
 
     elif forcefield == "charmmff":
-        # check if input directory exists
-        if not path.isdir(base):
-            raise RuntimeError(f"Path {base} is not a directory.")
 
-        # check if input directory contains at least one directory with the name 'ZINC'
-        if len(glob(base + "/ZINC*")) == 0 :
-            raise RuntimeError(f"No {name} directory found.")
+        # if smiles string is not provided but zinc name is
+        if len(smiles) == 0 and len(name) > 0:
 
-        # generate openff molecule object from sdf file
-        molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
-        molecule.generate_conformers(n_conformers=nr_of_conformations)
-        assert molecule.n_conformers > 0 # check that confomations are generated
-        return molecule
+            # check if input directory exists
+            if not path.isdir(base):
+                raise RuntimeError(f"Path {base} is not a directory.")
 
+            # check if input directory contains the proper .sdf file
+            if not path.isfile(f"{base}/{name}/{name}.sdf"):
+                raise RuntimeError(f"No .sdf file found for {name}")
+
+            # generate openff molecule object from sdf file
+            molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if smiles string is provided but zinc name is not
+        elif len(smiles) > 0 and len(name) == 0:
+            # look for smiles string in zinc_systems list and get the correct zinc_id
+            for zinc_id, smiles_str in zinc_systems:
+                if smiles_str == smiles:
+                    name = zinc_id
+            # if smiles string cannot be found in the list
+            if len(name) == 0:
+                raise RuntimeError(
+                    f"Zinc_id for smiles string {smiles} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
+                )
+
+            # check if input directory exists
+            if not path.isdir(base):
+                raise RuntimeError(f"Path {base} is not a directory.")
+
+            # check if input directory contains at least one directory with the name 'ZINC'
+            if len(glob(base + "/ZINC*")) == 0:
+                raise RuntimeError(f"No {name} directory found.")
+
+            # generate openff molecule object from sdf file
+            molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if both, smiles and name are provided
+        elif len(smiles) > 0 and len(name) > 0:
+            raise RuntimeError(
+                "Please provide only one argument (either smiles string or zinc system name)."
+            )
+
+        # if neither smiles nor name are provided
+        elif len(smiles) == 0 and len(name) == 0:
+            raise RuntimeError(
+                "Please provide either smiles string or zinc system name."
+            )
     else:
         raise RuntimeError("Either openff or charmmff. Abort.")
 
