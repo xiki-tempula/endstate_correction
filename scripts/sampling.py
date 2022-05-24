@@ -15,7 +15,7 @@ from endstate_rew.system import (
 )
 
 ### set number of CPU threads used by pytorch
-num_threads = 1
+num_threads = 2
 torch.set_num_threads(num_threads)
 
 ###################
@@ -30,10 +30,10 @@ else:
 ###################
 ff = "openff"  # charmmff
 run_id = 1
-n_samples = 5  # _000
-n_steps_per_sample = 4_000
+n_samples = 5_000
+n_steps_per_sample = 1_000
 n_lambdas = 11
-platform = "CPU"
+platform = "CUDA"
 ###################
 ###################
 print(f"{zink_id=}")
@@ -58,7 +58,7 @@ if ff == "charmmff":
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
 os.makedirs(w_dir, exist_ok=True)
-
+print(f'saving to: {w_dir}')
 # select a random conformation
 from random import randint
 
@@ -84,7 +84,7 @@ else:
 for lamb in lambs:
     print(f"{lamb=}")
     # set lambda
-    sim.context.setParameter("lambda", lamb)
+    sim.context.setParameter("scale", lamb)
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
@@ -99,3 +99,4 @@ for lamb in lambs:
             "wb+",
         ),
     )
+    print(f'traj dump to: {w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle')
