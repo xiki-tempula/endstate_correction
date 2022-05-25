@@ -1,3 +1,4 @@
+from curses import keyname
 import glob
 import pickle
 from collections import namedtuple
@@ -13,13 +14,16 @@ from tqdm import tqdm
 from endstate_rew.constant import kBT
 
 
-def _collect_equ_samples(path: str, name: str, lambda_scheme: list):
+def _collect_equ_samples(
+    path: str, name: str, lambda_scheme: list, every_nth_frame: int = 2
+):
     """Collect equilibrium samples"""
     nr_of_samples = 5_000
     nr_of_steps = 1_000
     coordinates = []
+    N_k = np.zeros(len(lambda_scheme))
     # loop over lambda scheme and collect samples in nanometer
-    for lamb in lambda_scheme:
+    for idx, lamb in enumerate(lambda_scheme):
         file = glob.glob(
             f"{path}/{name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.pickle"
         )
@@ -29,46 +33,61 @@ def _collect_equ_samples(path: str, name: str, lambda_scheme: list):
             print("WARNING! Incomplete equ sampling. Proceed with cautions.")
         else:
             coords_ = pickle.load(open(file[0], "rb"))
+            coords_ = coords_[1_000:]  # remove the first 1k samples
+            coords_ = coords_[::every_nth_frame]  # take only every second sample
+            N_k[idx] = len(coords_)
             coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in coords_])
 
     number_of_samples = len(coordinates)
     print(f"Number of samples loaded: {number_of_samples}")
-    return coordinates * unit.nanometer
+    return coordinates * unit.nanometer, N_k
 
 
-def calculate_u_ln(
-    smiles: str,
-    path: str,
-    name: str,
-):
+def calculate_u_kn(
+    smiles: str, path: str, name: str, every_nth_frame: int = 2, reload: bool = True
+) -> np.ndarray:
     from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
 
-    # generate molecule
-    m = generate_molecule(smiles)
-    # initialize simulation
-    # first, modify path to point to openff molecule object
-    w_dir = path.split("/")
-    w_dir = "/".join(w_dir[:-3])
-    print(w_dir)
-    sim = initialize_simulation_with_openff(m, w_dir=w_dir)
+    try:
+        # if already generated reuse
+        if reload == False:
+            raise FileNotFoundError
+        print(f"trying to load: {path}/mbar.pickle")
+        N_k, u_kn = pickle.load(open(f"{path}/mbar_{every_nth_frame}.pickle", "rb+"))
+        print(f"Reusing pregenerated mbar object: {path}/mbar.pickle")
+    except FileNotFoundError:
 
-    lambda_scheme = np.linspace(0, 1, 11)
-    samples = _collect_equ_samples(path, name, lambda_scheme)
-    samples = np.array(samples.value_in_unit(unit.nanometer))  # positions in nanometer
-    samples = samples[1_000:]  # remove the first 1k samples
-    samples = samples[::4]  # take only every second sample #NOTE: for now every 4th
-    N_k = len(samples) / len(lambda_scheme)
-    print(f"{N_k=}")
-    u_list = np.zeros((len(lambda_scheme), N_k))
-    for lamb_idx in range(lambda_scheme):
-        lamb = lambda_scheme[lamb_idx]
-        sim.context.setParameter("lambda", lamb)
-        us = []
-        for x in tqdm(range(len(samples))):
-            sim.context.setPositions(samples[x])
-            u_ = sim.context.getState(getEnergy=True).getPotentialEnergy() / kBT
-            us.append(u_)
-        u_list[lamb_idx] = np.array(us)
+        # generate molecule
+        m = generate_molecule(smiles)
+        # initialize simulation
+        # first, modify path to point to openff molecule object
+        w_dir = path.split("/")
+        w_dir = "/".join(w_dir[:-3])
+        # initialize simualtion and reload if already generated
+        sim = initialize_simulation_with_openff(m, w_dir=w_dir)
+
+        lambda_scheme = np.linspace(0, 1, 11)
+        samples, N_k = _collect_equ_samples(
+            path, name, lambda_scheme, every_nth_frame=every_nth_frame
+        )
+        samples = np.array(
+            samples.value_in_unit(unit.nanometer)
+        )  # positions in nanometer
+        u_kn = np.zeros(
+            (len(N_k), int(N_k[0] * len(N_k))), dtype=np.float64
+        )  # NOTE: assuming that N_k[0] is the maximum number of samples drawn from any state k
+        for k, lamb in enumerate(lambda_scheme):
+            sim.context.setParameter("lambda", lamb)
+            us = []
+            for x in tqdm(range(len(samples))):
+                sim.context.setPositions(samples[x])
+                u_ = sim.context.getState(getEnergy=True).getPotentialEnergy()
+                us.append(u_)
+            us = np.array([u / kBT for u in us], dtype=np.float64)
+            u_kn[k] = us
+        pickle.dump((N_k, u_kn), open(f"{path}/mbar.pickle", "wb+"))
+
+    return (N_k, u_kn)
 
 
 def _collect_neq_samples(
