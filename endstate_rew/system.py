@@ -146,7 +146,7 @@ def get_energy(sim):
     return sim.context.getState(getEnergy=True).getPotentialEnergy()
 
 
-def collect_samples(sim, n_samples: int = 1_000, n_steps_per_sample: int = 10_000):
+def generate_samples(sim, n_samples: int = 1_000, n_steps_per_sample: int = 10_000):
     """generate samples using a defined system"""
 
     print(f"Generate samples with mixed System: {n_samples=}, {n_steps_per_sample=}")

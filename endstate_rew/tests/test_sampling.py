@@ -1,6 +1,6 @@
 def test_sampling_with_openff():
     from endstate_rew.system import (
-        collect_samples,
+        generate_samples,
         generate_molecule,
         initialize_simulation_with_openff,
     )
@@ -11,16 +11,16 @@ def test_sampling_with_openff():
 
     # initialize simulation for all three cases
     sim = initialize_simulation_with_openff(m, at_endstate="mm")
-    collect_samples(sim, 1, 50)
+    generate_samples(sim, 1, 50)
     sim = initialize_simulation_with_openff(m, at_endstate="qml")
-    collect_samples(sim, 1, 50)
+    generate_samples(sim, 1, 50)
     sim = initialize_simulation_with_openff(m)
-    collect_samples(sim, 1, 50)
+    generate_samples(sim, 1, 50)
 
 
 def test_sampling_with_charmmff():
     from endstate_rew.system import (
-        collect_samples,
+        generate_samples,
         generate_molecule,
         initialize_simulation_with_charmmff,
         # remap_atoms,
@@ -40,12 +40,12 @@ def test_sampling_with_charmmff():
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="mm", conf_id=conf_id
     )
-    collect_samples(sim, 1, 2_000)
+    generate_samples(sim, 1, 1_000)
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="qml", conf_id=conf_id
     )
-    collect_samples(sim, 1, 2_000)
+    generate_samples(sim, 1, 1_000)
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", conf_id=conf_id
     )
-    collect_samples(sim, 1, 2000)
+    generate_samples(sim, 1, 100)

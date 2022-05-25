@@ -7,14 +7,14 @@ import numpy as np
 import torch
 from endstate_rew.constant import zinc_systems
 from endstate_rew.system import (
-    collect_samples,
+    generate_samples,
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
 )
 
 ### set number of CPU threads used by pytorch
-num_threads = 1
+num_threads = 2
 torch.set_num_threads(num_threads)
 
 ###################
@@ -29,10 +29,10 @@ else:
 ###################
 ff = "openff"  # charmmff
 run_id = 1
-n_samples = 5  # _000
-n_steps_per_sample = 4_000
+n_samples = 5_000
+n_steps_per_sample = 1_000
 n_lambdas = 11
-platform = "CPU"
+platform = "CUDA"
 ###################
 ###################
 print(f"{zink_id=}")
@@ -50,18 +50,18 @@ assert lambs[0] == 0.0
 assert lambs[-1] == 1.0
 ###################
 # generate mol
-if ff == "openff" and name == "2cle":
+if ff == "openff" and smiles:
     molecule = generate_molecule(forcefield=ff, smiles=smiles)
-elif ff == "charmmff" and name == "2cle":
+elif ff == "charmmff" and smiles:
     raise RuntimeError(
-        "No charmmff parameter for default system 2cle available. 2cle can only be sampled with openff"
+        "Charmff can not be used with SMILES input"
     )
 else:
     molecule = generate_molecule(forcefield=ff, name=name, base="../data/hipen_data")
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
 os.makedirs(w_dir, exist_ok=True)
-
+print(f'saving to: {w_dir}')
 # select a random conformation
 from random import randint
 
@@ -87,11 +87,11 @@ else:
 for lamb in lambs:
     print(f"{lamb=}")
     # set lambda
-    sim.context.setParameter("lambda", lamb)
+    sim.context.setParameter("scale", lamb)
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
-    samples = collect_samples(
+    samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
     # save samples
@@ -102,3 +102,4 @@ for lamb in lambs:
             "wb+",
         ),
     )
+    print(f'traj dump to: {w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle')

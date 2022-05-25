@@ -169,7 +169,7 @@ def test_atom_indices_charmmff():
 
 def test_sampling():
     from endstate_rew.system import (
-        collect_samples,
+        generate_samples,
         generate_molecule,
         initialize_simulation_with_charmmff,
         initialize_simulation_with_openff,
@@ -183,10 +183,10 @@ def test_sampling():
 
     # initialize simulation and start sampling at MM endstate
     sim = initialize_simulation_with_openff(molecule, at_endstate="MM", platform="CPU")
-    mm_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+    mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
     # initialize simulation and start sampling at QML endstate
     sim = initialize_simulation_with_openff(molecule, at_endstate="QML", platform="CPU")
-    qml_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+    qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
 
     # sample with charmmff
     # generate zinc mol
@@ -200,11 +200,11 @@ def test_sampling():
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="mm"
     )
-    mm_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+    mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
     sim = initialize_simulation_with_charmmff(
         molecule, zinc_id, base="data/hipen_data", at_endstate="qml"
     )
-    qml_samples = collect_samples(sim, n_samples=5, n_steps_per_sample=10)
+    qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
 
 
 def test_generate_simulation_instances_with_openff():
