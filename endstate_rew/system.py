@@ -8,7 +8,6 @@ from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
 from openmm.app import (
-    CharmmCrdFile,
     CharmmParameterSet,
     CharmmPsfFile,
     NoCutoff,
@@ -41,13 +40,13 @@ def generate_molecule(
     if forcefield == "openff":
 
         # if smiles string is not provided but zinc name is
-        if len(smiles) == 0 and len(name) > 0:
+        if not smiles and name:
             # look for zinc_id in zinc_systems list and get the correct smiles string
             for zinc_id, smiles_str in zinc_systems:
                 if zinc_id == name:
                     smiles = smiles_str
             # if zinc name cannot be found in the list
-            if len(smiles) == 0:
+            if not smiles:
                 raise RuntimeError(
                     f"Smiles string for {name} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
                 )
@@ -59,20 +58,20 @@ def generate_molecule(
             return molecule
 
         # if smiles string is provided but zinc name is not
-        elif len(smiles) > 0 and len(name) == 0:
+        elif smiles and not name:
             molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
             molecule.generate_conformers(n_conformers=nr_of_conformations)
             assert molecule.n_conformers > 0  # check that confomations are generated
             return molecule
 
         # if both, smiles and name are provided
-        elif len(smiles) > 0 and len(name) > 0:
+        elif smiles and name:
             raise RuntimeError(
                 "Please provide only one argument (either smiles string or zinc system name)."
             )
 
         # if neither smiles nor name are provided
-        elif len(smiles) == 0 and len(name) == 0:
+        elif not smiles and not name:
             raise RuntimeError(
                 "Please provide either smiles string or zinc system name."
             )
@@ -80,7 +79,7 @@ def generate_molecule(
     elif forcefield == "charmmff":
 
         # if smiles string is not provided but zinc name is
-        if len(smiles) == 0 and len(name) > 0:
+        if not smiles and name:
 
             # check if input directory exists
             if not path.isdir(base):
@@ -97,13 +96,13 @@ def generate_molecule(
             return molecule
 
         # if smiles string is provided but zinc name is not
-        elif len(smiles) > 0 and len(name) == 0:
+        elif smiles and not name:
             # look for smiles string in zinc_systems list and get the correct zinc_id
             for zinc_id, smiles_str in zinc_systems:
                 if smiles_str == smiles:
                     name = zinc_id
             # if smiles string cannot be found in the list
-            if len(name) == 0:
+            if not name:
                 raise RuntimeError(
                     f"Zinc_id for smiles string {smiles} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
                 )
@@ -123,13 +122,13 @@ def generate_molecule(
             return molecule
 
         # if both, smiles and name are provided
-        elif len(smiles) > 0 and len(name) > 0:
+        elif smiles and name:
             raise RuntimeError(
                 "Please provide only one argument (either smiles string or zinc system name)."
             )
 
         # if neither smiles nor name are provided
-        elif len(smiles) == 0 and len(name) == 0:
+        elif not smiles and not name:
             raise RuntimeError(
                 "Please provide either smiles string or zinc system name."
             )
@@ -278,7 +277,6 @@ def initialize_simulation_with_openff(
 
 # creating charmm systems from zinc data
 def create_charmm_system(name: str, base="../data/hipen_data"):
-    # from openmm.app import PDBFile
 
     # check if input directory exists
     if not path.isdir(base):
@@ -288,9 +286,8 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
     if len(glob(base + "/ZINC*")) < 1:
         raise RuntimeError("No ZINC directory found.")
 
-    # get psf, crd and prm files
+    # get psf and prm files
     psf = CharmmPsfFile(f"{base}/{name}/{name}.psf")
-    # crd = CharmmCrdFile(f"{base}/{name}/{name}.crd")
     params = CharmmParameterSet(
         f"{base}/top_all36_cgenff.rtf",
         f"{base}/par_all36_cgenff.prm",
@@ -299,17 +296,8 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
     # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-    # PDBFile.writeFile(psf.topology, crd.positions, open("tmp.pdb", "w+"))
     # return system object
-    return system, psf.topology  # , crd.positions
-
-
-""" def remap_atoms(zinc_id: str, base: str, molecule):
-
-    _, _, _ = create_charmm_system(zinc_id, base)
-    new_m = Molecule.from_pdb_and_smiles("tmp.pdb", molecule.to_smiles())
-    new_m.generate_conformers(n_conformers=molecule.max_conf)
-    return new_m """
+    return system, psf.topology
 
 
 # initialize simulation charmm system
