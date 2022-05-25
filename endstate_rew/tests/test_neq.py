@@ -50,7 +50,7 @@ def load_system_and_samples_openff(
     n_samples = 2_000
     n_steps_per_sample = 1_000
     ###########################################################################################
-    molecule = generate_molecule(smiles)
+    molecule = generate_molecule(forcefield = 'openff', smiles = smiles)
     sim = initialize_simulation_with_openff(molecule)
 
     samples_mm = pickle.load(
@@ -71,7 +71,7 @@ def load_system_and_samples_openff(
 
 def test_mass_list():
 
-    molecule = generate_molecule(smiles="ClCCOCCCl")
+    molecule = generate_molecule(forcefield = 'openff', smiles="ClCCOCCCl")
     system, _ = create_mm_system(molecule)
 
     # make sure that mass list generated from system and molecuel are the same
@@ -87,10 +87,15 @@ def test_mass_list():
 def test_seed_velocities():
 
     # test that manual velocity seeding works
-    molecule = generate_molecule(smiles="ClCCOCCCl")
+    # openff
+    molecule = generate_molecule(forcefield = 'openff', smiles="ClCCOCCCl")
     system, _ = create_mm_system(molecule)
     _seed_velocities(_get_masses(system))
-
+    
+    #charmmff 
+    molecule = generate_molecule(forcefield = 'charmmff', name = 'ZINC00079729', base = 'data/hipen_data')
+    system, _ = create_mm_system(molecule)
+    _seed_velocities(_get_masses(system))
 
 def test_switching_openff():
 
@@ -128,7 +133,7 @@ def test_switching_openff():
 def test_switching_charmmff():
 
     name, smiles = "ZINC00077329", "Cn1cc(Cl)c(/C=N/O)n1"
-    molecule = generate_molecule(smiles)
+    molecule = generate_molecule(forcefield = 'charmmff', smiles = smiles, base = 'data/hipen_data')
 
     # load simulation and samples for ZINC00077329
     sim, samples_mm, samples_qml = load_system_and_samples_charmmff(

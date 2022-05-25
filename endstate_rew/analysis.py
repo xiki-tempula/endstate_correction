@@ -64,7 +64,8 @@ def collect_results(
     switching_length = 2
     nr_of_switches = 500
     # create molecule
-    molecule = generate_molecule(smiles)
+    # openff
+    molecule = generate_molecule(forcefield="openff", smiles=smiles)
 
     sim = initialize_simulation(molecule, w_dir=f"{w_dir}/{name}")
     lambs = np.linspace(0, 1, switching_length)
