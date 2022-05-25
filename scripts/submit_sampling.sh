@@ -13,4 +13,4 @@ conda activate rew
 
 hostname
 
-python sampling.py 1 $1 # first argument = run_id, seconda argument = zinc_id
+python sampling.py $1 $2 # first argument = run_id, seconda argument = zinc_id
