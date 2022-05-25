@@ -27,25 +27,6 @@ def test_conf_selection():
             assert len(m.conformers) >= 1
 
 
-""" def test_confs():
-    from endstate_rew.constant import zinc_systems
-    from endstate_rew.system import generate_molecule, remap_atoms
-
-    for zinc_name, smiles in zinc_systems:
-        print(zinc_name)
-        if (
-            zinc_name == "ZINC00061095"
-            or zinc_name == "ZINC00095858"
-            or zinc_name == "ZINC00138607"
-        ):  # skip system that has wrong topology
-            continue
-
-        m = generate_molecule(smiles)
-        m = remap_atoms(zinc_name, base="data/hipen_data", molecule=m)
-
-        compare_coordinates_to = m.conformers[0].value_in_unit(unit.angstrom) """
-
-
 def test_openff_conformations():
     from endstate_rew.constant import zinc_systems
     from endstate_rew.system import generate_molecule
@@ -279,40 +260,6 @@ def test_generate_simulation_instances_with_openff():
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     assert not np.isclose(e_sim_mm_endstate, e_sim_qml_endstate)
-
-
-""" def test_atom_mapping_smiles_hipen():
-    # test if we are able to remap the atom order
-    from endstate_rew.constant import zinc_systems
-    from endstate_rew.system import create_charmm_system, generate_molecule
-    from openff.toolkit.topology import Molecule
-
-    # list of all the charmm systems with the zinc id
-
-    for zinc_name, smiles in zinc_systems:
-        print(zinc_name)
-        if (
-            zinc_name == "ZINC00061095"
-            or zinc_name == "ZINC00095858"
-            or zinc_name == "ZINC00138607"
-        ):  # skip system that has wrong topology
-            continue
-
-        # generate mol
-        molecule = generate_molecule(smiles)
-
-        # generate the charmm system
-        system, topology, _ = create_charmm_system(zinc_name, base="data/hipen_data")
-
-        # generate a mol with the atom order from the psf/crd files and the original
-        # smiles to define bond order etc
-        m_new = Molecule.from_pdb_and_smiles("tmp.pdb", molecule.to_smiles())
-
-        print(molecule.to_smiles(mapped=True))
-        print(m_new.to_smiles(mapped=True))
-
-        # make sure original smiles is unequal new smiles
-        assert molecule.to_smiles(mapped=True) != m_new.to_smiles(mapped=True) """
 
 
 def test_charmm_system_generation():
