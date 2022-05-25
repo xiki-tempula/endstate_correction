@@ -12,7 +12,7 @@ def test_collect_equ_samples():
 
     lambs = np.linspace(0, 1, 11)
     name = "ZINC00079729"
-    path = "/home/mwieder/endstate_rew/data/ZINC00079729/sampling_openff/run01/"
+    path = "data/ZINC00079729/sampling_openff/run01/"
     samples, N_k = _collect_equ_samples(path, name="ZINC00079729", lambda_scheme=lambs)
     print(N_k)
     assert N_k[0] == 2000
@@ -24,7 +24,7 @@ def test_equilibrium_free_energy():
     from pymbar import MBAR
 
     smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    path = "/home/mwieder/endstate_rew/data/ZINC00079729/sampling_openff/run01/"
+    path = "data/ZINC00079729/sampling_openff/run01/"
     name = "ZINC00079729"
 
     N_k, u_kn = calculate_u_kn(smiles, path, name, every_nth_frame=100, reload=False)
