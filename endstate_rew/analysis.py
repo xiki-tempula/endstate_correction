@@ -44,7 +44,12 @@ def _collect_equ_samples(
 
 
 def calculate_u_kn(
-    smiles: str, path: str, name: str, every_nth_frame: int = 2, reload: bool = True
+    smiles: str,
+    forcefield: str,
+    path: str,
+    name: str,
+    every_nth_frame: int = 2,
+    reload: bool = True,
 ) -> np.ndarray:
     from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
 
@@ -58,7 +63,7 @@ def calculate_u_kn(
     except FileNotFoundError:
 
         # generate molecule
-        m = generate_molecule(smiles)
+        m = generate_molecule(smiles=smiles, forcefield=forcefield)
         # initialize simulation
         # first, modify path to point to openff molecule object
         w_dir = path.split("/")

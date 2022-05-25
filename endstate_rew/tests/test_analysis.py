@@ -27,14 +27,28 @@ def test_equilibrium_free_energy():
     path = "data/ZINC00079729/sampling_openff/run01/"
     name = "ZINC00079729"
 
-    N_k, u_kn = calculate_u_kn(smiles, path, name, every_nth_frame=100, reload=False)
+    N_k, u_kn = calculate_u_kn(
+        smiles=smiles,
+        forcefield="openff",
+        path=path,
+        name=name,
+        every_nth_frame=100,
+        reload=False,
+    )
 
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
     assert np.isclose(f[0][0][-1], -2105810.5891775307)
 
-    N_k, u_kn = calculate_u_kn(smiles, path, name, every_nth_frame=100, reload=True)
+    N_k, u_kn = calculate_u_kn(
+        smiles=smiles,
+        forcefield="openff",
+        path=path,
+        name=name,
+        every_nth_frame=100,
+        reload=True,
+    )
 
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
