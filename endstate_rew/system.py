@@ -8,7 +8,6 @@ from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openmm import unit
 from openmm.app import (
-    CharmmCrdFile,
     CharmmParameterSet,
     CharmmPsfFile,
     NoCutoff,
@@ -17,17 +16,124 @@ from openmm.app import (
 from openmmml import MLPotential
 from tqdm import tqdm
 
-from endstate_rew.constant import collision_rate, kBT, speed_unit, stepsize, temperature
+from endstate_rew.constant import (
+    collision_rate,
+    kBT,
+    speed_unit,
+    stepsize,
+    temperature,
+    zinc_systems,
+)
 
 forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
 
 
-def generate_molecule(smiles: str, nr_of_conformations: int = 10) -> Molecule:
-    # generate a molecule using openff
-    molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
-    molecule.generate_conformers(n_conformers=nr_of_conformations)
-    molecule.max_conf = nr_of_conformations
-    return molecule
+def generate_molecule(
+    forcefield: str,
+    name: str = "",
+    smiles: str = "",
+    base: str = "../data/hipen_data",
+    nr_of_conformations: int = 10,
+) -> Molecule:
+
+    # check which ff
+    if forcefield == "openff":
+
+        # if smiles string is not provided but zinc name is
+        if not smiles and name:
+            # look for zinc_id in zinc_systems list and get the correct smiles string
+            for zinc_id, smiles_str in zinc_systems:
+                if zinc_id == name:
+                    smiles = smiles_str
+            # if zinc name cannot be found in the list
+            if not smiles:
+                raise RuntimeError(
+                    f"Smiles string for {name} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
+                )
+
+            # if zinc name is found: generate a molecule using openff
+            molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if smiles string is provided but zinc name is not
+        elif smiles and not name:
+            molecule = Molecule.from_smiles(smiles, hydrogens_are_explicit=False)
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if both, smiles and name are provided
+        elif smiles and name:
+            raise RuntimeError(
+                "Please provide only one argument (either smiles string or zinc system name)."
+            )
+
+        # if neither smiles nor name are provided
+        elif not smiles and not name:
+            raise RuntimeError(
+                "Please provide either smiles string or zinc system name."
+            )
+
+    elif forcefield == "charmmff":
+
+        # if smiles string is not provided but zinc name is
+        if not smiles and name:
+
+            # check if input directory exists
+            if not path.isdir(base):
+                raise RuntimeError(f"Path {base} is not a directory.")
+
+            # check if input directory contains the proper .sdf file
+            if not path.isfile(f"{base}/{name}/{name}.sdf"):
+                raise RuntimeError(f"No .sdf file found for {name}")
+
+            # generate openff molecule object from sdf file
+            molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if smiles string is provided but zinc name is not
+        elif smiles and not name:
+            # look for smiles string in zinc_systems list and get the correct zinc_id
+            for zinc_id, smiles_str in zinc_systems:
+                if smiles_str == smiles:
+                    name = zinc_id
+            # if smiles string cannot be found in the list
+            if not name:
+                raise RuntimeError(
+                    f"Zinc_id for smiles string {smiles} cannot be found. Please add ZINC name and smiles string to the zinc_systems list."
+                )
+
+            # check if input directory exists
+            if not path.isdir(base):
+                raise RuntimeError(f"Path {base} is not a directory.")
+
+            # check if input directory contains at least one directory with the name 'ZINC'
+            if len(glob(base + "/ZINC*")) == 0:
+                raise RuntimeError(f"No {name} directory found.")
+
+            # generate openff molecule object from sdf file
+            molecule = Molecule.from_file(f"{base}/{name}/{name}.sdf")
+            molecule.generate_conformers(n_conformers=nr_of_conformations)
+            assert molecule.n_conformers > 0  # check that confomations are generated
+            return molecule
+
+        # if both, smiles and name are provided
+        elif smiles and name:
+            raise RuntimeError(
+                "Please provide only one argument (either smiles string or zinc system name)."
+            )
+
+        # if neither smiles nor name are provided
+        elif not smiles and not name:
+            raise RuntimeError(
+                "Please provide either smiles string or zinc system name."
+            )
+    else:
+        raise RuntimeError("Either openff or charmmff. Abort.")
 
 
 def get_positions(sim):
@@ -97,12 +203,16 @@ def _initialize_simulation(
         )
         sim = Simulation(topology, ml_system, integrator, platform=platform)
     elif at_endstate.upper() == "QML":
-        print('BEWARE! Using only enstate system. This should only be used for debugging.')
+        print(
+            "BEWARE! Using only enstate system. This should only be used for debugging."
+        )
         system = potential.createSystem(topology)
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing QML system")
     elif at_endstate.upper() == "MM":
-        print('BEWARE! Using only enstate system. This should only be used for debugging.')
+        print(
+            "BEWARE! Using only enstate system. This should only be used for debugging."
+        )
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
 
@@ -154,7 +264,6 @@ def initialize_simulation_with_openff(
     else:
         system, topology = create_mm_system(molecule)
 
-
     return _initialize_simulation(
         at_endstate,
         topology.to_openmm(),
@@ -168,7 +277,6 @@ def initialize_simulation_with_openff(
 
 # creating charmm systems from zinc data
 def create_charmm_system(name: str, base="../data/hipen_data"):
-    from openmm.app import PDBFile
 
     # check if input directory exists
     if not path.isdir(base):
@@ -178,9 +286,8 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
     if len(glob(base + "/ZINC*")) < 1:
         raise RuntimeError("No ZINC directory found.")
 
-    # get psf, crd and prm files
+    # get psf and prm files
     psf = CharmmPsfFile(f"{base}/{name}/{name}.psf")
-    crd = CharmmCrdFile(f"{base}/{name}/{name}.crd")
     params = CharmmParameterSet(
         f"{base}/top_all36_cgenff.rtf",
         f"{base}/par_all36_cgenff.prm",
@@ -189,17 +296,8 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 
     # define system object
     system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-    PDBFile.writeFile(psf.topology, crd.positions, open("tmp.pdb", "w+"))
     # return system object
-    return system, psf.topology, crd.positions
-
-
-def remap_atoms(zinc_id: str, base: str, molecule):
-
-    _, _, _ = create_charmm_system(zinc_id, base)
-    new_m = Molecule.from_pdb_and_smiles("tmp.pdb", molecule.to_smiles())
-    new_m.generate_conformers(n_conformers=molecule.max_conf)
-    return new_m
+    return system, psf.topology
 
 
 # initialize simulation charmm system
@@ -227,7 +325,7 @@ def initialize_simulation_with_charmmff(
     # initialize potential
     potential = MLPotential("ani2x")
     # generate the charmm system
-    system, topology, _ = create_charmm_system(zinc_id, base)
+    system, topology = create_charmm_system(zinc_id, base)
 
     return _initialize_simulation(
         at_endstate, topology, potential, molecule, conf_id, platform, system
