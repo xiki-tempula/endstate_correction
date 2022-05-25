@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from endstate_rew.constant import zinc_systems
 from endstate_rew.system import (
-    collect_samples,
+    generate_samples,
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
@@ -52,9 +52,6 @@ assert lambs[-1] == 1.0
 ###################
 # generate mol
 molecule = generate_molecule(smiles)
-# for charmm, reaorder atoms
-if ff == "charmmff":
-    molecule = remap_atoms(name, base="data/hipen_data", molecule=molecule)
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
 os.makedirs(w_dir, exist_ok=True)
@@ -88,7 +85,7 @@ for lamb in lambs:
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
-    samples = collect_samples(
+    samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
     # save samples

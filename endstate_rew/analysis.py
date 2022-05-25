@@ -2,19 +2,76 @@ import glob
 import pickle
 from collections import namedtuple
 from typing import NamedTuple
-from os import path
-
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from openmm import unit
 from pymbar import BAR, EXP
+from tqdm import tqdm
 
 from endstate_rew.constant import kBT
 
 
-def _collect_samples(
+def _collect_equ_samples(path: str, name: str, lambda_scheme: list):
+    """Collect equilibrium samples"""
+    nr_of_samples = 5_000
+    nr_of_steps = 1_000
+    coordinates = []
+    # loop over lambda scheme and collect samples in nanometer
+    for lamb in lambda_scheme:
+        file = glob.glob(
+            f"{path}/{name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.pickle"
+        )
+        if len(file) == 2:
+            raise RuntimeError("Multiple traj files present. Abort.")
+        elif len(file) == 0:
+            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
+        else:
+            coords_ = pickle.load(open(file[0], "rb"))
+            coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in coords_])
+
+    number_of_samples = len(coordinates)
+    print(f"Number of samples loaded: {number_of_samples}")
+    return coordinates * unit.nanometer
+
+
+def calculate_u_ln(
+    smiles: str,
+    path: str,
+    name: str,
+):
+    from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
+
+    # generate molecule
+    m = generate_molecule(smiles)
+    # initialize simulation
+    # first, modify path to point to openff molecule object
+    w_dir = path.split("/")
+    w_dir = "/".join(w_dir[:-3])
+    print(w_dir)
+    sim = initialize_simulation_with_openff(m, w_dir=w_dir)
+
+    lambda_scheme = np.linspace(0, 1, 11)
+    samples = _collect_equ_samples(path, name, lambda_scheme)
+    samples = np.array(samples.value_in_unit(unit.nanometer))  # positions in nanometer
+    samples = samples[1_000:]  # remove the first 1k samples
+    samples = samples[::4]  # take only every second sample #NOTE: for now every 4th
+    N_k = len(samples) / len(lambda_scheme)
+    print(f"{N_k=}")
+    u_list = np.zeros((len(lambda_scheme), N_k))
+    for lamb_idx in range(lambda_scheme):
+        lamb = lambda_scheme[lamb_idx]
+        sim.context.setParameter("lambda", lamb)
+        us = []
+        for x in tqdm(range(len(samples))):
+            sim.context.setPositions(samples[x])
+            u_ = sim.context.getState(getEnergy=True).getPotentialEnergy() / kBT
+            us.append(u_)
+        u_list[lamb_idx] = np.array(us)
+
+
+def _collect_neq_samples(
     path: str, name: str, switching_length: int, direction: str = "mm_to_qml"
 ) -> list:
     files = glob.glob(f"{path}/{name}*{direction}*{switching_length}*.pickle")
@@ -31,7 +88,7 @@ def collect_results(
     w_dir: str, switching_length: int, run_id: int, name: str, smiles: str
 ) -> NamedTuple:
     from endstate_rew.neq import perform_switching
-    from endstate_rew.system import initialize_simulation, generate_molecule
+    from endstate_rew.system import generate_molecule, initialize_simulation
 
     # load samples
     mm_samples = pickle.load(
@@ -48,13 +105,13 @@ def collect_results(
 
     # get pregenerated work values
     ws_from_mm_to_qml = np.array(
-        _collect_samples(
+        _collect_neq_samples(
             f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "mm_to_qml"
         )
         / kBT
     )
     ws_from_qml_to_mm = np.array(
-        _collect_samples(
+        _collect_neq_samples(
             f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "qml_to_mm"
         )
         / kBT
