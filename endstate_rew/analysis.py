@@ -51,6 +51,7 @@ def calculate_u_kn(
     every_nth_frame: int = 2,
     reload: bool = True,
 ) -> np.ndarray:
+
     from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
 
     try:
@@ -93,6 +94,59 @@ def calculate_u_kn(
         pickle.dump((N_k, u_kn), open(f"{path}/mbar.pickle", "wb+"))
 
     return (N_k, u_kn)
+
+
+def plot_overlap_for_equilibrium_free_energy(
+    N_k: np.array, u_kn: np.ndarray, name: str
+):
+    from pymbar import MBAR
+
+    # initialize the MBAR maximum likelihood estimate
+
+    mbar = MBAR(u_kn, N_k)
+    plt.figure(figsize=[8, 8], dpi=300)
+    overlap = mbar.computeOverlap()["matrix"]
+    sns.heatmap(
+        overlap,
+        cmap="Blues",
+        linewidth=0.5,
+        annot=True,
+        fmt="0.2f",
+        annot_kws={"size": "small"},
+    )
+    plt.title(f"Free energy estimate for {name}", fontsize=15)
+    plt.savefig(f"{name}_equilibrium_free_energy.png")
+    plt.show()
+    plt.close()
+
+
+def plot_results_for_equilibrium_free_energy(
+    N_k: np.array, u_kn: np.ndarray, name: str
+):
+    from pymbar import MBAR
+
+    # initialize the MBAR maximum likelihood estimate
+
+    mbar = MBAR(u_kn, N_k)
+    print(
+        f'ddG = {mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"][0][-1]} +- {mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0][-1]}'
+    )
+
+    plt.figure(figsize=[8, 8], dpi=300)
+    r = mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"]
+
+    x = [a for a in np.linspace(0, 1, len(r[0]))]
+    y = r[0]
+    y_error = mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0]
+    print()
+    plt.errorbar(x, y, yerr=y_error, label="ddG +- stddev [kT]")
+    plt.legend()
+    plt.title(f"Free energy estimate for {name}", fontsize=15)
+    plt.ylabel("Free energy estimate in kT", fontsize=15)
+    plt.xlabel("lambda state (0 to 1)", fontsize=15)
+    plt.savefig(f"{name}_equilibrium_free_energy.png")
+    plt.show()
+    plt.close()
 
 
 def _collect_neq_samples(
