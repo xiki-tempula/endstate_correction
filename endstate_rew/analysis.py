@@ -2,7 +2,7 @@ from curses import keyname
 import glob
 import pickle
 from collections import namedtuple
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,8 +16,23 @@ from endstate_rew.constant import kBT
 
 def _collect_equ_samples(
     path: str, name: str, lambda_scheme: list, every_nth_frame: int = 2
-):
-    """Collect equilibrium samples"""
+) -> Tuple[list, np.array]:
+
+    """Collect equilibrium samples
+
+    Args:
+        path (str): path to the location where the samples are stored
+        name (str): name of the system (used in the sample files)
+        lambda_scheme (list): list of lambda states as floats
+        every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
+
+    Raises:
+        RuntimeError: if multuple sample files are present we can not decide which is the correct one.
+
+    Returns:
+        Tuple(coordinates, N_k)
+    """
+
     nr_of_samples = 5_000
     nr_of_steps = 1_000
     coordinates = []
@@ -51,6 +66,21 @@ def calculate_u_kn(
     every_nth_frame: int = 2,
     reload: bool = True,
 ) -> np.ndarray:
+
+    """
+    Calculate the u_kn matrix to be used by the mbar estimator
+
+    Args:
+        smiles (str): smiles string describing the system
+        forcefield (str): which force field is used (allowed options are `openff` or `charmmmff`)
+        path (str): path to location where samples are stored
+        name (str): name of the system (used in the sample files)
+        every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
+        reload (bool, optional): do you want to reload a previously saved mbar pickle file if present (every time the free energy is calculated the mbar pickle file is saved --- only loading is optional)
+
+    Returns:
+        Tuple(np.array, np.ndarray): (N_k, u_kn)
+    """
 
     from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
 
@@ -99,6 +129,14 @@ def calculate_u_kn(
 def plot_overlap_for_equilibrium_free_energy(
     N_k: np.array, u_kn: np.ndarray, name: str
 ):
+    """
+    Calculate the overlap for each state with each other state. THe overlap is normalized to be 1 for each row.
+
+    Args:
+        N_k (np.array): numnber of samples for each state k
+        u_kn (np.ndarray): each of the potential energy functions `u` describing a state `k` are applied to each sample `n` from each of the states `k`
+        name (str): name of the system in the plot
+    """
     from pymbar import MBAR
 
     # initialize the MBAR maximum likelihood estimate
@@ -123,6 +161,15 @@ def plot_overlap_for_equilibrium_free_energy(
 def plot_results_for_equilibrium_free_energy(
     N_k: np.array, u_kn: np.ndarray, name: str
 ):
+    """
+    Calculate the accumulated free energy along the mutation progress.
+
+
+    Args:
+        N_k (np.array): numnber of samples for each state k
+        u_kn (np.ndarray): each of the potential energy functions `u` describing a state `k` are applied to each sample `n` from each of the states `k`
+        name (str): name of the system in the plot
+    """
     from pymbar import MBAR
 
     # initialize the MBAR maximum likelihood estimate
