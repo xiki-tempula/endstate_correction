@@ -18,7 +18,8 @@ def _collect_equ_samples(
     path: str, name: str, lambda_scheme: list, every_nth_frame: int = 2
 ) -> Tuple[list, np.array]:
 
-    """Collect equilibrium samples
+    """
+    Collect equilibrium samples
 
     Args:
         path (str): path to the location where the samples are stored
