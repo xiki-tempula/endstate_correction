@@ -20,6 +20,7 @@ def test_collect_equ_samples():
 
 
 def test_equilibrium_free_energy():
+    "test that u_kn can be calculated and that results are consistent whether we reload mbar pickle or regernerate it"
     from endstate_rew.analysis import calculate_u_kn
     from pymbar import MBAR
 
@@ -27,16 +28,55 @@ def test_equilibrium_free_energy():
     path = "data/ZINC00079729/sampling_openff/run01/"
     name = "ZINC00079729"
 
-    N_k, u_kn = calculate_u_kn(smiles, path, name, every_nth_frame=100, reload=False)
+    N_k, u_kn = calculate_u_kn(
+        smiles=smiles,
+        forcefield="openff",
+        path=path,
+        name=name,
+        every_nth_frame=100,
+        reload=False,
+    )
 
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
     assert np.isclose(f[0][0][-1], -2105810.5891775307)
 
-    N_k, u_kn = calculate_u_kn(smiles, path, name, every_nth_frame=100, reload=True)
+    N_k, u_kn = calculate_u_kn(
+        smiles=smiles,
+        forcefield="openff",
+        path=path,
+        name=name,
+        every_nth_frame=100,
+        reload=True,
+    )
 
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
     assert np.isclose(f[0][0][-1], -2105810.5891775307)
+
+
+def test_plotting_equilibrium_free_energy():
+    "Test that plotting functions can be called"
+    from endstate_rew.analysis import calculate_u_kn
+    from endstate_rew.analysis import (
+        plot_overlap_for_equilibrium_free_energy,
+        plot_results_for_equilibrium_free_energy,
+    )
+
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
+    path = "data/ZINC00079729/sampling_openff/run01/"
+    name = "ZINC00079729"
+
+    N_k, u_kn = calculate_u_kn(
+        smiles=smiles,
+        forcefield="openff",
+        path=path,
+        name=name,
+        every_nth_frame=100,
+        reload=False,
+    )
+
+    plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
+    plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
