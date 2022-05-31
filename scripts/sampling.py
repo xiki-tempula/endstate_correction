@@ -19,16 +19,17 @@ torch.set_num_threads(num_threads)
 
 ###################
 # parse command line arguments
-if len(sys.argv) > 1:
+if len(sys.argv) > 2:
     print("Simulating zink system")
-    zink_id = int(sys.argv[1])
+    run_id = int(sys.argv[1])
+    zink_id = int(sys.argv[2])
     name, smiles = zinc_systems[zink_id]
 else:
+    run_id = int(sys.argv[1])
     name = "2cle"
     smiles = "ClCCOCCCl"
 ###################
 ff = "openff"  # charmmff
-run_id = 1
 n_samples = 5_000
 n_steps_per_sample = 1_000
 n_lambdas = 11
@@ -53,15 +54,13 @@ assert lambs[-1] == 1.0
 if ff == "openff" and smiles:
     molecule = generate_molecule(forcefield=ff, smiles=smiles)
 elif ff == "charmmff" and smiles:
-    raise RuntimeError(
-        "Charmff can not be used with SMILES input"
-    )
-else:
     molecule = generate_molecule(forcefield=ff, name=name, base="../data/hipen_data")
+else:
+    raise RuntimeError("Only openff can be used with SMILES input")
 # initialize working directory
 w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
 os.makedirs(w_dir, exist_ok=True)
-print(f'saving to: {w_dir}')
+print(f"saving to: {w_dir}")
 # select a random conformation
 from random import randint
 
@@ -102,4 +101,6 @@ for lamb in lambs:
             "wb+",
         ),
     )
-    print(f'traj dump to: {w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle')
+    print(
+        f"traj dump to: {w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle"
+    )
