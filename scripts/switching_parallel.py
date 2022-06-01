@@ -19,16 +19,22 @@ torch.set_num_threads(num_threads)
 
 ###########################################################################################
 # define run
-if len(sys.argv) == 3:
+if len(sys.argv) == 3:  # only true for ZINK systems
     print("Simulating zink system")
-    run_id = sys.argv[1]
+    run_id = int(sys.argv[1])
     zink_id = int(sys.argv[2])
+    assert zink_id < 25
     name, smiles = zinc_systems[zink_id]
-elif len(sys.argv) == 2:
-    name, smiles = zinc_systems[1]
+elif len(sys.argv) == 2: # smiles and name must be provided inside of script
     run_id = sys.argv[1]
+    ##############
+    #
+    name = "ZINC00077329"
+    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
+    #
+    ##############
 else:
-    raise RuntimeError("Run_id needs to be provided")
+    raise RuntimeError("run_id needs to be provided")
 
 # choose ff
 ff = "charmmff"  # openff
@@ -75,8 +81,7 @@ if ff == "openff":
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(molecule=molecule, zinc_id=name)
 ###########################################################################################
-
-# load samples
+# load samples for lambda=0. , the mm endstate
 mm_samples = []
 mm_sample_files = glob(
     f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle"
@@ -88,6 +93,8 @@ for samples in mm_sample_files:
 
 assert len(mm_samples) == nr_of_runs * n_samples
 
+###########################################################################################
+# load samples for lambda=1. , the qml endstate
 qml_samples = []
 qml_sample_files = glob(
     f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle"
@@ -99,6 +106,9 @@ for samples in qml_sample_files:
 
 assert len(qml_samples) == nr_of_runs * n_samples
 
+
+###########################################################################################
+# MM endstate
 # perform switching only if file does not already exist
 if not path.isfile(mm_to_qml_filename):
     # define lambda space
@@ -110,7 +120,10 @@ if not path.isfile(mm_to_qml_filename):
     # dump work values
     pickle.dump(ws_from_mm_to_qml, open(mm_to_qml_filename, "wb+"))
 
-# perform switching only if file does not already exist
+
+###########################################################################################
+# QML endstate
+# # perform switching only if file does not already exist
 if not path.isfile(qml_to_mm_filename):
     # define lambda space
     lambs = np.linspace(1, 0, switching_length)
