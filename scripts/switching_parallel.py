@@ -25,8 +25,7 @@ if len(sys.argv) == 3:
     zink_id = int(sys.argv[2])
     name, smiles = zinc_systems[zink_id]
 elif len(sys.argv) == 2:
-    name = "2cle"
-    smiles = "ClCCOCCCl"
+    name, smiles = zinc_systems[1]
     run_id = sys.argv[1]
 else:
     raise RuntimeError("Run_id needs to be provided")
@@ -82,28 +81,32 @@ mm_samples = []
 mm_sample_files = glob(
     f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle"
 )
+nr_of_runs = len(mm_sample_files)
+
 for samples in mm_sample_files:
-    mm_samples.append(pickle.load(open(samples, "rb")))
+    mm_samples.extend(pickle.load(open(samples, "rb")))
+
+assert len(mm_samples) == nr_of_runs * n_samples
 
 qml_samples = []
 qml_sample_files = glob(
     f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle"
 )
+nr_of_runs = len(qml_sample_files)
+
 for samples in qml_sample_files:
     qml_samples.append(pickle.load(open(samples, "rb")))
+
+assert len(qml_samples) == nr_of_runs * n_samples
 
 # perform switching only if file does not already exist
 if not path.isfile(mm_to_qml_filename):
     # define lambda space
     lambs = np.linspace(0, 1, switching_length)
     # perform NEQ from MM to QML
-    ws_from_mm_to_qml = []
-    for sample in mm_samples:
-        ws_from_mm_to_qml.append(
-            perform_switching(
-                sim, lambdas=lambs, samples=sample, nr_of_switches=nr_of_switches
-            )
-        )
+    ws_from_mm_to_qml = perform_switching(
+        sim, lambdas=lambs, samples=mm_samples, nr_of_switches=nr_of_switches
+    )
     # dump work values
     pickle.dump(ws_from_mm_to_qml, open(mm_to_qml_filename, "wb+"))
 
@@ -112,12 +115,8 @@ if not path.isfile(qml_to_mm_filename):
     # define lambda space
     lambs = np.linspace(1, 0, switching_length)
     # perform NEQ from QML to MM
-    ws_from_qml_to_mm = []
-    for sample in qml_samples:
-        ws_from_qml_to_mm.append(
-            perform_switching(
-                sim, lambdas=lambs, samples=qml_samples, nr_of_switches=nr_of_switches
-            )
-        )
+    ws_from_qml_to_mm = perform_switching(
+        sim, lambdas=lambs, samples=qml_samples, nr_of_switches=nr_of_switches
+    )
     # dump work values
     pickle.dump(ws_from_qml_to_mm, open(qml_to_mm_filename, "wb+"))
