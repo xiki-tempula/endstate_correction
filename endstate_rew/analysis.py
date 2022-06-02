@@ -90,7 +90,7 @@ def calculate_u_kn(
         if reload == False:
             raise FileNotFoundError
         print(f"trying to load: {path}/mbar_{every_nth_frame}.pickle")
-        N_k, u_kn = pickle.load(open(f"{path}/mbar_{every_nth_frame}.pickle", "rb+"))
+        N_k, u_kn = pickle.load(open(f"{path}/mbar_{every_nth_frame}.pickle", "rb"))
         print(f"Reusing pregenerated mbar object: {path}/mbar.pickle")
     except FileNotFoundError:
 
