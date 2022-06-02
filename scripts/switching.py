@@ -71,10 +71,14 @@ else:
 # initialize simulation depending on ff keyword
 if ff == "openff":
     sim = initialize_simulation_with_openff(
-        molecule=molecule, w_dir=f"/data/shared/projects/endstate_rew/{name}/"
+        molecule=molecule,
+        w_dir=f"/data/shared/projects/endstate_rew/{name}/",
+        platform="CUDA",
     )
 elif ff == "charmmff":
-    sim = initialize_simulation_with_charmmff(molecule=molecule, zinc_id=name)
+    sim = initialize_simulation_with_charmmff(
+        molecule=molecule, zinc_id=name, platform="CUDA"
+    )
 ###########################################################################################
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
@@ -110,7 +114,11 @@ if not path.isfile(mm_to_qml_filename):
     lambs = np.linspace(0, 1, switching_length)
     # perform NEQ from MM to QML
     ws_from_mm_to_qml = perform_switching(
-        sim, lambdas=lambs, samples=mm_samples, nr_of_switches=nr_of_switches
+        sim,
+        lambdas=lambs,
+        samples=mm_samples,
+        nr_of_switches=nr_of_switches,
+        implementation="NNPOps",
     )
     # dump work values
     pickle.dump(ws_from_mm_to_qml, open(mm_to_qml_filename, "wb+"))
@@ -124,7 +132,11 @@ if not path.isfile(qml_to_mm_filename):
     lambs = np.linspace(1, 0, switching_length)
     # perform NEQ from QML to MM
     ws_from_qml_to_mm = perform_switching(
-        sim, lambdas=lambs, samples=qml_samples, nr_of_switches=nr_of_switches
+        sim,
+        lambdas=lambs,
+        samples=qml_samples,
+        nr_of_switches=nr_of_switches,
+        implementation="NNPOps",
     )
     # dump work values
     pickle.dump(ws_from_qml_to_mm, open(qml_to_mm_filename, "wb+"))
