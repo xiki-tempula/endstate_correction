@@ -13,7 +13,7 @@ def perform_switching(
     lambdas: list,
     samples: list,
     nr_of_switches: int = 50,
-    implementation: srt = "",
+    implementation: str = "",
 ) -> list:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
 
