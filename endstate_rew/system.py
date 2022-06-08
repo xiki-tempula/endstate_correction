@@ -32,7 +32,7 @@ def generate_molecule(
     forcefield: str,
     name: str = "",
     smiles: str = "",
-    base: str = "../data/hipen_data",
+    base: str = "",
     nr_of_conformations: int = 10,
 ) -> Molecule:
 
@@ -77,6 +77,9 @@ def generate_molecule(
             )
 
     elif forcefield == "charmmff":
+        
+        if not base:
+            base = _get_hipen_data()
 
         # if smiles string is not provided but zinc name is
         if not smiles and name:
@@ -252,6 +255,7 @@ def initialize_simulation_with_openff(
     # initialize potential
     potential = MLPotential("ani2x")
     # initialize openMM system and topology
+    print(w_dir)
     if w_dir:
         mol_path = f"{w_dir}/system.openff"
         if path.isfile(mol_path):  # if already generated, load it
@@ -275,8 +279,19 @@ def initialize_simulation_with_openff(
     )
 
 
+def _get_hipen_data():
+    import pathlib
+    import endstate_rew as end
+
+    path = pathlib.Path(end.__file__).resolve().parent
+    return f"{path}/data/hipen_data"
+
+
 # creating charmm systems from zinc data
-def create_charmm_system(name: str, base="../data/hipen_data"):
+def create_charmm_system(name: str, base=""):
+
+    if not base:
+        base = _get_hipen_data()
 
     # check if input directory exists
     if not path.isdir(base):
@@ -304,7 +319,7 @@ def create_charmm_system(name: str, base="../data/hipen_data"):
 def initialize_simulation_with_charmmff(
     molecule: Molecule,
     zinc_id: str,
-    base: str = "../data/hipen_data",
+    base: str = "",
     at_endstate: str = "",
     platform: str = "CPU",
     conf_id: int = 0,
@@ -313,7 +328,7 @@ def initialize_simulation_with_charmmff(
 
     Args:
         zinc_id (str): _description_
-        base (str, optional): _description_. Defaults to '../data/hipen_data'
+        base (str, optional): _description_.
         at_endstate (str, optional): _description_. Defaults to ''.
         platform (str, optional): _description_. Defaults to 'CPU'.
 
@@ -321,6 +336,9 @@ def initialize_simulation_with_charmmff(
         _type_: _description_
     """
     assert molecule.n_conformers > 0
+
+    if not base:
+        base = _get_hipen_data()
 
     # initialize potential
     potential = MLPotential("ani2x")

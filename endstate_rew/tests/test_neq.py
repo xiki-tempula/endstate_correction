@@ -1,5 +1,6 @@
 import pickle
 from typing import Tuple
+from endstate_rew.system import _get_hipen_data
 
 import numpy as np
 from endstate_rew.neq import perform_switching
@@ -17,9 +18,12 @@ from openmm.app import Simulation
 
 
 def load_endstate_system_and_samples_charmmff(
-    molecule, name: str, path_to_samples: str, base: str = "data/hipen_data"
+    molecule, name: str, path_to_samples: str, base: str = ""
 ) -> Tuple[Simulation, list, list]:
     # initialize simulation and load pre-generated samples
+
+    if not base:
+        base = _get_hipen_data()
 
     n_samples = 5_000
     n_steps_per_sample = 1_000
@@ -95,9 +99,7 @@ def test_seed_velocities():
     _seed_velocities(_get_masses(system))
 
     # charmmff
-    molecule = generate_molecule(
-        forcefield="charmmff", name="ZINC00079729", base="data/hipen_data"
-    )
+    molecule = generate_molecule(forcefield="charmmff", name="ZINC00079729")
     system, _ = create_mm_system(molecule)
     _seed_velocities(_get_masses(system))
 
@@ -153,14 +155,12 @@ def test_switching_charmmff():
     molecule = generate_molecule(
         forcefield="charmmff",
         smiles=smiles,
-        base="data/hipen_data",
     )
 
     # load simulation and samples for ZINC00077329
     sim, samples_mm, samples_qml = load_endstate_system_and_samples_charmmff(
         molecule=molecule,
         name=name,
-        base="data/hipen_data",
         path_to_samples="data/ZINC00079729/sampling_openff/run01",
     )
     # perform instantaneous switching with predetermined coordinate set

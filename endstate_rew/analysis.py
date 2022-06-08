@@ -1,7 +1,6 @@
 import glob
 import pickle
 from collections import namedtuple
-from curses import keyname
 from typing import NamedTuple, Tuple
 
 import matplotlib.pyplot as plt
