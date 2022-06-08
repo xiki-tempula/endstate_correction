@@ -1,7 +1,7 @@
-from curses import keyname
 import glob
 import pickle
 from collections import namedtuple
+from curses import keyname
 from typing import NamedTuple, Tuple
 
 import matplotlib.pyplot as plt
@@ -15,7 +15,11 @@ from endstate_rew.constant import kBT
 
 
 def _collect_equ_samples(
-    path: str, name: str, lambda_scheme: list, every_nth_frame: int = 2
+    path: str,
+    name: str,
+    lambda_scheme: list,
+    every_nth_frame: int = 2,
+    only_endstates: bool = False,
 ) -> Tuple[list, np.array]:
 
     """
@@ -38,6 +42,7 @@ def _collect_equ_samples(
     nr_of_steps = 1_000
     coordinates = []
     N_k = np.zeros(len(lambda_scheme))
+
     # loop over lambda scheme and collect samples in nanometer
     for idx, lamb in enumerate(lambda_scheme):
         file = glob.glob(
@@ -48,9 +53,14 @@ def _collect_equ_samples(
         elif len(file) == 0:
             print("WARNING! Incomplete equ sampling. Proceed with cautions.")
         else:
+            if only_endstates and not (
+                idx == 0 or idx == len(lambda_scheme) - 1
+            ):  # take only first or last samples
+                print(f"skipping {idx}")
+                continue
             coords_ = pickle.load(open(file[0], "rb"))
             coords_ = coords_[1_000:]  # remove the first 1k samples
-            coords_ = coords_[::every_nth_frame]  # take only every second sample
+            coords_ = coords_[::every_nth_frame]  # take only every nth sample
             N_k[idx] = len(coords_)
             coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in coords_])
 
@@ -62,10 +72,11 @@ def _collect_equ_samples(
 def calculate_u_kn(
     smiles: str,
     forcefield: str,
-    path: str,
+    path_to_files: str,
     name: str,
     every_nth_frame: int = 2,
     reload: bool = True,
+    override: bool = False,
 ) -> np.ndarray:
 
     """
@@ -74,38 +85,44 @@ def calculate_u_kn(
     Args:
         smiles (str): smiles string describing the system
         forcefield (str): which force field is used (allowed options are `openff` or `charmmmff`)
-        path (str): path to location where samples are stored
+        path_to_files (str): path to location where samples are stored
         name (str): name of the system (used in the sample files)
         every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
         reload (bool, optional): do you want to reload a previously saved mbar pickle file if present (every time the free energy is calculated the mbar pickle file is saved --- only loading is optional)
-
+        override (bool, optional) : override
     Returns:
         Tuple(np.array, np.ndarray): (N_k, u_kn)
     """
 
-    from endstate_rew.system import generate_molecule, initialize_simulation_with_openff
+    from os import path
 
-    try:
-        # if already generated reuse
-        if reload == False:
-            raise FileNotFoundError
-        print(f"trying to load: {path}/mbar_{every_nth_frame}.pickle")
-        N_k, u_kn = pickle.load(open(f"{path}/mbar_{every_nth_frame}.pickle", "rb"))
-        print(f"Reusing pregenerated mbar object: {path}/mbar.pickle")
-    except FileNotFoundError:
+    from endstate_rew.system import (
+        generate_molecule,
+        initialize_simulation_with_charmmff,
+        initialize_simulation_with_openff,
+    )
 
+    pickle_path = f"{path_to_files}/mbar_{every_nth_frame}.pickle"
+    if path.isfile(pickle_path) and reload:  # if already generated reuse
+        print(f"trying to load: {pickle_path}")
+        N_k, u_kn = pickle.load(open(pickle_path, "rb"))
+        print(f"Reusing pregenerated mbar object: {pickle_path}")
+    else:
         # generate molecule
         m = generate_molecule(smiles=smiles, forcefield=forcefield)
         # initialize simulation
         # first, modify path to point to openff molecule object
-        w_dir = path.split("/")
+        w_dir = path_to_files.split("/")
         w_dir = "/".join(w_dir[:-3])
         # initialize simualtion and reload if already generated
-        sim = initialize_simulation_with_openff(m, w_dir=w_dir)
+        if forcefield == "openff":
+            sim = initialize_simulation_with_openff(m, w_dir=w_dir)
+        elif forcefield == "charmmff":
+            sim = initialize_simulation_with_charmmff(m, zinc_id=name)
 
         lambda_scheme = np.linspace(0, 1, 11)
         samples, N_k = _collect_equ_samples(
-            path, name, lambda_scheme, every_nth_frame=every_nth_frame
+            path_to_files, name, lambda_scheme, every_nth_frame=every_nth_frame
         )
         samples = np.array(
             samples.value_in_unit(unit.nanometer)
@@ -122,7 +139,16 @@ def calculate_u_kn(
                 us.append(u_)
             us = np.array([u / kBT for u in us], dtype=np.float64)
             u_kn[k] = us
-        pickle.dump((N_k, u_kn), open(f"{path}/mbar_{every_nth_frame}.pickle", "wb+"))
+
+        if not path.isfile(pickle_path) or override == True:
+            pickle.dump((N_k, u_kn), open(f"{pickle_path}", "wb+"))
+
+    # total number of samples
+    total_nr_of_samples = 0
+    for n in N_k:
+        total_nr_of_samples += n
+
+    assert total_nr_of_samples != 0  # make sure that there are samples present
 
     return (N_k, u_kn)
 
@@ -197,10 +223,8 @@ def plot_results_for_equilibrium_free_energy(
     plt.close()
 
 
-def _collect_neq_samples(
-    path: str, name: str, switching_length: int, direction: str = "mm_to_qml"
-) -> list:
-    files = glob.glob(f"{path}/{name}*{direction}*{switching_length}*.pickle")
+def _collect_neq_samples(files: list) -> list:
+
     ws = []
     for f in files:
         w_ = pickle.load(open(f, "rb")).value_in_unit(unit.kilojoule_per_mole)
@@ -210,35 +234,56 @@ def _collect_neq_samples(
     return ws * unit.kilojoule_per_mole
 
 
-def collect_results(
-    w_dir: str, switching_length: int, run_id: int, name: str, smiles: str
+def collect_results_from_neq_and_equ_free_energy_calculations(
+    w_dir: str,
+    forcefield: str,
+    run_id: int,
+    name: str,
+    smiles: str,
+    every_nth_frame: int = 10,
 ) -> NamedTuple:
-    from endstate_rew.neq import perform_switching
-    from endstate_rew.system import generate_molecule, initialize_simulation
 
-    # load samples
-    mm_samples = pickle.load(
-        open(
-            f"{w_dir}/{name}/sampling/{run_id}/{name}_mm_samples_5000_2000.pickle", "rb"
-        )
+    from os import path
+
+    from pymbar import MBAR
+
+    from endstate_rew.neq import perform_switching
+    from endstate_rew.system import (
+        generate_molecule,
+        initialize_simulation_with_charmmff,
+        initialize_simulation_with_openff,
     )
-    qml_samples = pickle.load(
-        open(
-            f"{w_dir}/{name}/sampling/{run_id}/{name}_qml_samples_5000_2000.pickle",
-            "rb",
+    from endstate_rew.analysis import _collect_equ_samples
+
+    # collect equ results
+    pickle_path = f"{w_dir}/sampling_{forcefield}/mbar_{every_nth_frame}.pickle"
+    equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id}"
+    neq_samples_path = f"{w_dir}/switching_{forcefield}/"
+
+    if not path.isfile(pickle_path):
+        raise FileNotFoundError(
+            f"Equilibrium mbar results are not saved: {pickle_path}"
         )
+
+    N_k, u_kn = pickle.load(open(pickle_path, "rb"))
+    mbar = MBAR(u_kn, N_k)
+    r = mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"]
+
+    # load equ samples
+    samples, N_k = _collect_equ_samples(
+        equ_samples_path, name=name, lambda_scheme=[0, 1], only_endstates=True
     )
 
     # get pregenerated work values
     ws_from_mm_to_qml = np.array(
         _collect_neq_samples(
-            f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "mm_to_qml"
+            f"{neq_samples_path}/{name}_neq_ws_from_mm_to_qml_200_5001.pickle"
         )
         / kBT
     )
     ws_from_qml_to_mm = np.array(
         _collect_neq_samples(
-            f"{w_dir}/{name}/switching/{run_id}/", name, switching_length, "qml_to_mm"
+            f"{neq_samples_path}/{name}_neq_ws_from_qml_to_mm_200_5001.pickle"
         )
         / kBT
     )
