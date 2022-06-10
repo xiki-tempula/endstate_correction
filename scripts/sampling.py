@@ -54,7 +54,7 @@ assert lambs[-1] == 1.0
 if ff == "openff" and smiles:
     molecule = generate_molecule(forcefield=ff, smiles=smiles)
 elif ff == "charmmff" and smiles:
-    molecule = generate_molecule(forcefield=ff, name=name, base="../data/hipen_data")
+    molecule = generate_molecule(forcefield=ff, name=name)
 else:
     raise RuntimeError("Only openff can be used with SMILES input")
 # initialize working directory
