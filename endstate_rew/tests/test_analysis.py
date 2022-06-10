@@ -26,16 +26,29 @@ def test_collect_equ_samples():
     assert N_k[-1] == 2000
     assert len(samples) == 4000
 
+    lambs = [0, 1]
+    samples, N_k = _collect_equ_samples(
+        path, name="ZINC00079729", lambda_scheme=lambs, only_endstates=True
+    )
 
-def test_collect_neq_samples():
+    print(N_k)
+    assert N_k[0] == 2000
+    assert N_k[-1] == 2000
+    assert len(samples) == 4000
+
+    mm_samples = samples[: int(N_k[0])]
+    qml_samples = samples[int(N_k[0]) :]
+    assert len(mm_samples) == 2_000
+    assert len(qml_samples) == 2_000
+
+
+def test_collect_work_values():
     """test if we are able to collect samples as anticipated"""
-    from endstate_rew.analysis import _collect_neq_samples
+    from endstate_rew.analysis import _collect_work_values
 
     nr_of_switches = 200
-    paths = [
-        f"data/ZINC00077329/switching_charmmff/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
-    ]
-    ws = _collect_neq_samples(paths)
+    path = f"data/ZINC00077329/switching_charmmff/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
+    ws = _collect_work_values(path)
     assert len(ws) == nr_of_switches
 
 
@@ -162,7 +175,22 @@ def test_collect_results():
         collect_results_from_neq_and_equ_free_energy_calculations,
     )
 
-    # name =
-    path = ""
+    name = "ZINC00077329"
+    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
+    path = f"data/{name}/"
 
-    #collect_results_from_neq_and_equ_free_energy_calculations()
+    collect_results_from_neq_and_equ_free_energy_calculations(
+        w_dir=path,
+        forcefield="openff",
+        run_id=1,
+        smiles=smiles,
+        name=name,
+    )
+
+    collect_results_from_neq_and_equ_free_energy_calculations(
+        w_dir=path,
+        forcefield="charmmff",
+        run_id=1,
+        smiles="Cn1cc(Cl)c(/C=N/O)n1",
+        name=name,
+    )

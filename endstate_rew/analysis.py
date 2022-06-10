@@ -118,7 +118,8 @@ def calculate_u_kn(
             sim = initialize_simulation_with_openff(m, w_dir=w_dir)
         elif forcefield == "charmmff":
             sim = initialize_simulation_with_charmmff(m, zinc_id=name)
-
+        else:
+            raise NotImplementedError("only charmmff or openff are implemented.")
         lambda_scheme = np.linspace(0, 1, 11)
         samples, N_k = _collect_equ_samples(
             path_to_files, name, lambda_scheme, every_nth_frame=every_nth_frame
@@ -222,12 +223,9 @@ def plot_results_for_equilibrium_free_energy(
     plt.close()
 
 
-def _collect_neq_samples(files: list) -> list:
+def _collect_work_values(file: str) -> list:
 
-    ws = []
-    for f in files:
-        w_ = pickle.load(open(f, "rb")).value_in_unit(unit.kilojoule_per_mole)
-        ws.extend(w_)
+    ws = pickle.load(open(file, "rb")).value_in_unit(unit.kilojoule_per_mole)
     number_of_samples = len(ws)
     print(f"Number of samples used: {number_of_samples}")
     return ws * unit.kilojoule_per_mole
@@ -240,8 +238,18 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     name: str,
     smiles: str,
     every_nth_frame: int = 10,
+    switching_length: int = 5001,
 ) -> NamedTuple:
 
+    """collects the pregenerated equilibrium free energies and non-equilibrium work values (and calculates the free energies)
+
+    Raises:
+        FileNotFoundError: _description_
+        NotImplementedError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     from os import path
 
     from pymbar import MBAR
@@ -255,16 +263,19 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     from endstate_rew.analysis import _collect_equ_samples
 
     # collect equ results
-    pickle_path = f"{w_dir}/sampling_{forcefield}/mbar_{every_nth_frame}.pickle"
-    equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id}"
+    equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id:0>2d}"
+    mbar_pickle_path = f"{equ_samples_path}/mbar_{every_nth_frame}.pickle"
     neq_samples_path = f"{w_dir}/switching_{forcefield}/"
 
-    if not path.isfile(pickle_path):
+    print(f"{equ_samples_path=}")
+    print(f"{neq_samples_path=}")
+
+    if not path.isfile(mbar_pickle_path):
         raise FileNotFoundError(
-            f"Equilibrium mbar results are not saved: {pickle_path}"
+            f"Equilibrium mbar results are not saved: {mbar_pickle_path}"
         )
 
-    N_k, u_kn = pickle.load(open(pickle_path, "rb"))
+    N_k, u_kn = pickle.load(open(mbar_pickle_path, "rb"))
     mbar = MBAR(u_kn, N_k)
     r = mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"]
 
@@ -272,30 +283,44 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     samples, N_k = _collect_equ_samples(
         equ_samples_path, name=name, lambda_scheme=[0, 1], only_endstates=True
     )
+    # split them in mm/qml samples
+    mm_samples = samples[: int(N_k[0])]
+    qml_samples = samples[int(N_k[0]) :]
+    assert len(mm_samples) == N_k[0]
+    assert len(qml_samples) == N_k[0]
 
     # get pregenerated work values
     ws_from_mm_to_qml = np.array(
-        _collect_neq_samples(
-            f"{neq_samples_path}/{name}_neq_ws_from_mm_to_qml_200_5001.pickle"
+        _collect_work_values(
+            f"{neq_samples_path}/{name}_neq_ws_from_mm_to_qml_200_{switching_length}.pickle"
         )
         / kBT
     )
     ws_from_qml_to_mm = np.array(
-        _collect_neq_samples(
-            f"{neq_samples_path}/{name}_neq_ws_from_qml_to_mm_200_5001.pickle"
+        _collect_work_values(
+            f"{neq_samples_path}/{name}_neq_ws_from_qml_to_mm_200_{switching_length}.pickle"
         )
         / kBT
     )
 
-    # perform instantenious swichting (FEP) to get dE values
+    ##############################
+    # perform inst switching
+    ##############################
     switching_length = 2
     nr_of_switches = 500
     # create molecule
-    # openff
     molecule = generate_molecule(forcefield="openff", smiles=smiles)
 
-    sim = initialize_simulation(molecule, w_dir=f"{w_dir}/{name}")
+    if forcefield == "openff":
+        sim = initialize_simulation_with_openff(molecule, w_dir=w_dir)
+    elif forcefield == "charmmff":
+        sim = initialize_simulation_with_charmmff(molecule, zinc_id=name)
+    else:
+        raise NotImplementedError("only charmmff or openff are implemented.")
+
+    # perform switching
     lambs = np.linspace(0, 1, switching_length)
+
     dEs_from_mm_to_qml = np.array(
         perform_switching(sim, lambs, samples=mm_samples, nr_of_switches=nr_of_switches)
         / kBT
@@ -307,14 +332,19 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
         )
         / kBT
     )
+    ##############################
 
     # pack everything in a namedtuple
     Results = namedtuple(
         "Results",
-        "dWs_from_mm_to_qml dWs_from_qml_to_mm dEs_from_mm_to_qml dEs_from_qml_to_mm",
+        "equ_mbar dWs_from_mm_to_qml dWs_from_qml_to_mm dEs_from_mm_to_qml dEs_from_qml_to_mm",
     )
     results = Results(
-        ws_from_mm_to_qml, ws_from_qml_to_mm, dEs_from_mm_to_qml, dEs_from_qml_to_mm
+        mbar,
+        ws_from_mm_to_qml,
+        ws_from_qml_to_mm,
+        dEs_from_mm_to_qml,
+        dEs_from_qml_to_mm,
     )
     return results
 
