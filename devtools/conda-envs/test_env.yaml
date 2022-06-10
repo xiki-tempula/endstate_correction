@@ -14,6 +14,7 @@ dependencies:
   - openmmtools
   - tqdm
   - pymbar
+  - seaborn
 
     # Testing
   - pytest
