@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import pytest
+import os
 
 ### set number of CPU threads used by pytorch
 num_threads = 2
