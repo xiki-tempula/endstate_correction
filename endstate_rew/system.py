@@ -77,7 +77,7 @@ def generate_molecule(
             )
 
     elif forcefield == "charmmff":
-        
+
         if not base:
             base = _get_hipen_data()
 
@@ -202,7 +202,11 @@ def _initialize_simulation(
     if not at_endstate:
         ml_atoms = [atom.index for atom in topology.atoms()]
         ml_system = potential.createMixedSystem(
-            topology, system, ml_atoms, interpolate=True
+            topology,
+            system,
+            ml_atoms,
+            interpolate=True,
+            implementation="nnpops",
         )
         sim = Simulation(topology, ml_system, integrator, platform=platform)
     elif at_endstate.upper() == "QML":
@@ -218,6 +222,8 @@ def _initialize_simulation(
         )
         sim = Simulation(topology, system, integrator, platform=platform)
         print("Initializing MM system")
+    else:
+        raise NotImplementedError()
 
     sim.context.setPositions(molecule.conformers[conf_id])
     # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,

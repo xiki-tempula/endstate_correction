@@ -169,7 +169,10 @@ def test_plotting_equilibrium_free_energy():
     plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
     plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
 
-
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Requires input data that are not provided in the repo",
+)
 def test_collect_results():
     from endstate_rew.analysis import (
         collect_results_from_neq_and_equ_free_energy_calculations,
