@@ -1,6 +1,7 @@
 import numpy as np
 from openmm import unit
 import pytest
+from endstate_rew.constant import check_implementation
 
 
 def test_conf_selection():
@@ -211,6 +212,8 @@ def test_generate_simulation_instances_with_openff():
     )
     from endstate_rew.constant import zinc_systems
 
+    implementation, platform = check_implementation()
+
     # generate molecule
     ethane_smiles = "CC"
     m = generate_molecule(forcefield="openff", smiles=ethane_smiles)
@@ -229,7 +232,10 @@ def test_generate_simulation_instances_with_openff():
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     sim = initialize_simulation_with_openff(m)
-    sim.context.setParameter("lambda", 0.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 0.0)
+    else:
+        sim.context.setParameter("lambda", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -241,7 +247,10 @@ def test_generate_simulation_instances_with_openff():
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     sim = initialize_simulation_with_openff(m)
-    sim.context.setParameter("lambda", 1.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 1.0)
+    else:
+        sim.context.setParameter("lambda", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -292,6 +301,8 @@ def test_generate_simulation_instances_with_charmmff():
         initialize_simulation_with_charmmff,
     )
 
+    implementation, platform = check_implementation()
+
     # get zinc_id
     zinc_id = "ZINC00079729"
     smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
@@ -311,7 +322,10 @@ def test_generate_simulation_instances_with_charmmff():
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     sim = initialize_simulation_with_charmmff(molecule, zinc_id)
-    sim.context.setParameter("lambda", 0.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 0.0)
+    else:
+        sim.context.setParameter("lambda", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -323,7 +337,10 @@ def test_generate_simulation_instances_with_charmmff():
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     sim = initialize_simulation_with_charmmff(molecule, zinc_id)
-    sim.context.setParameter("lambda", 1.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 1.0)
+    else:
+        sim.context.setParameter("lambda", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )

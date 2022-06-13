@@ -8,6 +8,7 @@ import pytest
 import os
 import numpy as np
 from openmm import unit
+from endstate_rew.constant import check_implementation
 
 
 def test_endstate_rew_imported():
@@ -37,15 +38,19 @@ def test_interpolation():
     zinc_id = "ZINC00077329"
     smiles = "Cn1cc(Cl)c(/C=N/O)n1"
     molecule = generate_molecule(forcefield="charmmff", smiles=smiles)
+    implementation, platform = check_implementation()
+    #    print('Skipping test --- only u')
 
     #######################################
     # initialize simulation for charmmff
     #######################################
-    sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id, conf_id=0, platform="CUDA"
-    )
+    sim = initialize_simulation_with_charmmff(molecule, zinc_id, conf_id=0)
 
-    sim.context.setParameter("scale", 1.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 1.0)
+    else:
+        sim.context.setParameter("lambda", 1.0)
+
     u_now = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
@@ -53,7 +58,10 @@ def test_interpolation():
     )
     print(u_now)
     assert np.isclose(u_now, -2346049.500037839)
-    sim.context.setParameter("scale", 0.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 0.0)
+    else:
+        sim.context.setParameter("lambda", 0.0)
     u_now = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
@@ -65,9 +73,12 @@ def test_interpolation():
     #####################################
     # initialize simulation for openff
     #####################################
-    sim = initialize_simulation_with_openff(molecule, conf_id=0, platform="CUDA")
+    sim = initialize_simulation_with_openff(molecule, conf_id=0)
 
-    sim.context.setParameter("scale", 1.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 1.0)
+    else:
+        sim.context.setParameter("lambda", 1.0)
     u_now = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
@@ -75,7 +86,10 @@ def test_interpolation():
     )
     print(u_now)
     assert np.isclose(u_now, -2346049.500037839)
-    sim.context.setParameter("scale", 0.0)
+    if implementation.lower() == "nnpops":
+        sim.context.setParameter("scale", 0.0)
+    else:
+        sim.context.setParameter("lambda", 0.0)
     u_now = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()

@@ -8,7 +8,6 @@ from endstate_rew.system import (
     _get_hipen_data,
     _get_masses,
     _seed_velocities,
-    create_charmm_system,
     create_mm_system,
     generate_molecule,
     initialize_simulation_with_charmmff,
@@ -36,7 +35,7 @@ def load_endstate_system_and_samples_charmmff(
     n_samples = 5_000
     n_steps_per_sample = 1_000
     ###########################################################################################
-    sim = initialize_simulation_with_charmmff(molecule, name, base, platform=platform)
+    sim = initialize_simulation_with_charmmff(molecule, name, base)
 
     samples_mm = pickle.load(
         open(
@@ -73,7 +72,7 @@ def load_endstate_system_and_samples_openff(
     n_steps_per_sample = 1_000
     ###########################################################################################
     molecule = generate_molecule(forcefield="openff", smiles=smiles)
-    sim = initialize_simulation_with_openff(molecule, platform=platform)
+    sim = initialize_simulation_with_openff(molecule)
 
     samples_mm = pickle.load(
         open(

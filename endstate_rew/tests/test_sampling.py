@@ -18,23 +18,19 @@ def test_sampling(ff):
     name = "ZINC00077329"
     smiles = "Cn1cc(Cl)c(/C=N/O)n1"
     m = generate_molecule(forcefield=ff, smiles=smiles)
-    implementation, platform = check_implementation()
+
     if ff == "charmmff":
         # initialize simulation for all three cases
-        sim = initialize_simulation_with_charmmff(
-            m, at_endstate="mm", platform=platform
-        )
+        sim = initialize_simulation_with_charmmff(m, at_endstate="mm", zinc_id=name)
         generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_charmmff(
-            m, at_endstate="qml", platform=platform
-        )
+        sim = initialize_simulation_with_charmmff(m, at_endstate="qml", zinc_id=name)
         generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_charmmff(m, platform=platform)
+        sim = initialize_simulation_with_charmmff(m, zinc_id=name)
         generate_samples(sim, 1, 50)
     else:
-        sim = initialize_simulation_with_openff(m, at_endstate="mm", platform=platform)
+        sim = initialize_simulation_with_openff(m, at_endstate="mm")
         generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_openff(m, at_endstate="qml", platform=platform)
+        sim = initialize_simulation_with_openff(m, at_endstate="qml")
         generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_openff(m, platform=platform)
+        sim = initialize_simulation_with_openff(m)
         generate_samples(sim, 1, 50)
