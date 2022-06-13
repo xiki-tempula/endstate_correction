@@ -8,7 +8,6 @@ dependencies:
   - pip
 
   - openmm
-  - nnpops
   - openmm-torch
   - openff-toolkit
   - openmmtools
@@ -25,6 +24,6 @@ dependencies:
 
     # Pip-only installs
   - pip:
-     - git+https://github.com/wiederm/openmm-ml.git
+     - git+https://github.com/openmm/openmm-ml.git
   #  - codecov
 

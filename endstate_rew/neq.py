@@ -4,7 +4,7 @@ import numpy as np
 from openmm import unit
 from tqdm import tqdm
 
-from endstate_rew.constant import distance_unit, temperature
+from endstate_rew.constant import distance_unit, temperature, check_implementation
 from endstate_rew.system import _seed_velocities, _get_masses
 
 
@@ -16,6 +16,8 @@ def perform_switching(
     implementation: str = "",
 ) -> list:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
+
+    implementation, platform = check_implementation()
 
     # list  of work values
     ws = []
@@ -65,6 +67,7 @@ def perform_switching(
                 sim.context.setParameter("lambda", lambdas[idx_lamb - 1])
             u_before = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # add to accumulated work
+            print((u_now - u_before).value_in_unit(unit.kilojoule_per_mole))
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
 
         ws.append(w)
