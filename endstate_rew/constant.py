@@ -55,8 +55,11 @@ def check_implementation() -> Tuple[str, str]:
     try:
         from NNPOps import OptimizedTorchANI as _
 
-        implementation = "NNPOps"
+        implementation = "nnpops"
         platform = "CUDA"
     except ModuleNotFoundError:
         platform = "CPU"
+        implementation = ""
+
+    print(implementation, platform)
     return implementation, platform

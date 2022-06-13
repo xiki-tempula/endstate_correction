@@ -48,7 +48,7 @@ def perform_switching(
         # perform NEQ switching
         for idx_lamb in range(1, len(lambdas)):
             # set lambda parameter
-            if implementation == "NNPOps":
+            if implementation.lower() == "nnpops":
                 sim.context.setParameter("scale", lambdas[idx_lamb])
             else:
                 sim.context.setParameter("lambda", lambdas[idx_lamb])
@@ -61,7 +61,7 @@ def perform_switching(
             # calculate u_t(x_t)
             u_now = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # calculate u_{t-1}(x_t)
-            if implementation == "NNPOps":
+            if implementation.lower() == "nnpops":
                 sim.context.setParameter("scale", lambdas[idx_lamb - 1])
             else:
                 sim.context.setParameter("lambda", lambdas[idx_lamb - 1])

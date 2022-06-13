@@ -1,5 +1,6 @@
 import numpy as np
 from openmm import unit
+import pytest
 
 
 def test_conf_selection():
@@ -165,7 +166,11 @@ def test_atom_indices_charmmff():
     assert atoms_psf == atoms_pdb
 
 
-def test_sampling():
+@pytest.mark.parametrize(
+    "ff",
+    [("charmmff"), ("openff")],
+)
+def test_sampling(ff):
     from endstate_rew.system import (
         generate_samples,
         generate_molecule,
@@ -173,30 +178,29 @@ def test_sampling():
         initialize_simulation_with_openff,
     )
 
-    # sample with openff
-    # sampling for ethanol
     # initialize molecule
-    smiles = "CCO"
-    molecule = generate_molecule(forcefield="openff", smiles=smiles)
+    name = "ZINC00077329"
+    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
 
-    # initialize simulation and start sampling at MM endstate
-    sim = initialize_simulation_with_openff(molecule, at_endstate="MM", platform="CPU")
-    mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
-    # initialize simulation and start sampling at QML endstate
-    sim = initialize_simulation_with_openff(molecule, at_endstate="QML", platform="CPU")
-    qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+    if ff == "openff":
+        molecule = generate_molecule(forcefield=ff, smiles=smiles)
 
-    # sample with charmmff
-    # generate zinc mol
-    zinc_id = "ZINC00079729"
-    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    molecule = generate_molecule(forcefield="charmmff", smiles=smiles)
+        # initialize simulation and start sampling at MM endstate
+        sim = initialize_simulation_with_openff(molecule, at_endstate="MM")
+        mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+        # initialize simulation and start sampling at QML endstate
+        sim = initialize_simulation_with_openff(molecule, at_endstate="QML")
+        qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+    elif ff == "charmmff":
+        molecule = generate_molecule(forcefield=ff, name=name)
 
-    # initialize simulation for all thre cases
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="mm")
-    mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="qml")
-    qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+        # initialize simulation for all thre cases
+        sim = initialize_simulation_with_charmmff(molecule, name, at_endstate="mm")
+        mm_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+        sim = initialize_simulation_with_charmmff(molecule, name, at_endstate="qml")
+        qml_samples = generate_samples(sim, n_samples=5, n_steps_per_sample=10)
+    else:
+        raise NotImplemented
 
 
 def test_generate_simulation_instances_with_openff():

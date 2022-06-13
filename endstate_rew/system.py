@@ -192,10 +192,14 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 
 
 def _initialize_simulation(
-    at_endstate: str, topology, potential, molecule, conf_id: int, platform, system
+    at_endstate: str, topology, potential, molecule, conf_id: int, system
 ):
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
+    from endstate_rew.constant import check_implementation
+
+    implementation, platform = check_implementation()
+
     platform = mm.Platform.getPlatformByName(platform)
 
     # define the atoms that are calculated using both potentials
@@ -206,7 +210,7 @@ def _initialize_simulation(
             system,
             ml_atoms,
             interpolate=True,
-            implementation="nnpops",
+            implementation=implementation,
         )
         sim = Simulation(topology, ml_system, integrator, platform=platform)
     elif at_endstate.upper() == "QML":
@@ -241,7 +245,6 @@ def _initialize_simulation(
 def initialize_simulation_with_openff(
     molecule: Molecule,
     at_endstate: str = "",
-    platform: str = "CPU",
     w_dir="",
     conf_id: int = 0,
 ):
@@ -280,7 +283,6 @@ def initialize_simulation_with_openff(
         potential,
         molecule,
         conf_id,
-        platform,
         system,
     )
 
@@ -327,7 +329,6 @@ def initialize_simulation_with_charmmff(
     zinc_id: str,
     base: str = "",
     at_endstate: str = "",
-    platform: str = "CPU",
     conf_id: int = 0,
 ):
     """Initialize a simulation instance
@@ -352,5 +353,5 @@ def initialize_simulation_with_charmmff(
     system, topology = create_charmm_system(zinc_id, base)
 
     return _initialize_simulation(
-        at_endstate, topology, potential, molecule, conf_id, platform, system
+        at_endstate, topology, potential, molecule, conf_id, system
     )

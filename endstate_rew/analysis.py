@@ -76,7 +76,6 @@ def calculate_u_kn(
     every_nth_frame: int = 2,
     reload: bool = True,
     override: bool = False,
-    platform: str = "CPU",
 ) -> np.ndarray:
 
     """
@@ -119,11 +118,9 @@ def calculate_u_kn(
         w_dir = "/".join(w_dir[:-3])
         # initialize simualtion and reload if already generated
         if forcefield == "openff":
-            sim = initialize_simulation_with_openff(m, w_dir=w_dir, platform=platform)
+            sim = initialize_simulation_with_openff(m, w_dir=w_dir)
         elif forcefield == "charmmff":
-            sim = initialize_simulation_with_charmmff(
-                m, zinc_id=name, platform=platform
-            )
+            sim = initialize_simulation_with_charmmff(m, zinc_id=name)
         else:
             raise NotImplementedError("only charmmff or openff are implemented.")
         lambda_scheme = np.linspace(0, 1, 11)
@@ -137,7 +134,7 @@ def calculate_u_kn(
             (len(N_k), int(N_k[0] * len(N_k))), dtype=np.float64
         )  # NOTE: assuming that N_k[0] is the maximum number of samples drawn from any state k
         for k, lamb in enumerate(lambda_scheme):
-            if implementation == "NNPOps":
+            if implementation.lower() == "nnpops":
                 sim.context.setParameter("scale", lamb)
             else:
                 sim.context.setParameter("lambda", lamb)
@@ -248,7 +245,6 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     smiles: str,
     every_nth_frame: int = 10,
     switching_length: int = 5001,
-    implementation: str = "",
 ) -> NamedTuple:
 
     """collects the pregenerated equilibrium free energies and non-equilibrium work values (and calculates the free energies)
@@ -321,20 +317,10 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     # create molecule
     molecule = generate_molecule(forcefield=forcefield, smiles=smiles)
 
-    # NOTE: 'NNPOps' works only with CUDA platform
-    if implementation == "NNPOps":
-        platform = "CUDA"
-    else:
-        platform = "CPU"
-
     if forcefield == "openff":
-        sim = initialize_simulation_with_openff(
-            molecule, w_dir=w_dir, platform=platform
-        )
+        sim = initialize_simulation_with_openff(molecule, w_dir=w_dir)
     elif forcefield == "charmmff":
-        sim = initialize_simulation_with_charmmff(
-            molecule, zinc_id=name, platform=platform
-        )
+        sim = initialize_simulation_with_charmmff(molecule, zinc_id=name)
     else:
         raise NotImplementedError("only charmmff or openff are implemented.")
 
@@ -347,7 +333,6 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
             lambs,
             samples=mm_samples,
             nr_of_switches=nr_of_switches,
-            implementation=implementation,
         )
         / kBT
     )
@@ -358,7 +343,6 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
             lambs,
             samples=qml_samples,
             nr_of_switches=nr_of_switches,
-            implementation=implementation,
         )
         / kBT
     )
