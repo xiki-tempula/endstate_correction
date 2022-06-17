@@ -40,8 +40,8 @@ def perform_switching(
         sim.context.setPositions(x)
         # reseed velocities
         # NOTE: FIXME: for now this is done manually
-        # sim.context.setVelocitiesToTemperature(temperature)
-        sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+        sim.context.setVelocitiesToTemperature(temperature)
+        # sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
         # initialize work
         w = 0.0
         # perform NEQ switching
