@@ -8,7 +8,7 @@ from endstate_rew.system import (
     _get_hipen_data,
     _get_masses,
     _seed_velocities,
-    create_mm_system,
+    create_openff_system,
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
@@ -93,7 +93,7 @@ def load_endstate_system_and_samples_openff(
 def test_mass_list():
 
     molecule = generate_molecule(forcefield="openff", smiles="ClCCOCCCl")
-    system, _ = create_mm_system(molecule)
+    system, _ = create_openff_system(molecule)
 
     # make sure that mass list generated from system and molecuel are the same
     m_list = _get_masses(system)
@@ -110,12 +110,12 @@ def test_seed_velocities():
     # test that manual velocity seeding works
     # openff
     molecule = generate_molecule(forcefield="openff", smiles="ClCCOCCCl")
-    system, _ = create_mm_system(molecule)
+    system, _ = create_openff_system(molecule)
     _seed_velocities(_get_masses(system))
 
     # charmmff
     molecule = generate_molecule(forcefield="charmmff", name="ZINC00079729")
-    system, _ = create_mm_system(molecule)
+    system, _ = create_openff_system(molecule)
     _seed_velocities(_get_masses(system))
 
 
@@ -127,18 +127,18 @@ def test_seed_velocities():
             -2405742.1451317305,
             2405742.1452882225,
         ),
-        pytest.param(
+        (
             "openff",
-            -5252603.00305137,
-            5252603.00305137,
-            marks=pytest.mark.xfail,
+            -2346353.8752537486,
+            2346353.8752537486,
         ),
     ],
 )
 def test_switching(ff, dW_for, dW_rev):
 
     name = "ZINC00077329"
-
+    print(f"{name=}")
+    print(f"{ff=}")
     # load simulation and samples for 2cle
     sim, samples_mm, samples_qml = load_endstate_system_and_samples_openff(
         name=name,

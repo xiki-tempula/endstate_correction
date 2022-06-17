@@ -10,7 +10,7 @@ torch.set_num_threads(num_threads)
 
 @pytest.mark.parametrize(
     "ff",
-    [("charmmff"), pytest.param("openff", marks=pytest.mark.xfail)],
+    ["charmmff", "openff"],
 )
 def test_collect_equ_samples(ff):
     """test if we are able to collect samples as anticipated"""
@@ -63,11 +63,15 @@ def test_collect_work_values(ff, nr_of_switches):
     assert len(ws) == nr_of_switches
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Runs out of time on MacOS",  # TODO: FIXME!
+)
 @pytest.mark.parametrize(
     "ff, ddG",
     [
         ("charmmff", -940544.0390218807),
-        pytest.param("openff", -2105810.5, marks=pytest.mark.xfail),
+        ("openff", -940689.0530839318),
     ],
 )
 def test_equilibrium_free_energy(ff, ddG):
@@ -114,7 +118,7 @@ def test_equilibrium_free_energy(ff, ddG):
     "ff",
     [
         ("charmmff"),
-        pytest.param("openff", marks=pytest.mark.xfail),
+        ("openff"),
     ],
 )
 def test_plotting_equilibrium_free_energy(ff):

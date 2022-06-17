@@ -13,7 +13,6 @@ def perform_switching(
     lambdas: list,
     samples: list,
     nr_of_switches: int = 50,
-    implementation: str = "",
 ) -> list:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
 
@@ -67,8 +66,6 @@ def perform_switching(
                 sim.context.setParameter("lambda", lambdas[idx_lamb - 1])
             u_before = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # add to accumulated work
-            print((u_now - u_before).value_in_unit(unit.kilojoule_per_mole))
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
-
         ws.append(w)
     return np.array(ws) * unit.kilojoule_per_mole
