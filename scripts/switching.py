@@ -33,7 +33,7 @@ elif len(sys.argv) == 1:  # smiles and name must be provided inside of script
     ##############
 
 # choose ff and working directory
-ff = "charmmff"  # openff
+ff = "charmmff"  # "charmmff"  # openff
 w_dir = f"/data/shared/projects/endstate_rew/{name}/"
 # equilibrium samples
 n_samples = 5_000
@@ -52,6 +52,7 @@ mm_to_qml_filename = f"{w_dir}/switching_{ff}/{name}_neq_ws_from_mm_to_qml_{nr_o
 qml_to_mm_filename = f"{w_dir}/switching_{ff}/{name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}.pickle"
 
 if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
+    print("All work values have already been calculated.")
     sys.exit()
 
 # create folder
@@ -66,19 +67,16 @@ if ff == "openff" and smiles:
 elif ff == "charmmff" and smiles and not name:
     raise RuntimeError("Charmff can not be used with SMILES input")
 else:
-    molecule = generate_molecule(forcefield=ff, name=name, base="../data/hipen_data")
+    molecule = generate_molecule(forcefield=ff, name=name)
 
 # initialize simulation depending on ff keyword
 if ff == "openff":
     sim = initialize_simulation_with_openff(
         molecule=molecule,
         w_dir=f"/data/shared/projects/endstate_rew/{name}/",
-        platform="CUDA",
     )
 elif ff == "charmmff":
-    sim = initialize_simulation_with_charmmff(
-        molecule=molecule, zinc_id=name, platform="CUDA"
-    )
+    sim = initialize_simulation_with_charmmff(molecule=molecule, zinc_id=name)
 ###########################################################################################
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
@@ -118,11 +116,12 @@ if not path.isfile(mm_to_qml_filename):
         lambdas=lambs,
         samples=mm_samples,
         nr_of_switches=nr_of_switches,
-        implementation="NNPOps",
     )
     # dump work values
+    print(ws_from_mm_to_qml)
     pickle.dump(ws_from_mm_to_qml, open(mm_to_qml_filename, "wb+"))
-
+else:
+    print(f"Already calculated: {mm_to_qml_filename}")
 
 ###########################################################################################
 # QML endstate
@@ -136,7 +135,9 @@ if not path.isfile(qml_to_mm_filename):
         lambdas=lambs,
         samples=qml_samples,
         nr_of_switches=nr_of_switches,
-        implementation="NNPOps",
     )
     # dump work values
     pickle.dump(ws_from_qml_to_mm, open(qml_to_mm_filename, "wb+"))
+    print(ws_from_qml_to_mm)
+else:
+    print(f"Already calculated: {qml_to_mm_filename}")
