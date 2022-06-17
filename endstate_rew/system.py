@@ -25,8 +25,6 @@ from endstate_rew.constant import (
     zinc_systems,
 )
 
-forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
-
 
 def generate_molecule(
     forcefield: str,
@@ -160,8 +158,10 @@ def generate_samples(sim, n_samples: int = 1_000, n_steps_per_sample: int = 10_0
     return samples
 
 
-def create_mm_system(molecule):
+def create_openff_system(molecule):
     """given a molecule it creates an openMM system and topology instance"""
+
+    forcefield = ForceField("openff_unconstrained-2.0.0.offxml")
     topology = molecule.to_topology()
     system = forcefield.create_openmm_system(topology)
     return system, topology
@@ -272,10 +272,10 @@ def initialize_simulation_with_openff(
             system, topology = pickle.load(open(mol_path, "rb"))
         else:  # if not generated, generate it and save it
             print("generate and save system ...")
-            system, topology = create_mm_system(molecule)
+            system, topology = create_openff_system(molecule)
             pickle.dump((system, topology), open(mol_path, "wb+"))
     else:
-        system, topology = create_mm_system(molecule)
+        system, topology = create_openff_system(molecule)
 
     return _initialize_simulation(
         at_endstate,

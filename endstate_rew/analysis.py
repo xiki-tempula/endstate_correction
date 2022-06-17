@@ -366,6 +366,11 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
 def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
 
     print("################################")
+    ddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"][0][-1]
+    dddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0][
+        -1
+    ]
+    print(f"Equilibrium free energy: {ddG}+/-{dddG}")
     print(
         f"Crooks' equation: {BAR(results.dWs_from_mm_to_qml, results.dWs_from_qml_to_mm)}"
     )
@@ -433,8 +438,16 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
     # plot results
     #########################################
     axs[1].set_title(rf"{name} - offset $\Delta$G(MM$\rightarrow$QML)")
-    # Crooks' equation
     ddG_list, dddG_list = [], []
+    # Equilibrium free energy
+    ddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"][0][-1]
+    dddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0][
+        -1
+    ]
+    ddG_list.append(ddG)
+    dddG_list.append(dddG)
+
+    # Crooks' equation
     ddG, dddG = BAR(results.dWs_from_mm_to_qml, results.dWs_from_qml_to_mm)
     if np.isnan(dddG):
         print("#######################")
@@ -481,7 +494,9 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
         dddG_list,
         fmt="o",
     )
-    axs[1].set_xticklabels(["", "Crooks", "", "Jazynski", "", "FEP+EXP", "", "FEP+BAR"])
+    axs[1].set_xticklabels(
+        ["", "Equilibrium", "", "Crooks", "", "Jazynski", "", "FEP+EXP", "", "FEP+BAR"]
+    )
     axs[1].set_ylabel("kT")
     # axs[1].legend()
 
