@@ -10,11 +10,7 @@ from endstate_rew.system import _seed_velocities, _get_masses, get_positions
 
 
 def perform_switching(
-    sim,
-    lambdas: list,
-    samples: list,
-    nr_of_switches: int = 50,
-    save_traj: bool = False
+    sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
 ) -> Tuple[list, list]:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
 
@@ -24,7 +20,7 @@ def perform_switching(
     ws = []
     # list of conformations
     endstate_samples = []
-    
+
     inst_switching = False
     if len(lambdas) == 2:
         print("Instantanious switching: dE will be calculated")
@@ -51,7 +47,6 @@ def perform_switching(
         w = 0.0
         # perform NEQ switching
         for idx_lamb in range(1, len(lambdas)):
-            print(f'lambda state: {idx_lamb}')
             # set lambda parameter
             if implementation.lower() == "nnpops":
                 sim.context.setParameter("scale", lambdas[idx_lamb])

@@ -192,7 +192,13 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 
 
 def _initialize_simulation(
-    at_endstate: str, topology, potential, molecule, conf_id: int, system
+    at_endstate: str,
+    topology,
+    potential,
+    molecule,
+    conf_id: int,
+    system,
+    minimize: bool,
 ):
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
@@ -234,7 +240,9 @@ def _initialize_simulation(
     # for now avoiding call to minimizer
     print("Minimizing ...")
     u_1 = sim.context.getState(getEnergy=True).getPotentialEnergy()
-    sim.minimizeEnergy(maxIterations=100)
+
+    if minimize is True:
+        sim.minimizeEnergy(maxIterations=100)
     u_2 = sim.context.getState(getEnergy=True).getPotentialEnergy()
     print(f"before min: {u_1}; after min: {u_2}")
     # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
@@ -250,6 +258,7 @@ def initialize_simulation_with_openff(
     at_endstate: str = "",
     w_dir="",
     conf_id: int = 0,
+    minimize: bool = True,
 ):
     """Initialize a simulation instance
 
@@ -287,6 +296,7 @@ def initialize_simulation_with_openff(
         molecule,
         conf_id,
         system,
+        minimize,
     )
 
 
@@ -333,6 +343,7 @@ def initialize_simulation_with_charmmff(
     base: str = "",
     at_endstate: str = "",
     conf_id: int = 0,
+    minimize: bool = True,
 ):
     """Initialize a simulation instance
 
@@ -356,5 +367,5 @@ def initialize_simulation_with_charmmff(
     system, topology = create_charmm_system(zinc_id, base)
 
     return _initialize_simulation(
-        at_endstate, topology, potential, molecule, conf_id, system
+        at_endstate, topology, potential, molecule, conf_id, system, minimize
     )
