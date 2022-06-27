@@ -240,8 +240,8 @@ def _initialize_simulation(
     # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
     # this will be fiexed in the future
     # revert back to openMM velovity call
-    sim.context.setVelocitiesToTemperature(temperature)
-    # sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+    # sim.context.setVelocitiesToTemperature(temperature)
+    sim.context.setVelocities(_seed_velocities(_get_masses(system)))
     return sim
 
 
