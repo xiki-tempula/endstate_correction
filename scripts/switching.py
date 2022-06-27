@@ -45,6 +45,9 @@ switching_length = 5_001
 nr_of_switches = 200
 #############
 save_traj = True
+mm_to_qml_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_qml_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
+qml_to_mm_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_mm_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
+#############
 
 print(f"{ff=}")
 print(f"{name=}")
@@ -57,9 +60,6 @@ if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
     print("All work values have already been calculated.")
     sys.exit()
 
-if save_traj:
-    mm_to_qml_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
-    qml_to_mm_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
 
 # create folder
 os.makedirs(f"{w_dir}/switching_{ff}", exist_ok=True)
