@@ -318,10 +318,12 @@ def test_generate_simulation_instances_with_charmmff():
     # than the pure endstate implementation
 
     # at lambda=0.0 (mm endpoint)
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="mm")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, at_endstate="mm", minimize=False
+    )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id)
+    sim = initialize_simulation_with_charmmff(molecule, zinc_id, minimize=False)
     if implementation.lower() == "nnpops":
         sim.context.setParameter("scale", 0.0)
     else:
@@ -333,10 +335,12 @@ def test_generate_simulation_instances_with_charmmff():
     assert np.isclose(e_sim_mm_endstate, e_sim_mm_interpolate_endstate)
 
     # at lambda=1.0 (qml endpoint)
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="qml")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, at_endstate="qml", minimize=False
+    )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id)
+    sim = initialize_simulation_with_charmmff(molecule, zinc_id, minimize=False)
     if implementation.lower() == "nnpops":
         sim.context.setParameter("scale", 1.0)
     else:
@@ -348,10 +352,14 @@ def test_generate_simulation_instances_with_charmmff():
     assert np.isclose(e_sim_qml_endstate, e_sim_qml_interpolate_endstate)
 
     # double check that QML and MM endpoint have different energies
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="mm")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, at_endstate="mm", minimize=False
+    )
     e_sim_mm_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, at_endstate="qml")
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, at_endstate="qml", minimize=False
+    )
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
 
     assert not np.isclose(e_sim_mm_endstate, e_sim_qml_endstate)
