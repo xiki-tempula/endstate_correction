@@ -174,3 +174,11 @@ def test_switching(ff, dW_for, dW_rev):
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     print(dW_forw)
+
+  # check return values
+    lambs = np.linspace(0, 1, 2)
+    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=False)
+    assert len(list_1) != 0 and len(list_2) == 0
+    
+    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=True)
+    assert len(list_1) != 0 and len(list_2) != 0
