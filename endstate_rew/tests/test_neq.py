@@ -150,27 +150,35 @@ def test_switching(ff, dW_for, dW_rev):
     # dU_rev = dU(x)_mm - dU(x)_qml
     lambs = np.linspace(0, 1, 2)
     print(lambs)
-    dE_list = perform_switching(
+    dE_list, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), dW_for)
     lambs = np.linspace(1, 0, 2)
     print(lambs)
-    dE_list = perform_switching(
+    dE_list, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), dW_rev)
 
     # perform NEQ switching
     lambs = np.linspace(0, 1, 21)
-    dW_forw = perform_switching(
+    dW_forw, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     print(dW_forw)
 
     # perform NEQ switching
     lambs = np.linspace(0, 1, 101)
-    dW_forw = perform_switching(
+    dW_forw, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     print(dW_forw)
+
+  # check return values
+    lambs = np.linspace(0, 1, 2)
+    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=False)
+    assert len(list_1) != 0 and len(list_2) == 0
+    
+    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=True)
+    assert len(list_1) != 0 and len(list_2) != 0

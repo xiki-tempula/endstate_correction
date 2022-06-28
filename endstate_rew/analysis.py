@@ -333,7 +333,7 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
             lambs,
             samples=mm_samples,
             nr_of_switches=nr_of_switches,
-        )
+        )[0]
         / kBT
     )
     lambs = np.linspace(1, 0, switching_length)
@@ -343,7 +343,7 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
             lambs,
             samples=qml_samples,
             nr_of_switches=nr_of_switches,
-        )
+        )[0]
         / kBT
     )
     ##############################
