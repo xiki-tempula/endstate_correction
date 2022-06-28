@@ -7,6 +7,8 @@ from tqdm import tqdm
 from endstate_rew.constant import distance_unit, temperature, check_implementation
 from endstate_rew.system import _seed_velocities, _get_masses
 
+from openmm import OpenMMException
+
 
 def perform_switching(
     sim,
@@ -38,10 +40,14 @@ def perform_switching(
         )
         # set position
         sim.context.setPositions(x)
+
         # reseed velocities
-        # NOTE: FIXME: for now this is done manually
-        sim.context.setVelocitiesToTemperature(temperature)
-        # sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+        try:
+            sim.context.setVelocitiesToTemperature(temperature)
+            # NOTE: FIXME: for now this is done manually
+        except OpenMMException:
+            sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+
         # initialize work
         w = 0.0
         # perform NEQ switching

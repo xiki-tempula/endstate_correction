@@ -194,6 +194,8 @@ def _seed_velocities(masses: np.array) -> np.ndarray:
 def _initialize_simulation(
     at_endstate: str, topology, potential, molecule, conf_id: int, system
 ):
+    from openmm import OpenMMException
+
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
     from endstate_rew.constant import check_implementation
@@ -237,11 +239,14 @@ def _initialize_simulation(
     sim.minimizeEnergy(maxIterations=100)
     u_2 = sim.context.getState(getEnergy=True).getPotentialEnergy()
     print(f"before min: {u_1}; after min: {u_2}")
-    # NOTE: FIXME: velocities are seeded manually right now (otherwise pytorch error) --
-    # this will be fiexed in the future
-    # revert back to openMM velovity call
-    sim.context.setVelocitiesToTemperature(temperature)
-    # sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+
+    try:
+        # openMM velovity call
+        sim.context.setVelocitiesToTemperature(temperature)
+    except OpenMMException:
+        # NOTE: FIXME: velocities are seeded manually (otherwise pytorch error) --
+        sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+
     return sim
 
 
