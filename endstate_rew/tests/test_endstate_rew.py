@@ -44,7 +44,9 @@ def test_interpolation():
     #######################################
     # initialize simulation for charmmff
     #######################################
-    sim = initialize_simulation_with_charmmff(molecule, zinc_id, conf_id=0)
+    sim = initialize_simulation_with_charmmff(
+        molecule, zinc_id, conf_id=0, minimize=False
+    )
 
     if implementation.lower() == "nnpops":
         sim.context.setParameter("scale", 1.0)
@@ -73,7 +75,7 @@ def test_interpolation():
     #####################################
     # initialize simulation for openff
     #####################################
-    sim = initialize_simulation_with_openff(molecule, conf_id=0)
+    sim = initialize_simulation_with_openff(molecule, conf_id=0, minimize=False)
 
     if implementation.lower() == "nnpops":
         sim.context.setParameter("scale", 1.0)

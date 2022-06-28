@@ -33,8 +33,9 @@ elif len(sys.argv) == 1:  # smiles and name must be provided inside of script
     ##############
 
 # choose ff and working directory
-ff = "charmmff"  # "charmmff"  # openff
+ff = "charmmff"  # openff
 w_dir = f"/data/shared/projects/endstate_rew/{name}/"
+
 # equilibrium samples
 n_samples = 5_000
 n_steps_per_sample = 1_000
@@ -42,6 +43,10 @@ n_steps_per_sample = 1_000
 # NEQ
 switching_length = 5_001
 nr_of_switches = 200
+#############
+save_traj = True
+mm_to_qml_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_qml_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
+qml_to_mm_traj_filename = f"{w_dir}/switching_{ff}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_mm_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}.pickle"
 #############
 
 print(f"{ff=}")
@@ -54,6 +59,7 @@ qml_to_mm_filename = f"{w_dir}/switching_{ff}/{name}_neq_ws_from_qml_to_mm_{nr_o
 if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
     print("All work values have already been calculated.")
     sys.exit()
+
 
 # create folder
 os.makedirs(f"{w_dir}/switching_{ff}", exist_ok=True)
@@ -111,15 +117,21 @@ if not path.isfile(mm_to_qml_filename):
     # define lambda space
     lambs = np.linspace(0, 1, switching_length)
     # perform NEQ from MM to QML
-    ws_from_mm_to_qml = perform_switching(
+    ws_from_mm_to_qml, mm_to_qml_samples = perform_switching(
         sim,
         lambdas=lambs,
         samples=mm_samples,
         nr_of_switches=nr_of_switches,
+        save_traj=save_traj,
     )
     # dump work values
     print(ws_from_mm_to_qml)
     pickle.dump(ws_from_mm_to_qml, open(mm_to_qml_filename, "wb+"))
+
+    if save_traj:
+        # save qml endstate samples
+        pickle.dump(mm_to_qml_samples, open(mm_to_qml_traj_filename, "wb+"))
+        print(f"traj dump to: {mm_to_qml_traj_filename}")
 else:
     print(f"Already calculated: {mm_to_qml_filename}")
 
@@ -130,14 +142,20 @@ if not path.isfile(qml_to_mm_filename):
     # define lambda space
     lambs = np.linspace(1, 0, switching_length)
     # perform NEQ from QML to MM
-    ws_from_qml_to_mm = perform_switching(
+    ws_from_qml_to_mm, qml_to_mm_samples = perform_switching(
         sim,
         lambdas=lambs,
         samples=qml_samples,
         nr_of_switches=nr_of_switches,
+        save_traj=save_traj,
     )
     # dump work values
     pickle.dump(ws_from_qml_to_mm, open(qml_to_mm_filename, "wb+"))
     print(ws_from_qml_to_mm)
+
+    if save_traj:
+        # save MM endstate samples
+        pickle.dump(qml_to_mm_samples, open(qml_to_mm_traj_filename, "wb+"))
+        print(f"traj dump to: {qml_to_mm_traj_filename}")
 else:
     print(f"Already calculated: {qml_to_mm_filename}")
