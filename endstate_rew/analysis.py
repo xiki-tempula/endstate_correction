@@ -388,11 +388,13 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
     axs[0].set_title(rf"{name} - distribution of $\Delta$W and $\Delta$E")
     palett = sns.color_palette(n_colors=8)
     palett_as_hex = palett.as_hex()
-    c1, c2, c3, c4 = (
+    c1, c2, c3, c4, c5, c7 = (
         palett_as_hex[0],
         palett_as_hex[1],
         palett_as_hex[2],
         palett_as_hex[3],
+        palett_as_hex[4],
+        palett_as_hex[6],
     )
     axs[0].ticklabel_format(axis="x", style="sci", useOffset=True, scilimits=(0, 0))
     # axs[1].ticklabel_format(axis='x', style='sci', useOffset=False,scilimits=(0,0))
@@ -490,7 +492,8 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
 
     axs[1].errorbar(
         [i for i in range(len(ddG_list))],
-        ddG_list - np.min(ddG_list),
+        # ddG_list - np.min(ddG_list),
+        ddG_list - ddG_list[0],
         dddG_list,
         fmt="o",
     )
@@ -499,6 +502,10 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
     )
     axs[1].set_ylabel("kT")
     # axs[1].legend()
+
+    axs[1].set_ylim([-5, 5])
+
+    axs[1].axhline(y=0.0, color=c1, linestyle=":")
 
     # plot cummulative stddev of dE and dW
     #########################################
@@ -522,20 +529,28 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
         for x in range(1, len(results.dEs_from_qml_to_mm) + 1)
     ]
     axs[2].plot(
-        cum_stddev_ws_from_mm_to_qml, label=r"stddev $\Delta$W(MM$\rightarrow$QML)"
+        cum_stddev_ws_from_mm_to_qml,
+        label=r"stddev $\Delta$W(MM$\rightarrow$QML)",
+        color=c1,
     )
     axs[2].plot(
-        cum_stddev_ws_from_qml_to_mm, label=r"stddev $\Delta$W(QML$\rightarrow$MM)"
+        cum_stddev_dEs_from_mm_to_qml,
+        label=r"stddev $\Delta$E(MM$\rightarrow$QML)",
+        color=c2,
     )
     axs[2].plot(
-        cum_stddev_dEs_from_mm_to_qml, label=r"stddev $\Delta$E(MM$\rightarrow$QML)"
+        cum_stddev_ws_from_qml_to_mm,
+        label=r"stddev $\Delta$W(QML$\rightarrow$MM)",
+        color=c3,
     )
     axs[2].plot(
-        cum_stddev_dEs_from_qml_to_mm, label=r"stddev $\Delta$E(QML$\rightarrow$MM)"
+        cum_stddev_dEs_from_qml_to_mm,
+        label=r"stddev $\Delta$E(QML$\rightarrow$MM)",
+        color=c4,
     )
     # plot 1 kT limit
-    axs[2].axhline(y=1.0, color="yellow", linestyle=":")
-    axs[2].axhline(y=2.0, color="orange", linestyle=":")
+    axs[2].axhline(y=1.0, color=c7, linestyle=":")
+    axs[2].axhline(y=2.0, color=c5, linestyle=":")
 
     axs[2].set_ylabel("kT")
 

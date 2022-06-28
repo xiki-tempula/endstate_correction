@@ -8,6 +8,8 @@ from typing import Tuple
 from endstate_rew.constant import distance_unit, temperature, check_implementation
 from endstate_rew.system import _seed_velocities, _get_masses, get_positions
 
+from openmm import OpenMMException
+
 
 def perform_switching(
     sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
@@ -39,10 +41,15 @@ def perform_switching(
         )
         # set position
         sim.context.setPositions(x)
+
         # reseed velocities
-        # NOTE: FIXME: for now this is done manually
-        # sim.context.setVelocitiesToTemperature(temperature)
-        sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+
+        try:
+            sim.context.setVelocitiesToTemperature(temperature)
+        except OpenMMException:
+            # NOTE: FIXME: for now this is done manually
+            sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+
         # initialize work
         w = 0.0
         # perform NEQ switching
