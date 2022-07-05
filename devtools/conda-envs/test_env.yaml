@@ -29,4 +29,4 @@ dependencies:
      - git+https://github.com/openmm/openmm-ml.git
   #  - codecov
 
-- seaborn_image
+- seaborn-image
