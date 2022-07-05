@@ -10,7 +10,6 @@ import matplotlib.image as mpimg
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 import seaborn as sns
-import seaborn_image as isns
 from openmm import unit
 from pymbar import BAR, EXP
 from tqdm import tqdm
@@ -905,7 +904,7 @@ def vis_torsions(
         fig.suptitle(f"Torsion profile of {name} ({ff})", fontsize=13, weight="bold")
 
         # flip the image, so that it is displayed correctly
-        image = np.flipud(mpimg.imread(f"mol_pics_{ff}/{name}_{ff}.png"))
+        image = mpimg.imread(f"mol_pics_{ff}/{name}_{ff}.png")
 
         # plot the molecule image on the first axis
         axs[0].imshow(image)
