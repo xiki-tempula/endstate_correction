@@ -55,10 +55,7 @@ def perform_switching(
         # perform NEQ switching
         for idx_lamb in range(1, len(lambdas)):
             # set lambda parameter
-            if implementation.lower() == "nnpops":
-                sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb])
-            else:
-                sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb])
+            sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb])
             # test if neq or instantaneous swithching: if neq, perform integration step
             if not inst_switching:
                 # perform 1 simulation step
@@ -68,10 +65,7 @@ def perform_switching(
             # calculate u_t(x_t)
             u_now = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # calculate u_{t-1}(x_t)
-            if implementation.lower() == "nnpops":
-                sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb - 1])
-            else:
-                sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb - 1])
+            sim.context.setParameter("lambda_interpolate", lambdas[idx_lamb - 1])
             u_before = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # add to accumulated work
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)

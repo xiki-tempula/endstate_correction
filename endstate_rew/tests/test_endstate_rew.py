@@ -48,10 +48,7 @@ def test_interpolation():
         molecule, zinc_id, conf_id=0, minimize=False
     )
 
-    if implementation.lower() == "nnpops":
-        sim.context.setParameter("lambda_interpolate", 1.0)
-    else:
-        sim.context.setParameter("lambda_interpolate", 1.0)
+    sim.context.setParameter("lambda_interpolate", 1.0)
 
     u_now = (
         sim.context.getState(getEnergy=True)
@@ -60,10 +57,7 @@ def test_interpolation():
     )
     print(u_now)
     assert np.isclose(u_now, -2346049.500037839)
-    if implementation.lower() == "nnpops":
-        sim.context.setParameter("lambda_interpolate", 0.0)
-    else:
-        sim.context.setParameter("lambda_interpolate", 0.0)
+    sim.context.setParameter("lambda_interpolate", 0.0)
     u_now = (
         sim.context.getState(getEnergy=True)
         .getPotentialEnergy()
