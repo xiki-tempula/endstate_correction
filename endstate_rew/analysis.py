@@ -142,9 +142,9 @@ def calculate_u_kn(
         )  # NOTE: assuming that N_k[0] is the maximum number of samples drawn from any state k
         for k, lamb in enumerate(lambda_scheme):
             if implementation.lower() == "nnpops":
-                sim.context.setParameter("scale", lamb)
+                sim.context.setParameter("lambda_interpolate", lamb)
             else:
-                sim.context.setParameter("lambda", lamb)
+                sim.context.setParameter("lambda_interpolate", lamb)
             us = []
             for x in tqdm(range(len(samples))):
                 sim.context.setPositions(samples[x])
