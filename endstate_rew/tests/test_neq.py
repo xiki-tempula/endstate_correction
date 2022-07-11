@@ -60,14 +60,6 @@ def load_endstate_system_and_samples_openff(
 ) -> Tuple[Simulation, list, list]:
     # initialize simulation and load pre-generated samples
 
-    try:
-        from NNPOps import OptimizedTorchANI as _
-
-        implementation = "NNPOps"
-        platform = "CUDA"
-    except ModuleNotFoundError:
-        platform = "CPU"
-
     n_samples = 5_000
     n_steps_per_sample = 1_000
     ###########################################################################################
@@ -175,10 +167,14 @@ def test_switching(ff, dW_for, dW_rev):
     )
     print(dW_forw)
 
-  # check return values
+    # check return values
     lambs = np.linspace(0, 1, 2)
-    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=False)
+    list_1, list_2 = perform_switching(
+        sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=False
+    )
     assert len(list_1) != 0 and len(list_2) == 0
-    
-    list_1, list_2 = perform_switching(sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=True)
+
+    list_1, list_2 = perform_switching(
+        sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1, save_traj=True
+    )
     assert len(list_1) != 0 and len(list_2) != 0

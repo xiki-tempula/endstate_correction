@@ -233,9 +233,9 @@ def test_generate_simulation_instances_with_openff():
 
     sim = initialize_simulation_with_openff(m, minimize=False)
     if implementation.lower() == "nnpops":
-        sim.context.setParameter("scale", 0.0)
+        sim.context.setParameter("lambda_interpolate", 0.0)
     else:
-        sim.context.setParameter("lambda", 0.0)
+        sim.context.setParameter("lambda_interpolate", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -248,9 +248,9 @@ def test_generate_simulation_instances_with_openff():
 
     sim = initialize_simulation_with_openff(m, minimize=False)
     if implementation.lower() == "nnpops":
-        sim.context.setParameter("scale", 1.0)
+        sim.context.setParameter("lambda_interpolate", 1.0)
     else:
-        sim.context.setParameter("lambda", 1.0)
+        sim.context.setParameter("lambda_interpolate", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -325,9 +325,9 @@ def test_generate_simulation_instances_with_charmmff():
 
     sim = initialize_simulation_with_charmmff(molecule, zinc_id, minimize=False)
     if implementation.lower() == "nnpops":
-        sim.context.setParameter("scale", 0.0)
+        sim.context.setParameter("lambda_interpolate", 0.0)
     else:
-        sim.context.setParameter("lambda", 0.0)
+        sim.context.setParameter("lambda_interpolate", 0.0)
     e_sim_mm_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )
@@ -342,9 +342,9 @@ def test_generate_simulation_instances_with_charmmff():
 
     sim = initialize_simulation_with_charmmff(molecule, zinc_id, minimize=False)
     if implementation.lower() == "nnpops":
-        sim.context.setParameter("scale", 1.0)
+        sim.context.setParameter("lambda_interpolate", 1.0)
     else:
-        sim.context.setParameter("lambda", 1.0)
+        sim.context.setParameter("lambda_interpolate", 1.0)
     e_sim_qml_interpolate_endstate = get_energy(sim).value_in_unit(
         unit.kilojoule_per_mole
     )

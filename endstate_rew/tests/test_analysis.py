@@ -162,8 +162,8 @@ def test_collect_results(ff):
         collect_results_from_neq_and_equ_free_energy_calculations,
     )
 
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
+    name = "ZINC00079729"
+    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
     path = f"data/{name}/"
 
     collect_results_from_neq_and_equ_free_energy_calculations(
