@@ -55,7 +55,7 @@ potential = MLPotential("ani2x")
 import endstate_rew
 package_path = endstate_rew.__path__[0]
 
-base = f"/home/mwieder/endstate_rew/data/jctc_data/{system_name}/"
+base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff
@@ -72,6 +72,7 @@ print(f"{run_id=}")
 print(f"{ff=}")
 print(f"{platform=}")
 print(f"{n_lambdas=}")
+print(f"{vac=}")
 
 lambs = np.linspace(0, 1, n_lambdas)
 assert len(lambs) == n_lambdas
@@ -80,11 +81,11 @@ assert lambs[-1] == 1.0
 ###################
 # generate simulation
 if vac:
-    psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
-    pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
-else:
     psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.psf")
     pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.pdb")
+else:
+    psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
+    pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
 
 params = CharmmParameterSet(
     f"{parameter_base}/{system_name}/charmm-gui/unk/unk.rtf",
