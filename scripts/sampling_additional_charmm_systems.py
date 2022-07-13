@@ -48,8 +48,12 @@ system_name = jctc_systems[system_id]
 ###########################################
 ###########################################
 potential = MLPotential("ani2x")
-base = f"/home/mwieder/Work/Projects/endstate_rew/endstate_rew/data/jctc_data/{system_name}/"
-toppar_base = f"/home/mwieder/Work/Projects/endstate_rew/endstate_rew/data/jctc_data"
+
+import endstate_rew
+package_path = endstate_rew.__path__[0]
+
+base = f"/home/mwieder/endstate_rew/data/jctc_data/{system_name}/"
+parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff
 n_samples = 5_000
@@ -73,16 +77,16 @@ assert lambs[-1] == 1.0
 ###################
 # generate simulation
 
-psf = CharmmPsfFile(f"{base}/charmm-gui/openmm/step3_input.psf")
-pdb = PDBFile(f"{base}/charmm-gui/openmm/step3_input.pdb")
+psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
+pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
 params = CharmmParameterSet(
-    f"{base}/charmm-gui/unk/unk.rtf",
-    f"{base}/charmm-gui/unk/unk.prm",
-    f"{toppar_base}/toppar/top_all36_cgenff.rtf",
-    f"{toppar_base}/toppar/par_all36_cgenff.prm",
-    f"{toppar_base}/toppar/toppar_water_ions.str",
+    f"{parameter_base}/{system_name}/charmm-gui/unk/unk.rtf",
+    f"{parameter_base}/{system_name}/charmm-gui/unk/unk.prm",
+    f"{parameter_base}/toppar/top_all36_cgenff.rtf",
+    f"{parameter_base}/toppar/par_all36_cgenff.prm",
+    f"{parameter_base}/toppar/toppar_water_ions.str",
 )
-psf = read_box(psf, f'{base}/charmm-gui/input.config.dat')
+psf = read_box(psf, f'{parameter_base}/{system_name}/charmm-gui/input.config.dat')
 mm_system = psf.createSystem(params, nonbondedMethod=NoCutoff)
 
 chains = list(psf.topology.chains())

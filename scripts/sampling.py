@@ -85,7 +85,7 @@ else:
 for lamb in lambs:
     print(f"{lamb=}")
     # set lambda
-    sim.context.setParameter("scale", lamb)
+    sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
