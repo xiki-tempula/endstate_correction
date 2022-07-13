@@ -110,7 +110,6 @@ ml_system = potential.createMixedSystem(
 integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)
 sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
-sim.context.setVelocitiesToTemperature(temperature)
 
 ###################
 # perform lambda protocoll
@@ -120,6 +119,7 @@ for lamb in lambs:
     sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
     # collect samples
     sim.reporters.append(
         DCDReporter(
