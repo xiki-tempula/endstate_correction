@@ -13,6 +13,25 @@ temperature = 300 * unit.kelvin
 
 kBT = kB * temperature
 
+jctc_systems = [
+    "1_octanol",
+    "ethane",
+    "methylformate",
+    "2_methoxyphenol",
+    "ethanol",
+    "p_cresol",
+    "3_methylindole",
+    "ethyl_methylsulfide",
+    "phenyl_trifluoroethyl_ether",
+    "4_methylimidazole",
+    "propane",
+    "acetamide",
+    "propionamide",
+    "bis_2_chloroethylether",
+    "methanethiol",
+    "triacetylglycerol",
+]
+
 zinc_systems = [
     (
         "ZINC00061095",
