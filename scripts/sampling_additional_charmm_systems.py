@@ -12,6 +12,7 @@ from openmm.app import (
     CharmmParameterSet,
     CharmmPsfFile,
     NoCutoff,
+    PME,
     PDBFile,
     Simulation,
     DCDReporter,
@@ -42,8 +43,10 @@ def read_box(psf, filename):
 # parse command line arguments
 print("Simulating jctc system")
 run_id = int(sys.argv[1])
+assert run_id > 0
 system_id = int(sys.argv[2])
 system_name = jctc_systems[system_id]
+vac = True
 ###################
 ###########################################
 ###########################################
@@ -60,7 +63,6 @@ n_samples = 5_000
 n_steps_per_sample = 1_000
 n_lambdas = 2
 platform = "CUDA"
-run_id = 1
 ###################
 ###################
 os.makedirs(f"{base}/sampling_{ff}/run{run_id:0>2d}", exist_ok=True)
@@ -77,9 +79,13 @@ assert lambs[0] == 0.0
 assert lambs[-1] == 1.0
 ###################
 # generate simulation
+if vac:
+    psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
+    pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
+else:
+    psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.psf")
+    pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.pdb")
 
-psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
-pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
 params = CharmmParameterSet(
     f"{parameter_base}/{system_name}/charmm-gui/unk/unk.rtf",
     f"{parameter_base}/{system_name}/charmm-gui/unk/unk.prm",
@@ -87,11 +93,15 @@ params = CharmmParameterSet(
     f"{parameter_base}/toppar/par_all36_cgenff.prm",
     f"{parameter_base}/toppar/toppar_water_ions.str",
 )
-psf = read_box(psf, f'{parameter_base}/{system_name}/charmm-gui/input.config.dat')
-mm_system = psf.createSystem(params, nonbondedMethod=NoCutoff)
+if vac:
+    mm_system = psf.createSystem(params, nonbondedMethod=NoCutoff)
+else:
+    psf = read_box(psf, f'{parameter_base}/{system_name}/charmm-gui/input.config.dat')
+    mm_system = psf.createSystem(params, nonbondedMethod=PME)
 
 chains = list(psf.topology.chains())
 ml_atoms = [atom.index for atom in chains[0].atoms()]
+print(f'{ml_atoms=}')
 potential = MLPotential("ani2x")
 ml_system = potential.createMixedSystem(
     psf.topology, mm_system, ml_atoms, interpolate=True
@@ -100,6 +110,7 @@ ml_system = potential.createMixedSystem(
 integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)
 sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
+sim.context.setVelocitiesToTemperature(temperature)
 
 ###################
 # perform lambda protocoll
