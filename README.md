@@ -5,7 +5,7 @@ endstate_rew
 [![codecov](https://codecov.io/gh/wiederm/endstate_rew/branch/main/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_rew/branch/main)
 
 
-Endstate reweighting from MM to QML potential
+Endstate correction from MM to QML potential
 
 ### Copyright
 
