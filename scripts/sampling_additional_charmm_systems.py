@@ -27,15 +27,18 @@ torch.set_num_threads(num_threads)
 
 def read_box(psf, filename):
     try:
-        sysinfo = json.load(open(filename, 'r'))
-        boxlx, boxly, boxlz = map(float, sysinfo['dimensions'][:3])
+        sysinfo = json.load(open(filename, "r"))
+        boxlx, boxly, boxlz = map(float, sysinfo["dimensions"][:3])
     except:
-        for line in open(filename, 'r'):
-            segments = line.split('=')
-            if segments[0].strip() == "BOXLX": boxlx = float(segments[1])
-            if segments[0].strip() == "BOXLY": boxly = float(segments[1])
-            if segments[0].strip() == "BOXLZ": boxlz = float(segments[1])
-    psf.setBox(boxlx*unit.angstroms, boxly*unit.angstroms, boxlz*unit.angstroms)
+        for line in open(filename, "r"):
+            segments = line.split("=")
+            if segments[0].strip() == "BOXLX":
+                boxlx = float(segments[1])
+            if segments[0].strip() == "BOXLY":
+                boxly = float(segments[1])
+            if segments[0].strip() == "BOXLZ":
+                boxlz = float(segments[1])
+    psf.setBox(boxlx * unit.angstroms, boxly * unit.angstroms, boxlz * unit.angstroms)
     return psf
 
 
@@ -53,6 +56,7 @@ vac = True
 potential = MLPotential("ani2x")
 
 import endstate_rew
+
 package_path = endstate_rew.__path__[0]
 
 base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
@@ -66,7 +70,7 @@ platform = "CUDA"
 ###################
 ###################
 os.makedirs(f"{base}/sampling_{ff}/run{run_id:0>2d}", exist_ok=True)
-print('saving to {base}/sampling_{ff}/run{run_id:0>2d}')
+print("saving to {base}/sampling_{ff}/run{run_id:0>2d}")
 print(f"{system_name=}")
 print(f"{run_id=}")
 print(f"{ff=}")
@@ -84,7 +88,9 @@ if vac:
     psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.psf")
     pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.pdb")
 else:
-    psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
+    psf = CharmmPsfFile(
+        f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf"
+    )
     pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
 
 params = CharmmParameterSet(
@@ -97,12 +103,12 @@ params = CharmmParameterSet(
 if vac:
     mm_system = psf.createSystem(params, nonbondedMethod=NoCutoff)
 else:
-    psf = read_box(psf, f'{parameter_base}/{system_name}/charmm-gui/input.config.dat')
+    psf = read_box(psf, f"{parameter_base}/{system_name}/charmm-gui/input.config.dat")
     mm_system = psf.createSystem(params, nonbondedMethod=PME)
 
 chains = list(psf.topology.chains())
 ml_atoms = [atom.index for atom in chains[0].atoms()]
-print(f'{ml_atoms=}')
+print(f"{ml_atoms=}")
 potential = MLPotential("ani2x")
 ml_system = potential.createMixedSystem(
     psf.topology, mm_system, ml_atoms, interpolate=True
@@ -122,6 +128,7 @@ for lamb in lambs:
     sim.context.setPositions(pdb.positions)
     sim.context.setVelocitiesToTemperature(temperature)
     # collect samples
+    sim.reporters.clear()
     sim.reporters.append(
         DCDReporter(
             f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.dcd",
@@ -131,15 +138,4 @@ for lamb in lambs:
 
     samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
-    )
-    # save samples
-    pickle.dump(
-        samples,
-        open(
-            f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle",
-            "wb",
-        ),
-    )
-    print(
-        f"traj dump to: {base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle"
     )
