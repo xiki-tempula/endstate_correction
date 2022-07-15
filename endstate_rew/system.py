@@ -2,7 +2,6 @@ import pickle
 from glob import glob
 from os import path
 
-import numpy as np
 import openmm as mm
 from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
