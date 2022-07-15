@@ -1,24 +1,27 @@
 # general imports
-import os, sys
-import pickle
+import json
+import os
+import sys
 
+import endstate_rew
 import numpy as np
 import openmm as mm
-from openmm import unit
 import torch
-from endstate_rew.constant import collision_rate, stepsize, temperature, jctc_systems
+from endstate_rew.constant import collision_rate, jctc_systems, stepsize, temperature
 from endstate_rew.system import generate_samples
+from openmm import unit
 from openmm.app import (
+    PME,
     CharmmParameterSet,
     CharmmPsfFile,
+    DCDReporter,
     NoCutoff,
-    PME,
     PDBFile,
     Simulation,
-    DCDReporter,
 )
 from openmmml import MLPotential
-import json
+
+package_path = endstate_rew.__path__[0]
 
 ### set number of CPU threads used by pytorch
 num_threads = 2
@@ -49,21 +52,17 @@ run_id = int(sys.argv[1])
 assert run_id > 0
 system_id = int(sys.argv[2])
 system_name = jctc_systems[system_id]
-vac = True
+vac = False
 ###################
 ###########################################
 ###########################################
 potential = MLPotential("ani2x")
 
-import endstate_rew
-
-package_path = endstate_rew.__path__[0]
-
 base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff
-n_samples = 5_000
+n_samples = 5_0  # 00
 n_steps_per_sample = 1_000
 n_lambdas = 2
 platform = "CUDA"
@@ -118,20 +117,26 @@ integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)
 sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
 
+
 ###################
 # perform lambda protocoll
 for lamb in lambs:
     print(f"{lamb=}")
+    if vac:
+        trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_vacuum.dcd"
+    else:
+        trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_waterbox.dcd"
+
+    print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
     sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(pdb.positions)
     sim.context.setVelocitiesToTemperature(temperature)
     # collect samples
-    sim.reporters.clear()
     sim.reporters.append(
         DCDReporter(
-            f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.dcd",
+            trajectory_file,
             n_steps_per_sample,
         )
     )
@@ -139,3 +144,4 @@ for lamb in lambs:
     samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
+    sim.reporters.clear()
