@@ -5,7 +5,6 @@ from os import path
 import openmm as mm
 from openff.toolkit.topology import Molecule
 from openff.toolkit.typing.engines.smirnoff import ForceField
-from openmm import unit
 from openmm.app import (
     CharmmParameterSet,
     CharmmPsfFile,
@@ -17,8 +16,6 @@ from tqdm import tqdm
 
 from endstate_rew.constant import (
     collision_rate,
-    kBT,
-    speed_unit,
     stepsize,
     temperature,
     zinc_systems,

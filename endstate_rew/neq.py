@@ -8,8 +8,6 @@ from typing import Tuple
 from endstate_rew.constant import distance_unit, temperature, check_implementation
 from endstate_rew.system import get_positions
 
-from openmm import OpenMMException
-
 
 def perform_switching(
     sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
