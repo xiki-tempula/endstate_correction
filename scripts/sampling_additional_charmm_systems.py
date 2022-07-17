@@ -52,7 +52,8 @@ run_id = int(sys.argv[1])
 assert run_id > 0
 system_id = int(sys.argv[2])
 system_name = jctc_systems[system_id]
-vac = False
+env = "vacuum"  # waterbox
+assert env in ("waterbox", "vacuum")
 ###################
 ###########################################
 ###########################################
@@ -62,7 +63,7 @@ base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff
-n_samples = 5_0  # 00
+n_samples = 5_000
 n_steps_per_sample = 1_000
 n_lambdas = 2
 platform = "CUDA"
@@ -75,7 +76,7 @@ print(f"{run_id=}")
 print(f"{ff=}")
 print(f"{platform=}")
 print(f"{n_lambdas=}")
-print(f"{vac=}")
+print(f"{env=}")
 
 lambs = np.linspace(0, 1, n_lambdas)
 assert len(lambs) == n_lambdas
@@ -83,14 +84,16 @@ assert lambs[0] == 0.0
 assert lambs[-1] == 1.0
 ###################
 # generate simulation
-if vac:
+if env == "vacuum":
     psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.psf")
     pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/vac.pdb")
-else:
+elif env == "waterbox":
     psf = CharmmPsfFile(
         f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf"
     )
     pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
+else:
+    raise RuntimeError()
 
 params = CharmmParameterSet(
     f"{parameter_base}/{system_name}/charmm-gui/unk/unk.rtf",
@@ -99,11 +102,13 @@ params = CharmmParameterSet(
     f"{parameter_base}/toppar/par_all36_cgenff.prm",
     f"{parameter_base}/toppar/toppar_water_ions.str",
 )
-if vac:
+if env == "vacuum":
     mm_system = psf.createSystem(params, nonbondedMethod=NoCutoff)
-else:
+elif env == "waterbox":
     psf = read_box(psf, f"{parameter_base}/{system_name}/charmm-gui/input.config.dat")
     mm_system = psf.createSystem(params, nonbondedMethod=PME)
+else:
+    raise RuntimeError()
 
 chains = list(psf.topology.chains())
 ml_atoms = [atom.index for atom in chains[0].atoms()]
@@ -122,10 +127,7 @@ sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
 # perform lambda protocoll
 for lamb in lambs:
     print(f"{lamb=}")
-    if vac:
-        trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_vacuum.dcd"
-    else:
-        trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_waterbox.dcd"
+    trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
 
     print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
