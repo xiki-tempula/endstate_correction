@@ -135,7 +135,7 @@ sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
 mm_sample_files = glob(
-    f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd"
+    f"{base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd"
 )
 nr_of_runs = len(mm_sample_files)
 
@@ -153,7 +153,7 @@ assert len(mm_samples) == nr_of_runs * n_samples
 # load samples for lambda=1. , the qml endstate
 qml_samples = []
 qml_sample_files = glob(
-    f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd"
+    f"{base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd"
 )
 nr_of_runs = len(qml_sample_files)
 

@@ -70,7 +70,7 @@ platform = "CUDA"
 ###################
 ###################
 os.makedirs(f"{base}/sampling_{ff}/run{run_id:0>2d}", exist_ok=True)
-print("saving to {base}/sampling_{ff}/run{run_id:0>2d}")
+print(f"saving to {base}/sampling_{ff}/run{run_id:0>2d}")
 print(f"{system_name=}")
 print(f"{run_id=}")
 print(f"{ff=}")
