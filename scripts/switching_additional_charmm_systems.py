@@ -12,6 +12,7 @@ from openmm.app import (
     CharmmPsfFile,
     NoCutoff,
     PDBFile,
+    DCDReporter,
     Simulation,
 )
 from openmmml import MLPotential
@@ -45,7 +46,7 @@ def read_box(psf, filename):
 
 num_threads = 2
 torch.set_num_threads(num_threads)
-env = "vacuum"  # waterbox
+env = "waterbox"  # waterbox
 assert env in ("waterbox", "vacuum")
 ###########################################################################################
 # define run
@@ -131,6 +132,13 @@ ml_system = potential.createMixedSystem(
 integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)
 sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
+# sim.reporters.append(
+#     DCDReporter(
+#         "save_everything.dcd",
+#         1,
+#     )
+# )
+
 ###########################################################################################
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
@@ -140,13 +148,13 @@ mm_sample_files = glob(
 nr_of_runs = len(mm_sample_files)
 
 for samples in mm_sample_files:
-    mm_samples.extend(
-        mdtraj.load_dcd(
-            samples,
-            top=top,
-        ).xyz
-        * unit.nanometer
+    traj = mdtraj.load_dcd(
+        samples,
+        top=top,
     )
+    if env == "waterbox":
+        traj.image_molecules(inplace=True)
+    mm_samples.extend(traj.xyz * unit.nanometer)
 
 assert len(mm_samples) == nr_of_runs * n_samples
 ###########################################################################################
@@ -158,13 +166,13 @@ qml_sample_files = glob(
 nr_of_runs = len(qml_sample_files)
 
 for samples in qml_sample_files:
-    qml_samples.extend(
-        mdtraj.load_dcd(
-            samples,
-            top=top,
-        ).xyz
-        * unit.nanometer
+    traj = mdtraj.load_dcd(
+        samples,
+        top=top,
     )
+    if env == "waterbox":
+        traj.image_molecules(inplace=True)
+    qml_samples.extend(traj.xyz * unit.nanometer)
 
 assert len(qml_samples) == nr_of_runs * n_samples
 ###########################################################################################

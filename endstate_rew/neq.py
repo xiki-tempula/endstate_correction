@@ -14,8 +14,6 @@ def perform_switching(
 ) -> Tuple[list, list]:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
 
-    implementation, platform = check_implementation()
-
     # list  of work values
     ws = []
     # list of conformations
@@ -62,7 +60,6 @@ def perform_switching(
             u_before = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # add to accumulated work
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
-        ws.append(w)
         if save_traj:
             endstate_samples.append(get_positions(sim))
     return np.array(ws) * unit.kilojoule_per_mole, endstate_samples
