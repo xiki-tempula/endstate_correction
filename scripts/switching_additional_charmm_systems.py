@@ -78,8 +78,8 @@ qml_to_mm_traj_filename = f"{base}/switching_{ff}/{system_name}_samples_{n_sampl
 print(f"{ff=}")
 print(f"{system_name=}")
 
-mm_to_qml_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_mm_to_qml_{nr_of_switches}_{switching_length}.pickle"
-qml_to_mm_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}.pickle"
+mm_to_qml_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_mm_to_qml_{nr_of_switches}_{switching_length}_{env}.pickle"
+qml_to_mm_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}_{env}.pickle"
 
 if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
     print("All work values have already been calculated.")
