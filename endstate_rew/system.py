@@ -167,30 +167,6 @@ def create_openff_system(molecule):
     return system, topology
 
 
-def _get_masses(system) -> np.array:
-    return (
-        np.array(
-            [
-                system.getParticleMass(atom_idx) / unit.dalton
-                for atom_idx in range(system.getNumParticles())
-            ]
-        )
-        * unit.daltons
-    )
-
-
-def _seed_velocities(masses: np.array) -> np.ndarray:
-
-    # should only take
-    # sim.context.setVelocitiesToTemperature(temperature)
-    # but currently this returns a pytorch error
-    # instead seed manually from boltzmann distribution
-
-    sigma_v = np.array([unit.sqrt(kBT / m) / speed_unit for m in masses]) * speed_unit
-
-    return np.random.randn(len(sigma_v), 3) * sigma_v[:, None]
-
-
 def _initialize_simulation(
     at_endstate: str,
     topology,
@@ -200,8 +176,6 @@ def _initialize_simulation(
     system,
     minimize: bool,
 ):
-    from openmm import OpenMMException
-
     # define integrator
     integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
     from endstate_rew.constant import check_implementation
@@ -248,12 +222,7 @@ def _initialize_simulation(
     u_2 = sim.context.getState(getEnergy=True).getPotentialEnergy()
     print(f"before min: {u_1}; after min: {u_2}")
 
-    try:
-        # openMM velovity call
-        sim.context.setVelocitiesToTemperature(temperature)
-    except OpenMMException:
-        # NOTE: FIXME: velocities are seeded manually (otherwise pytorch error) --
-        sim.context.setVelocities(_seed_velocities(_get_masses(system)))
+    sim.context.setVelocitiesToTemperature(temperature)
 
     return sim
 
@@ -281,7 +250,7 @@ def initialize_simulation_with_openff(
     # initialize potential
     potential = MLPotential("ani2x")
     # initialize openMM system and topology
-    print(w_dir)
+
     if w_dir:
         mol_path = f"{w_dir}/system.openff"
         if path.isfile(mol_path):  # if already generated, load it
@@ -311,6 +280,14 @@ def _get_hipen_data():
 
     path = pathlib.Path(end.__file__).resolve().parent
     return f"{path}/data/hipen_data"
+
+
+def _get_jctc_data():
+    import pathlib
+    import endstate_rew as end
+
+    path = pathlib.Path(end.__file__).resolve().parent
+    return f"{path}/data/jctc_data"
 
 
 # creating charmm systems from zinc data

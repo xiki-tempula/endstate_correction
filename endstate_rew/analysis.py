@@ -887,34 +887,37 @@ def vis_torsions(
     ################################################## PLOT TORSION PROFILES ##########################################################################################
 
     if plotting:
+        import matplotlib.gridspec as gridspec
+
+        plt.style.use("fivethirtyeight")
+        sns.set_theme()
+        sns.set_palette("bright")
 
         # generate molecule picture
         save_mol_pic(zinc_id=zinc_id, ff=ff)
 
-        # counter for addressing axis
-        counter = 0
-
         # create corresponding nr of subplots
-        fig, axs = plt.subplots(
-            len(torsions) + 1, 1, figsize=(8, len(torsions) * 2 + 6), dpi=400
+        fig = plt.figure(tight_layout=True, figsize=(8, len(torsions) * 2 + 6), dpi=400)
+        gs = gridspec.GridSpec(
+            len(torsions) + 1,
+            2,
         )
-        fig.suptitle(f"Torsion profile of {name} ({ff})", fontsize=13, weight="bold")
+
+        fig.suptitle(f"Torsion profile of {name} ({ff})", fontsize=15, weight="bold")
 
         # flip the image, so that it is displayed correctly
         image = mpimg.imread(f"mol_pics_{ff}/{name}_{ff}.png")
 
         # plot the molecule image on the first axis
-        axs[0].imshow(image)
-        axs[0].axis("off")
+        ax = fig.add_subplot(gs[0, :])
 
-        # set counter to 1 (for torsion profiles)
-        counter += 1
-        # counter for atom indices
-        idx_counter = 0
+        ax.imshow(image)
+        ax.axis("off")
 
         # iterate over all torsions and plot results
-        for torsion in torsions:
-
+        for counter in range(1, len(torsions) + 1):
+            # counter for atom indices
+            idx_counter = counter - 1
             # plot only sampling data
             if not switching:
                 data_histplot = {
@@ -941,25 +944,46 @@ def vis_torsions(
                 w_distance_qml_switch_mm = wasserstein_distance(u_values = list(chain.from_iterable(torsions_qml[idx_counter])), v_values = list(chain.from_iterable(torsions_mm_switching[idx_counter])))
                 w_distance_mm_switch_qml = wasserstein_distance(u_values = list(chain.from_iterable(torsions_mm[idx_counter])), v_values = list(chain.from_iterable(torsions_qml_switching[idx_counter]))) """
 
-            sns.histplot(
-                ax=axs[counter],
-                data=data_histplot,
-                bins=100,  # not sure how many bins to use
-                kde=True,
-                alpha=0.5,
-                stat="density",
-                common_norm=False,
+            ax_violin = fig.add_subplot(gs[counter, 0])
+            sns.violinplot(
+                ax=ax_violin,
+                data=[
+                    torsions_mm[idx_counter].squeeze(),
+                    torsions_qml[idx_counter].squeeze(),
+                    torsions_mm_switching[idx_counter].squeeze(),
+                    torsions_qml_switching[idx_counter].squeeze(),
+                ],
+                orient="h",
+                inner="point",
+                split=True,
+                scale="width",
+                saturation=0.5,
             )
-            # add atom indices as subplot title
-            axs[counter].set_title(f"Torsion {all_indices[idx_counter]}", fontsize=13)
+            ax_kde = fig.add_subplot(gs[counter, 1])
+            sns.kdeplot(
+                ax=ax_kde,
+                data=data_histplot,
+                common_norm=False,
+                shade=True,
+                linewidth=2,
+                # kde=True,
+                # alpha=0.5,
+                # stat="density",
+                # common_norm=False,
+            )
 
             # adjust axis labelling
             unit = np.arange(-np.pi, np.pi + np.pi / 4, step=(1 / 4 * np.pi))
-            axs[counter].set(xlim=(-np.pi, np.pi))
-            axs[counter].set_xticks(
-                unit, ["-π", "-3π/4", "-π/2", "-π/4", "0", "π/4", "π/2", "3π/4", "π"]
-            )
-            axs[counter].yaxis.set_major_formatter(FormatStrFormatter("%.3f"))
+            for ax in [ax_violin, ax_kde]:
+                # add atom indices as subplot title
+                ax.set_title(f"Torsion {all_indices[idx_counter]}", fontsize=13)
+                ax.set(xlim=(-np.pi, np.pi))
+                ax.set_xticks(
+                    unit,
+                    ["-π", "-3π/4", "-π/2", "-π/4", "0", "π/4", "π/2", "3π/4", "π"],
+                )
+                ax.yaxis.set_major_formatter(FormatStrFormatter("%.3f"))
+                ax.set_yticks([])  # remove tick values on y axis
 
             # if wasserstein distance is computed, it can be added as an annotation box next to the plot
             """ text_div = f'Wasserstein distance\n\nmm (sampling) & qml (sampling): {w_distance:.3f}\nmm (sampling) & qml ({switching_length}ps switch): {w_distance_mm_switch_qml:.3f}\nqml (sampling) & mm ({switching_length}ps switch): {w_distance_qml_switch_mm:.3f}'
@@ -976,16 +1000,14 @@ def vis_torsions(
                     boxcoords=("axes fraction", "axes points"),
                     box_alignment=(1, 0.08))
                     #arrowprops=dict(arrowstyle="->"))
-            axs[counter].add_artist(ab) """
+            axs[counter][0].add_artist(ab) """
 
-            counter += 1
-            idx_counter += 1
-        axs[-1].set_xlabel("Dihedral angle")
-
+        # axs[-1][0].set_xlabel("Dihedral angle")
         plt.tight_layout()
-
         if not os.path.isdir(f"torsion_profiles_{ff}"):
             os.makedirs(f"torsion_profiles_{ff}")
         plt.savefig(f"torsion_profiles_{ff}/{name}_{ff}_{switching_length}ps.png")
+        plt.show()
+
     else:
         print(f"No torsion profile can be generated for {name}")
