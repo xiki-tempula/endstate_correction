@@ -76,7 +76,7 @@ if ff == "openff":
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, conf_id=conf_id
+        molecule, zinc_id=name, conf_id=conf_id#, minimize = False
     )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
