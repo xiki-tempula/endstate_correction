@@ -76,7 +76,7 @@ if ff == "openff":
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, conf_id=conf_id
+        molecule, zinc_id=name, conf_id=conf_id#, minimize = False
     )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
@@ -85,7 +85,7 @@ else:
 for lamb in lambs:
     print(f"{lamb=}")
     # set lambda
-    sim.context.setParameter("scale", lamb)
+    sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
