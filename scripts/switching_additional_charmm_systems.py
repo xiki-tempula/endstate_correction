@@ -12,7 +12,6 @@ from openmm.app import (
     CharmmPsfFile,
     NoCutoff,
     PDBFile,
-    DCDReporter,
     Simulation,
 )
 from openmmml import MLPotential
@@ -59,7 +58,7 @@ platform = "CUDA"
 ###########################################
 potential = MLPotential("ani2x")
 
-base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
+output_base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 # equilibrium samples
@@ -71,15 +70,15 @@ switching_length = 5_001
 nr_of_switches = 500
 #############
 save_traj = True
-mm_to_qml_traj_filename = f"{base}/switching_{ff}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_qml_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}_{env}.pickle"
-qml_to_mm_traj_filename = f"{base}/switching_{ff}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_mm_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}_{env}.pickle"
+mm_to_qml_traj_filename = f"{output_base}/switching_{ff}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_qml_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}_{env}.pickle"
+qml_to_mm_traj_filename = f"{output_base}/switching_{ff}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_mm_endstate_nr_samples_{nr_of_switches}_switching_length_{switching_length}_{env}.pickle"
 #############
 
 print(f"{ff=}")
 print(f"{system_name=}")
 
-mm_to_qml_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_mm_to_qml_{nr_of_switches}_{switching_length}_{env}.pickle"
-qml_to_mm_filename = f"{base}/switching_{ff}/{system_name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}_{env}.pickle"
+mm_to_qml_filename = f"{output_base}/switching_{ff}/{system_name}_neq_ws_from_mm_to_qml_{nr_of_switches}_{switching_length}_{env}.pickle"
+qml_to_mm_filename = f"{output_base}/switching_{ff}/{system_name}_neq_ws_from_qml_to_mm_{nr_of_switches}_{switching_length}_{env}.pickle"
 
 if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
     print("All work values have already been calculated.")
@@ -87,8 +86,8 @@ if path.isfile(mm_to_qml_filename) and path.isfile(qml_to_mm_filename):
 
 
 # create folder
-os.makedirs(f"{base}/switching_{ff}", exist_ok=True)
-print(f"Generate directory: {base}/switching_{ff}")
+os.makedirs(f"{output_base}/switching_{ff}", exist_ok=True)
+print(f"Generate directory: {output_base}/switching_{ff}")
 
 ###########################################################################################
 ###########################################################################################
@@ -136,7 +135,7 @@ sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
 mm_sample_files = glob(
-    f"{base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd"
+    f"{output_base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd"
 )
 nr_of_runs = len(mm_sample_files)
 
@@ -154,7 +153,7 @@ assert len(mm_samples) == nr_of_runs * n_samples
 # load samples for lambda=1. , the qml endstate
 qml_samples = []
 qml_sample_files = glob(
-    f"{base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd"
+    f"{output_base}/sampling_{ff}/run*/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd"
 )
 nr_of_runs = len(qml_sample_files)
 

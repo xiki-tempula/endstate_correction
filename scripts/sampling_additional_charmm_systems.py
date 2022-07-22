@@ -59,7 +59,7 @@ assert env in ("waterbox", "vacuum")
 ###########################################
 potential = MLPotential("ani2x")
 
-base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
+output_base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff
@@ -69,8 +69,8 @@ n_lambdas = 2
 platform = "CUDA"
 ###################
 ###################
-os.makedirs(f"{base}/sampling_{ff}/run{run_id:0>2d}", exist_ok=True)
-print(f"saving to {base}/sampling_{ff}/run{run_id:0>2d}")
+os.makedirs(f"{output_base}/sampling_{ff}/run{run_id:0>2d}", exist_ok=True)
+print(f"saving to {output_base}/sampling_{ff}/run{run_id:0>2d}")
 print(f"{system_name=}")
 print(f"{run_id=}")
 print(f"{ff=}")
@@ -130,7 +130,7 @@ sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
 # perform lambda protocoll
 for lamb in lambs:
     print(f"{lamb=}")
-    trajectory_file = f"{base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
+    trajectory_file = f"{output_base}/sampling_{ff}/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
 
     print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
