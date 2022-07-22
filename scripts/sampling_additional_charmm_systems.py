@@ -113,10 +113,13 @@ else:
 chains = list(psf.topology.chains())
 ml_atoms = [atom.index for atom in chains[0].atoms()]
 print(f"{ml_atoms=}")
+
+#####################
 potential = MLPotential("ani2x")
 ml_system = potential.createMixedSystem(
     psf.topology, mm_system, ml_atoms, interpolate=True
 )
+#####################
 
 integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)

@@ -132,13 +132,6 @@ ml_system = potential.createMixedSystem(
 integrator = mm.LangevinIntegrator(temperature, collision_rate, stepsize)
 platform = mm.Platform.getPlatformByName(platform)
 sim = Simulation(psf.topology, ml_system, integrator, platform=platform)
-# sim.reporters.append(
-#     DCDReporter(
-#         "save_everything.dcd",
-#         1,
-#     )
-# )
-
 ###########################################################################################
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
