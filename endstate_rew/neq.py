@@ -5,7 +5,7 @@ from openmm import unit
 from tqdm import tqdm
 from typing import Tuple
 
-from endstate_rew.constant import distance_unit, temperature, check_implementation
+from endstate_rew.constant import distance_unit, temperature
 from endstate_rew.system import get_positions
 
 
