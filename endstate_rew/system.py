@@ -210,10 +210,10 @@ def _initialize_simulation(
     sim.context.setPositions(molecule.conformers[conf_id])
     # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
     # for now avoiding call to minimizer
-    print("Minimizing ...")
     u_1 = sim.context.getState(getEnergy=True).getPotentialEnergy()
 
     if minimize is True:
+        print("Minimizing ...")
         sim.minimizeEnergy(maxIterations=100)
     u_2 = sim.context.getState(getEnergy=True).getPotentialEnergy()
     print(f"before min: {u_1}; after min: {u_2}")
