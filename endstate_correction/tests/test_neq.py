@@ -2,109 +2,75 @@ import pickle
 from typing import Tuple
 
 import numpy as np
-import pytest
 from endstate_correction.neq import perform_switching
-from endstate_correction.system import (
-    _get_hipen_data,
-    create_openff_system,
-    generate_molecule,
-    initialize_simulation_with_charmmff,
-    initialize_simulation_with_openff,
-)
 from openmm import unit
 from openmm.app import Simulation
+import endstate_correction
+import pathlib
+import mdtraj
 
 
-def load_endstate_system_and_samples_charmmff(
-    molecule, name: str, path_to_samples: str, base: str = ""
+def load_endstate_system_and_samples(
+    system_name: str,
 ) -> Tuple[Simulation, list, list]:
+
     # initialize simulation and load pre-generated samples
-    try:
-        from NNPOps import OptimizedTorchANI as _
 
-        implementation = "NNPOps"
-        platform = "CUDA"
-    except ModuleNotFoundError:
-        platform = "CPU"
+    from openmm.app import (
+        CharmmParameterSet,
+        CharmmPsfFile,
+        CharmmCrdFile,
+    )
 
-    if not base:
-        base = _get_hipen_data()
+    from endstate_correction.system import create_charmm_system
 
+    ########################################################
+    ########################################################
+    # ----------------- vacuum -----------------------------
+    # get all relevant files
+    path = pathlib.Path(endstate_correction.__file__).resolve().parent
+    hipen_testsystem = f"{path}/data/hipen_data"
+
+    system_name = "ZINC00079729"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    crd = CharmmCrdFile(f"{hipen_testsystem}/{system_name}/{system_name}.crd")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
+    )
+
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    sim.context.setPositions(crd.positions)
+    # data/ZINC00079729/sampling_charmmff/run01/ZINC00079729_samples_5000_steps_1000_lamb_0.0000.pickle
     n_samples = 5_000
     n_steps_per_sample = 1_000
     ###########################################################################################
-    sim = initialize_simulation_with_charmmff(molecule, name, base)
-
-    samples_mm = pickle.load(
-        open(
-            f"{path_to_samples}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle",
-            "rb",
-        )
-    )
-    samples_qml = pickle.load(
-        open(
-            f"{path_to_samples}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle",
-            "rb",
-        )
+    mm_samples = []
+    traj = mdtraj.load_dcd(
+        f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.dcd",
+        top=f"{hipen_testsystem}/{system_name}/{system_name}.psf",
     )
 
-    return sim, samples_mm, samples_qml
-
-
-def load_endstate_system_and_samples_openff(
-    name: str,
-    smiles: str,
-    path_to_samples: str,
-) -> Tuple[Simulation, list, list]:
-    # initialize simulation and load pre-generated samples
-
-    n_samples = 5_000
-    n_steps_per_sample = 1_000
-    ###########################################################################################
-    molecule = generate_molecule(forcefield="openff", smiles=smiles)
-    sim = initialize_simulation_with_openff(molecule)
-
-    samples_mm = pickle.load(
-        open(
-            f"{path_to_samples}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle",
-            "rb",
-        )
+    mm_samples.extend(traj.xyz * unit.nanometer)
+    qml_samples = []
+    traj = mdtraj.load_dcd(
+        f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.dcd",
+        top=f"{hipen_testsystem}/{system_name}/{system_name}.psf",
     )
-    samples_qml = pickle.load(
-        open(
-            f"{path_to_samples}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle",
-            "rb",
-        )
-    )
+    qml_samples.extend(traj.xyz * unit.nanometer)
 
-    return sim, samples_mm, samples_qml
+    return sim, mm_samples, qml_samples
 
 
-@pytest.mark.parametrize(
-    "ff, dW_for, dW_rev",
-    [
-        (
-            "charmmff",
-            -2405742.1451317305,
-            2405742.1452882225,
-        ),
-        (
-            "openff",
-            -2346353.8752537486,
-            2346353.8752537486,
-        ),
-    ],
-)
-def test_switching(ff, dW_for, dW_rev):
+def test_switching():
 
-    name = "ZINC00077329"
-    print(f"{name=}")
-    print(f"{ff=}")
+    system_name = "ZINC00077329"
+    print(f"{system_name=}")
+
     # load simulation and samples for 2cle
-    sim, samples_mm, samples_qml = load_endstate_system_and_samples_openff(
-        name=name,
-        smiles="Cn1cc(Cl)c(/C=N/O)n1",
-        path_to_samples=f"data/{name}/sampling_{ff}/run01",
+    sim, samples_mm, samples_qml = load_endstate_system_and_samples(
+        system_name=system_name,
     )
     # perform instantaneous switching with predetermined coordinate set
     # here, we evaluate dU_forw = dU(x)_qml - dU(x)_mm and make sure that it is the same as
@@ -114,13 +80,19 @@ def test_switching(ff, dW_for, dW_rev):
     dE_list, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
-    assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), dW_for)
+    assert np.isclose(
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -5252555.14554809
+    )
     lambs = np.linspace(1, 0, 2)
-    print(lambs)
+
     dE_list, _ = perform_switching(
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
-    assert np.isclose(dE_list[0].value_in_unit(unit.kilojoule_per_mole), dW_rev)
+    print(dE_list)
+
+    assert np.isclose(
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 5252555.14554809
+    )
 
     # perform NEQ switching
     lambs = np.linspace(0, 1, 21)
