@@ -3,12 +3,17 @@ import json
 import os
 import sys
 
-import endstate_rew
+import endstate_correction
 import numpy as np
 import openmm as mm
 import torch
-from endstate_rew.constant import collision_rate, jctc_systems, stepsize, temperature
-from endstate_rew.system import generate_samples
+from endstate_correction.constant import (
+    collision_rate,
+    jctc_systems,
+    stepsize,
+    temperature,
+)
+from endstate_correction.system import generate_samples
 from openmm import unit
 from openmm.app import (
     PME,
@@ -21,7 +26,7 @@ from openmm.app import (
 )
 from openmmml import MLPotential
 
-package_path = endstate_rew.__path__[0]
+package_path = endstate_correction.__path__[0]
 
 ### set number of CPU threads used by pytorch
 num_threads = 2
@@ -59,7 +64,7 @@ assert env in ("waterbox", "vacuum")
 ###########################################
 potential = MLPotential("ani2x")
 
-output_base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
+output_base = f"/data/shared/projects/endstate_correction/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 ff = "charmmff"  # "openff" #"charmmff"  # openff

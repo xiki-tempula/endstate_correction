@@ -4,4 +4,4 @@ API Documentation
 .. autosummary::
    :toctree: autosummary
 
-   endstate_rew.canvas
+   endstate_correction.canvas

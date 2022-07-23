@@ -3,5 +3,5 @@ include MANIFEST.in
 include CODE_OF_CONDUCT.md
 include versioneer.py
 
-graft endstate_rew
+graft endstate_correction
 global-exclude *.py[cod] __pycache__ *.so

@@ -9,4 +9,4 @@ path_classifiers:
     - versioneer.py  # Set Versioneer.py to an external "library" (3rd party code)
     - devtools/*
   generated:
-    - endstate_rew/_version.py
+    - endstate_correction/_version.py

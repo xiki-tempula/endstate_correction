@@ -4,19 +4,23 @@ from openmm.app import (
     PDBFile,
     CharmmCrdFile,
 )
-import endstate_rew
+import endstate_correction
 import pathlib
 
 # define path to test systems
-path = pathlib.Path(endstate_rew.__file__).resolve().parent
+path = pathlib.Path(endstate_correction.__file__).resolve().parent
 hipen_testsystem = f"{path}/data/hipen_data"
 
-path = pathlib.Path(endstate_rew.__file__).resolve().parent
+path = pathlib.Path(endstate_correction.__file__).resolve().parent
 jctc_testsystem = f"{path}/data/jctc_data"
 
 
 def test_sampling():
-    from endstate_rew.system import generate_samples, create_charmm_system, read_box
+    from endstate_correction.system import (
+        generate_samples,
+        create_charmm_system,
+        read_box,
+    )
 
     ########################################################
     ########################################################

@@ -3,8 +3,8 @@ from typing import Tuple
 
 import numpy as np
 import pytest
-from endstate_rew.neq import perform_switching
-from endstate_rew.system import (
+from endstate_correction.neq import perform_switching
+from endstate_correction.system import (
     _get_hipen_data,
     create_openff_system,
     generate_molecule,

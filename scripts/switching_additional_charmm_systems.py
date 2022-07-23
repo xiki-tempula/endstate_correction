@@ -5,7 +5,7 @@ import os
 from os import path
 import numpy as np
 import torch
-from endstate_rew.neq import perform_switching
+from endstate_correction.neq import perform_switching
 from openmm.app import (
     PME,
     CharmmParameterSet,
@@ -15,15 +15,20 @@ from openmm.app import (
     Simulation,
 )
 from openmmml import MLPotential
-from endstate_rew.constant import collision_rate, jctc_systems, stepsize, temperature
+from endstate_correction.constant import (
+    collision_rate,
+    jctc_systems,
+    stepsize,
+    temperature,
+)
 from glob import glob
 import json
 from openmm import unit
-import endstate_rew
+import endstate_correction
 import openmm as mm
 import mdtraj
 
-package_path = endstate_rew.__path__[0]
+package_path = endstate_correction.__path__[0]
 
 
 def read_box(psf, filename):
@@ -58,7 +63,7 @@ platform = "CUDA"
 ###########################################
 potential = MLPotential("ani2x")
 
-output_base = f"/data/shared/projects/endstate_rew/jctc_data/{system_name}/"
+output_base = f"/data/shared/projects/endstate_correction/jctc_data/{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
 ###################
 # equilibrium samples

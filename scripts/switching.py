@@ -5,13 +5,13 @@ import os
 from os import path
 import numpy as np
 import torch
-from endstate_rew.neq import perform_switching
-from endstate_rew.system import (
+from endstate_correction.neq import perform_switching
+from endstate_correction.system import (
     generate_molecule,
     initialize_simulation_with_charmmff,
     initialize_simulation_with_openff,
 )
-from endstate_rew.constant import zinc_systems
+from endstate_correction.constant import zinc_systems
 from glob import glob
 
 num_threads = 2
@@ -34,7 +34,7 @@ elif len(sys.argv) == 1:  # smiles and name must be provided inside of script
 
 # choose ff and working directory
 ff = "charmmff"  # openff
-w_dir = f"/data/shared/projects/endstate_rew/{name}/"
+w_dir = f"/data/shared/projects/endstate_correction/{name}/"
 
 # equilibrium samples
 n_samples = 5_000
@@ -79,7 +79,7 @@ else:
 if ff == "openff":
     sim = initialize_simulation_with_openff(
         molecule=molecule,
-        w_dir=f"/data/shared/projects/endstate_rew/{name}/",
+        w_dir=f"/data/shared/projects/endstate_correction/{name}/",
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(molecule=molecule, zinc_id=name)
@@ -87,7 +87,7 @@ elif ff == "charmmff":
 # load samples for lambda=0. , the mm endstate
 mm_samples = []
 mm_sample_files = glob(
-    f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle"
+    f"/data/shared/projects/endstate_correction/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.pickle"
 )
 nr_of_runs = len(mm_sample_files)
 
@@ -100,7 +100,7 @@ assert len(mm_samples) == nr_of_runs * n_samples
 # load samples for lambda=1. , the qml endstate
 qml_samples = []
 qml_sample_files = glob(
-    f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle"
+    f"/data/shared/projects/endstate_correction/{name}/sampling_{ff}/run*/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.pickle"
 )
 nr_of_runs = len(qml_sample_files)
 

@@ -1,8 +1,8 @@
-endstate_rew
+endstate_correction
 ==============================
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/wiederm/endstate_rew/workflows/CI/badge.svg)](https://github.com/wiederm/endstate_rew/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/wiederm/endstate_rew/branch/main/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_rew/branch/main)
+[![GitHub Actions Build Status](https://github.com/wiederm/endstate_correction/workflows/CI/badge.svg)](https://github.com/wiederm/endstate_correction/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/wiederm/endstate_correction/branch/main/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_correction/branch/main)
 
 
 Endstate correction from MM to QML potential

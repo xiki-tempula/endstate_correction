@@ -16,8 +16,8 @@ from tqdm import tqdm
 import mdtraj as md
 from scipy.stats import wasserstein_distance
 from itertools import chain
-from endstate_rew.system import generate_molecule
-from endstate_rew.constant import kBT, check_implementation, zinc_systems
+from endstate_correction.system import generate_molecule
+from endstate_correction.constant import kBT, check_implementation, zinc_systems
 
 
 def _collect_equ_samples(
@@ -102,7 +102,7 @@ def calculate_u_kn(
 
     from os import path
 
-    from endstate_rew.system import (
+    from endstate_correction.system import (
         generate_molecule,
         initialize_simulation_with_charmmff,
         initialize_simulation_with_openff,
@@ -264,13 +264,13 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
 
     from pymbar import MBAR
 
-    from endstate_rew.neq import perform_switching
-    from endstate_rew.system import (
+    from endstate_correction.neq import perform_switching
+    from endstate_correction.system import (
         generate_molecule,
         initialize_simulation_with_charmmff,
         initialize_simulation_with_openff,
     )
-    from endstate_rew.analysis import _collect_equ_samples
+    from endstate_correction.analysis import _collect_equ_samples
 
     # collect equ results
     equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id:0>2d}"
@@ -760,7 +760,7 @@ def get_indices(rot_bond: int, rot_bond_list: list, bonds: list):
 def vis_torsions(
     zinc_id: int,
     ff: str,
-    w_dir: str = "/data/shared/projects/endstate_rew/",
+    w_dir: str = "/data/shared/projects/endstate_correction/",
     switching: bool = False,
     switching_length: int = 5,
 ):

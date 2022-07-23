@@ -1,5 +1,5 @@
 """
-Unit and regression test for the endstate_rew package.
+Unit and regression test for the endstate_correction package.
 """
 
 # Import package, test suite, and other packages as needed
@@ -8,17 +8,17 @@ import pytest
 import os
 import numpy as np
 from openmm import unit
-from endstate_rew.constant import check_implementation
+from endstate_correction.constant import check_implementation
 
 
-def test_endstate_rew_imported():
+def test_endstate_correction_imported():
     """Sample test, will always pass so long as import statement worked."""
-    assert "endstate_rew" in sys.modules
+    assert "endstate_correction" in sys.modules
 
 
 def test_hipen_import():
 
-    from endstate_rew.system import _get_hipen_data
+    from endstate_correction.system import _get_hipen_data
 
     print(_get_hipen_data())
 
@@ -28,7 +28,7 @@ def test_hipen_import():
     reason="Requires 'CUDA' and 'nnpops' enabled openmm-ml, which is currently not available on conda",  # TODO: FIXME!
 )
 def test_interpolation():
-    from endstate_rew.system import (
+    from endstate_correction.system import (
         initialize_simulation_with_openff,
         generate_molecule,
         initialize_simulation_with_charmmff,
