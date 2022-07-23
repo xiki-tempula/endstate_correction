@@ -211,7 +211,6 @@ def _initialize_simulation(
     # NOTE: FIXME: minimizing the energy of the interpolating potential leeds to very high energies,
     # for now avoiding call to minimizer
     u_1 = sim.context.getState(getEnergy=True).getPotentialEnergy()
-
     if minimize is True:
         print("Minimizing ...")
         sim.minimizeEnergy(maxIterations=100)
