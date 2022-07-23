@@ -62,4 +62,5 @@ def perform_switching(
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
         if save_traj:
             endstate_samples.append(get_positions(sim))
+        ws.append(w)
     return np.array(ws) * unit.kilojoule_per_mole, endstate_samples
