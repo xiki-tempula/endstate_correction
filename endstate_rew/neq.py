@@ -5,18 +5,14 @@ from openmm import unit
 from tqdm import tqdm
 from typing import Tuple
 
-from endstate_rew.constant import distance_unit, temperature, check_implementation
-from endstate_rew.system import _seed_velocities, _get_masses, get_positions
-
-from openmm import OpenMMException
+from endstate_rew.constant import distance_unit, temperature
+from endstate_rew.system import get_positions
 
 
 def perform_switching(
     sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
 ) -> Tuple[list, list]:
     """performs NEQ switching using the lambda sheme passed from randomly dranw samples"""
-
-    implementation, platform = check_implementation()
 
     # list  of work values
     ws = []
@@ -43,12 +39,7 @@ def perform_switching(
         sim.context.setPositions(x)
 
         # reseed velocities
-
-        try:
-            sim.context.setVelocitiesToTemperature(temperature)
-        except OpenMMException:
-            # NOTE: FIXME: for now this is done manually
-            sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+        sim.context.setVelocitiesToTemperature(temperature)
 
         # initialize work
         w = 0.0
@@ -69,7 +60,6 @@ def perform_switching(
             u_before = sim.context.getState(getEnergy=True).getPotentialEnergy()
             # add to accumulated work
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
-        ws.append(w)
         if save_traj:
             endstate_samples.append(get_positions(sim))
     return np.array(ws) * unit.kilojoule_per_mole, endstate_samples

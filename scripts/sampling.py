@@ -1,7 +1,8 @@
 # general imports
 import os
-import pickle
 import sys
+from openmm.app import DCDReporter, PDBFile
+
 
 import numpy as np
 import torch
@@ -29,9 +30,9 @@ else:
     name = "2cle"
     smiles = "ClCCOCCCl"
 ###################
-ff = "charmmff" #"openff" #"charmmff"  # openff
+ff = "charmmff"  # "openff" #"charmmff"  # openff
 n_samples = 5_000
-n_steps_per_sample = 1_000
+n_steps_per_sample = 5
 n_lambdas = 11
 platform = "CUDA"
 ###################
@@ -64,7 +65,7 @@ print(f"saving to: {w_dir}")
 # select a random conformation
 from random import randint
 
-conf_id = randint(0, molecule.n_conformers - 1)
+conf_id = 2  # randint(0, molecule.n_conformers - 1)
 print(f"select conf_id: {conf_id}")
 ###################
 # initialize simulation depending on ff keyword
@@ -76,30 +77,32 @@ if ff == "openff":
     )
 elif ff == "charmmff":
     sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, conf_id=conf_id#, minimize = False
+        molecule, zinc_id=name, conf_id=conf_id, minimize=False
     )
 else:
     raise RuntimeError("Either openff or charmmff. Abort.")
 ###################
+PDBFile.writeFile(
+    sim.topology, molecule.conformers[conf_id], file=open(f"{w_dir}/{name}.pdb", "w")
+)
 # perform lambda protocoll
-for lamb in lambs:
+for lamb in [1.0]:
+    trajectory_file = f"{w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.dcd"
     print(f"{lamb=}")
     # set lambda
     sim.context.setParameter("lambda_interpolate", lamb)
+    # add reporter
+    sim.reporters.append(
+        DCDReporter(
+            trajectory_file,
+            n_steps_per_sample,
+        )
+    )
+
     # set coordinates
     sim.context.setPositions(molecule.conformers[conf_id])
     # collect samples
     samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
-    # save samples
-    pickle.dump(
-        samples,
-        open(
-            f"{w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle",
-            "wb+",
-        ),
-    )
-    print(
-        f"traj dump to: {w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.pickle"
-    )
+    print(f"traj saved to: {trajectory_file}")

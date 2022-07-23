@@ -6,8 +6,6 @@ import pytest
 from endstate_rew.neq import perform_switching
 from endstate_rew.system import (
     _get_hipen_data,
-    _get_masses,
-    _seed_velocities,
     create_openff_system,
     generate_molecule,
     initialize_simulation_with_charmmff,
@@ -80,35 +78,6 @@ def load_endstate_system_and_samples_openff(
     )
 
     return sim, samples_mm, samples_qml
-
-
-def test_mass_list():
-
-    molecule = generate_molecule(forcefield="openff", smiles="ClCCOCCCl")
-    system, _ = create_openff_system(molecule)
-
-    # make sure that mass list generated from system and molecuel are the same
-    m_list = _get_masses(system)
-    masses = np.array([a.mass / unit.dalton for a in molecule.atoms]) * unit.daltons
-    print(m_list)
-    print(masses)
-    assert np.allclose(
-        m_list.value_in_unit(unit.daltons), masses.value_in_unit(unit.daltons)
-    )
-
-
-def test_seed_velocities():
-
-    # test that manual velocity seeding works
-    # openff
-    molecule = generate_molecule(forcefield="openff", smiles="ClCCOCCCl")
-    system, _ = create_openff_system(molecule)
-    _seed_velocities(_get_masses(system))
-
-    # charmmff
-    molecule = generate_molecule(forcefield="charmmff", name="ZINC00079729")
-    system, _ = create_openff_system(molecule)
-    _seed_velocities(_get_masses(system))
 
 
 @pytest.mark.parametrize(
