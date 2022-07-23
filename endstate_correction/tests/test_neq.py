@@ -1,13 +1,12 @@
-import pickle
+import pathlib
 from typing import Tuple
 
+import endstate_correction
+import mdtraj
 import numpy as np
 from endstate_correction.neq import perform_switching
 from openmm import unit
 from openmm.app import Simulation
-import endstate_correction
-import pathlib
-import mdtraj
 
 
 def load_endstate_system_and_samples(
@@ -16,13 +15,8 @@ def load_endstate_system_and_samples(
 
     # initialize simulation and load pre-generated samples
 
-    from openmm.app import (
-        CharmmParameterSet,
-        CharmmPsfFile,
-        CharmmCrdFile,
-    )
-
     from endstate_correction.system import create_charmm_system
+    from openmm.app import CharmmCrdFile, CharmmParameterSet, CharmmPsfFile
 
     ########################################################
     ########################################################
@@ -47,18 +41,16 @@ def load_endstate_system_and_samples(
     n_steps_per_sample = 1_000
     ###########################################################################################
     mm_samples = []
-    traj = mdtraj.load_dcd(
+    xyz, unitcell_lengths, _ = mdtraj.open(
         f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.dcd",
-        top=f"{hipen_testsystem}/{system_name}/{system_name}.psf",
-    )
+    ).read()
 
-    mm_samples.extend(traj.xyz * unit.nanometer)
+    mm_samples.extend(xyz * unit.nanometer)
     qml_samples = []
-    traj = mdtraj.load_dcd(
+    xyz, unitcell_lengths, _ = mdtraj.open(
         f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.dcd",
-        top=f"{hipen_testsystem}/{system_name}/{system_name}.psf",
-    )
-    qml_samples.extend(traj.xyz * unit.nanometer)
+    ).read()
+    qml_samples.extend(xyz * unit.nanometer)
 
     return sim, mm_samples, qml_samples
 
@@ -81,7 +73,7 @@ def test_switching():
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -5252555.14554809
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -10081964.667892333
     )
     lambs = np.linspace(1, 0, 2)
 
@@ -91,7 +83,7 @@ def test_switching():
     print(dE_list)
 
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 5252555.14554809
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 10081964.66789233
     )
 
     # perform NEQ switching

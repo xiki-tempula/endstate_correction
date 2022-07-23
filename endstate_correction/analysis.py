@@ -1,74 +1,48 @@
 import glob
-import pickle
 import os
-import numpy as np
+import pickle
 from collections import namedtuple
 from typing import NamedTuple, Tuple
 
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from matplotlib.ticker import FormatStrFormatter
-from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
-import seaborn as sns
-from openmm import unit
-from pymbar import BAR, EXP
-from tqdm import tqdm
+import matplotlib.pyplot as plt
 import mdtraj as md
+import numpy as np
+import seaborn as sns
+from matplotlib.offsetbox import (AnnotationBbox, DrawingArea, OffsetImage,
+                                  TextArea)
+from matplotlib.ticker import FormatStrFormatter
+from openmm import unit
+from openmm.app import Simulation
+from pymbar import BAR, EXP
 from scipy.stats import wasserstein_distance
-from itertools import chain
-from endstate_correction.system import generate_molecule
-from endstate_correction.constant import kBT, check_implementation, zinc_systems
+from tqdm import tqdm
+
+from endstate_correction.constant import (check_implementation, kBT,
+                                          zinc_systems)
 
 
 def _collect_equ_samples(
-    path: str,
-    name: str,
-    lambda_scheme: list,
-    every_nth_frame: int = 2,
-    only_endstates: bool = False,
+    file_list: list, every_nth_frame: int = 10
 ) -> Tuple[list, np.array]:
 
     """
     Collect equilibrium samples
 
-    Args:
-        path (str): path to the location where the samples are stored
-        name (str): name of the system (used in the sample files)
-        lambda_scheme (list): list of lambda states as floats
-        every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
-
-    Raises:
-        RuntimeError: if multuple sample files are present we can not decide which is the correct one.
-
     Returns:
         Tuple(coordinates, N_k)
     """
 
-    nr_of_samples = 5_000
-    nr_of_steps = 1_000
     coordinates = []
-    N_k = np.zeros(len(lambda_scheme))
+    N_k = np.zeros(len(file_list))
 
     # loop over lambda scheme and collect samples in nanometer
-    for idx, lamb in enumerate(lambda_scheme):
-        file = glob.glob(
-            f"{path}/{name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.pickle"
-        )
-        if len(file) == 2:
-            raise RuntimeError("Multiple traj files present. Abort.")
-        elif len(file) == 0:
-            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
-        else:
-            if only_endstates and not (
-                idx == 0 or idx == len(lambda_scheme) - 1
-            ):  # take only first or last samples
-                print(f"skipping {idx}")
-                continue
-            coords_ = pickle.load(open(file[0], "rb"))
-            coords_ = coords_[1_000:]  # remove the first 1k samples
-            coords_ = coords_[::every_nth_frame]  # take only every nth sample
-            N_k[idx] = len(coords_)
-            coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in coords_])
+    for idx, xyz in enumerate(file_list):
+
+        xyz = xyz[1_000:]  # remove the first 1k samples
+        xyz = xyz[::every_nth_frame]  # take only every nth sample
+        N_k[idx] = len(xyz)
+        coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in xyz])
 
     number_of_samples = len(coordinates)
     print(f"Number of samples loaded: {number_of_samples}")
@@ -76,10 +50,9 @@ def _collect_equ_samples(
 
 
 def calculate_u_kn(
-    smiles: str,
-    forcefield: str,
     path_to_files: str,
-    name: str,
+    trajs: list,
+    sim: Simulation,
     every_nth_frame: int = 2,
     reload: bool = True,
     override: bool = False,
@@ -89,8 +62,6 @@ def calculate_u_kn(
     Calculate the u_kn matrix to be used by the mbar estimator
 
     Args:
-        smiles (str): smiles string describing the system
-        forcefield (str): which force field is used (allowed options are `openff` or `charmmmff`)
         path_to_files (str): path to location where samples are stored
         name (str): name of the system (used in the sample files)
         every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
@@ -102,38 +73,20 @@ def calculate_u_kn(
 
     from os import path
 
-    from endstate_correction.system import (
-        generate_molecule,
-        initialize_simulation_with_charmmff,
-        initialize_simulation_with_openff,
-    )
-
-    # NOTE: NNPOps only runs on CUDA
-    implementation, platform = check_implementation()
-
     pickle_path = f"{path_to_files}/mbar_{every_nth_frame}.pickle"
     if path.isfile(pickle_path) and reload:  # if already generated reuse
         print(f"trying to load: {pickle_path}")
         N_k, u_kn = pickle.load(open(pickle_path, "rb"))
         print(f"Reusing pregenerated mbar object: {pickle_path}")
     else:
-        # generate molecule
-        m = generate_molecule(smiles=smiles, forcefield=forcefield)
         # initialize simulation
         # first, modify path to point to openff molecule object
         w_dir = path_to_files.split("/")
         w_dir = "/".join(w_dir[:-3])
         # initialize simualtion and reload if already generated
-        if forcefield == "openff":
-            sim = initialize_simulation_with_openff(m, w_dir=w_dir)
-        elif forcefield == "charmmff":
-            sim = initialize_simulation_with_charmmff(m, zinc_id=name)
-        else:
-            raise NotImplementedError("only charmmff or openff are implemented.")
         lambda_scheme = np.linspace(0, 1, 11)
-        samples, N_k = _collect_equ_samples(
-            path_to_files, name, lambda_scheme, every_nth_frame=every_nth_frame
-        )
+        samples, N_k = _collect_equ_samples(trajs, every_nth_frame)
+
         samples = np.array(
             samples.value_in_unit(unit.nanometer)
         )  # positions in nanometer
@@ -207,6 +160,7 @@ def plot_results_for_equilibrium_free_energy(
         u_kn (np.ndarray): each of the potential energy functions `u` describing a state `k` are applied to each sample `n` from each of the states `k`
         name (str): name of the system in the plot
     """
+
     from pymbar import MBAR
 
     # initialize the MBAR maximum likelihood estimate
@@ -264,13 +218,11 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
 
     from pymbar import MBAR
 
+    from endstate_correction.analysis import _collect_equ_samples
     from endstate_correction.neq import perform_switching
     from endstate_correction.system import (
-        generate_molecule,
-        initialize_simulation_with_charmmff,
-        initialize_simulation_with_openff,
-    )
-    from endstate_correction.analysis import _collect_equ_samples
+        generate_molecule, initialize_simulation_with_charmmff,
+        initialize_simulation_with_openff)
 
     # collect equ results
     equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id:0>2d}"
@@ -570,10 +522,9 @@ def plot_resutls_of_switching_experiments(name: str, results: NamedTuple):
 
 # generate molecule picture with atom indices
 def save_mol_pic(zinc_id: str, ff: str):
-    from rdkit.Chem import AllChem
     from rdkit import Chem
+    from rdkit.Chem import AllChem, Draw
     from rdkit.Chem.Draw import IPythonConsole
-    from rdkit.Chem import Draw
 
     IPythonConsole.drawOptions.addAtomIndices = True
     from rdkit.Chem.Draw import rdMolDraw2D

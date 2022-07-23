@@ -2,10 +2,11 @@
 import json
 
 import openmm as mm
-from tqdm import tqdm
 from openmm import unit
-from openmm.app import PME, CharmmParameterSet, CharmmPsfFile, NoCutoff, Simulation
+from openmm.app import (PME, CharmmParameterSet, CharmmPsfFile, NoCutoff,
+                        Simulation)
 from openmmml import MLPotential
+from tqdm import tqdm
 
 from endstate_correction.constant import collision_rate, stepsize, temperature
 

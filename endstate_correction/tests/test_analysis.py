@@ -1,94 +1,118 @@
+import glob
+import pathlib
+
+import endstate_correction
+import mdtraj as md
 import numpy as np
-import torch
-import pytest
-import os
-
-### set number of CPU threads used by pytorch
-num_threads = 2
-torch.set_num_threads(num_threads)
+from endstate_correction.analysis import calculate_u_kn
+from endstate_correction.system import create_charmm_system
+from openmm import unit
+from openmm.app import CharmmParameterSet, CharmmPsfFile
+from pymbar import MBAR
 
 
-@pytest.mark.parametrize(
-    "ff",
-    ["charmmff", "openff"],
-)
-def test_collect_equ_samples(ff):
+def test_collect_equ_samples():
     """test if we are able to collect samples as anticipated"""
     from endstate_correction.analysis import _collect_equ_samples
 
-    lambs = np.linspace(0, 1, 11)
     name = "ZINC00077329"
-    path = f"data/{name}/sampling_{ff}/run01/"
-    samples, N_k = _collect_equ_samples(path, name=name, lambda_scheme=lambs)
+    nr_of_samples = 5_000
+    nr_of_steps = 1_000
+    trajs = []
+    path = f"data/{name}/sampling_charmmff/run01/"
+    for lamb in np.linspace(0, 1, 11):
+        print(lamb)
+        file = glob.glob(
+            f"{path}/{name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.dcd"
+        )
+        if len(file) == 2:
+            raise RuntimeError("Multiple traj files present. Abort.")
+        if len(file) == 0:
+            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
+
+        trajs.append(md.open(file[0]).read()[0] * unit.nanometer)
+
+    samples, N_k = _collect_equ_samples(trajs)
 
     print(N_k)
-    assert N_k[0] == 2000
-    assert len(samples) == 22000
+    assert N_k[0] == 400
+    assert len(samples) == 4400
+    trajs = []
+    for lamb in np.linspace(0, 1, 2):
+        print(lamb)
+        file = glob.glob(
+            f"{path}/{name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.dcd"
+        )
+        if len(file) == 2:
+            raise RuntimeError("Multiple traj files present. Abort.")
+        if len(file) == 0:
+            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
 
-    samples, N_k = _collect_equ_samples(
-        path, name=name, lambda_scheme=lambs, only_endstates=True
-    )
+        trajs.append(md.open(file[0]).read()[0] * unit.nanometer)
+
+    samples, N_k = _collect_equ_samples(trajs)
     print(N_k)
-    assert N_k[0] == 2000
-    assert N_k[-1] == 2000
-    assert len(samples) == 4000
-
-    lambs = [0, 1]
-    samples, N_k = _collect_equ_samples(
-        path, name=name, lambda_scheme=lambs, only_endstates=True
-    )
-
-    print(N_k)
-    assert N_k[0] == 2000
-    assert N_k[-1] == 2000
-    assert len(samples) == 4000
+    assert N_k[0] == 400
+    assert N_k[-1] == 400
+    assert len(samples) == 800
 
     mm_samples = samples[: int(N_k[0])]
     qml_samples = samples[int(N_k[0]) :]
-    assert len(mm_samples) == 2_000
-    assert len(qml_samples) == 2_000
+    assert len(mm_samples) == 400
+    assert len(qml_samples) == 400
 
 
-@pytest.mark.parametrize(
-    "ff, nr_of_switches",
-    [("charmmff", 200), pytest.param("openff", 200, marks=pytest.mark.xfail)],
-)
-def test_collect_work_values(ff, nr_of_switches):
+def test_collect_work_values():
     """test if we are able to collect samples as anticipated"""
     from endstate_correction.analysis import _collect_work_values
 
-    print(ff)
-    path = f"data/ZINC00077329/switching_{ff}/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
+    nr_of_switches = 200
+    path = f"data/ZINC00077329/switching_charmmff/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
     ws = _collect_work_values(path)
     assert len(ws) == nr_of_switches
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true",
-    reason="Runs out of time on MacOS",  # TODO: FIXME!
-)
-@pytest.mark.parametrize(
-    "ff, ddG",
-    [
-        ("charmmff", -940544.0390218807),
-        ("openff", -940689.0530839318),
-    ],
-)
-def test_equilibrium_free_energy(ff, ddG):
+def test_equilibrium_free_energy():
     "test that u_kn can be calculated and that results are consistent whether we reload mbar pickle or regernerate it"
-    from endstate_correction.analysis import calculate_u_kn
-    from pymbar import MBAR
+    ########################################################
+    ########################################################
+    # ----------------- vacuum -----------------------------
+    # get all relevant files
+    path = pathlib.Path(endstate_correction.__file__).resolve().parent
+    hipen_testsystem = f"{path}/data/hipen_data"
 
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    path = f"data/{name}/sampling_{ff}/run01/"
+    system_name = "ZINC00077329"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
+    )
+
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+
+    nr_of_samples = 5_000
+    nr_of_steps = 1_000
+    trajs = []
+    path = f"data/{system_name}/sampling_charmmff/run01/"
+
+    for lamb in np.linspace(0, 1, 11):
+        print(lamb)
+        file = glob.glob(
+            f"{path}/{system_name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.dcd"
+        )
+        if len(file) == 2:
+            raise RuntimeError("Multiple traj files present. Abort.")
+        if len(file) == 0:
+            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
+
+        trajs.append(md.open(file[0]).read()[0] * unit.angstrom)
 
     N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield=ff,
         path_to_files=path,
-        name=name,
-        every_nth_frame=100,
+        sim=sim,
+        trajs=trajs,
+        every_nth_frame=20,
         reload=False,
         override=True,
     )
@@ -96,14 +120,13 @@ def test_equilibrium_free_energy(ff, ddG):
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], ddG, rtol=1e-06)
+    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
 
     N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield="charmmff",
         path_to_files=path,
-        name=name,
-        every_nth_frame=100,
+        trajs=trajs,
+        every_nth_frame=20,
+        sim=sim,
         reload=True,
         override=False,
     )
@@ -111,65 +134,58 @@ def test_equilibrium_free_energy(ff, ddG):
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], ddG, rtol=1e-06)
+    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
 
 
-@pytest.mark.parametrize(
-    "ff",
-    [
-        ("charmmff"),
-        ("openff"),
-    ],
-)
-def test_plotting_equilibrium_free_energy(ff):
+def test_plotting_equilibrium_free_energy():
     "Test that plotting functions can be called"
-    from endstate_correction.analysis import calculate_u_kn
     from endstate_correction.analysis import (
+        calculate_u_kn,
         plot_overlap_for_equilibrium_free_energy,
         plot_results_for_equilibrium_free_energy,
     )
 
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    path = f"data/{name}/sampling_{ff}/run01/"
+    ########################################################
+    ########################################################
+    # ----------------- vacuum -----------------------------
+    # get all relevant files
+    path = pathlib.Path(endstate_correction.__file__).resolve().parent
+    hipen_testsystem = f"{path}/data/hipen_data"
+
+    system_name = "ZINC00077329"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
+    )
+
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+
+    nr_of_samples = 5_000
+    nr_of_steps = 1_000
+    trajs = []
+    path = f"data/{system_name}/sampling_charmmff/run01/"
+
+    for lamb in np.linspace(0, 1, 11):
+        print(lamb)
+        file = glob.glob(
+            f"{path}/{system_name}_samples_{nr_of_samples}_steps_{nr_of_steps}_lamb_{lamb:.4f}.dcd"
+        )
+        if len(file) == 2:
+            raise RuntimeError("Multiple traj files present. Abort.")
+        if len(file) == 0:
+            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
+
+        trajs.append(md.open(file[0]).read()[0] * unit.angstrom)
 
     N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield=ff,
         path_to_files=path,
-        name=name,
-        every_nth_frame=100,
+        trajs=trajs,
+        every_nth_frame=20,
+        sim=sim,
         reload=False,
     )
 
-    plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
-    plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
-
-
-@pytest.mark.skipif(
-    os.getenv("CI") == "true",
-    reason="Requires input data that are not provided in the repo",
-)
-@pytest.mark.parametrize(
-    "ff",
-    [
-        ("charmmff"),
-        pytest.param("openff", marks=pytest.mark.xfail),
-    ],
-)
-def test_collect_results(ff):
-    from endstate_correction.analysis import (
-        collect_results_from_neq_and_equ_free_energy_calculations,
-    )
-
-    name = "ZINC00079729"
-    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    path = f"data/{name}/"
-
-    collect_results_from_neq_and_equ_free_energy_calculations(
-        w_dir=path,
-        forcefield=ff,
-        run_id=1,
-        smiles=smiles,
-        name=name,
-    )
+    plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
+    plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
