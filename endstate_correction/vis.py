@@ -1,7 +1,7 @@
 import pickle
 import nglview as ng
-from endstate_rew.system import generate_molecule
-from endstate_rew.constant import zinc_systems
+from endstate_correction.system import generate_molecule
+from endstate_correction.constant import zinc_systems
 import mdtraj as md
 
 
@@ -10,7 +10,7 @@ def visualize_mol(
     forcefield: str,
     endstate: str,
     run_id: str = "",
-    w_dir: str = "/data/shared/projects/endstate_rew",
+    w_dir: str = "/data/shared/projects/endstate_correction",
     switching: bool = False,
     switching_length: int = 5001,
 ):

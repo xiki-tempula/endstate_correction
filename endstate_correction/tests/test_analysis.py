@@ -14,7 +14,7 @@ torch.set_num_threads(num_threads)
 )
 def test_collect_equ_samples(ff):
     """test if we are able to collect samples as anticipated"""
-    from endstate_rew.analysis import _collect_equ_samples
+    from endstate_correction.analysis import _collect_equ_samples
 
     lambs = np.linspace(0, 1, 11)
     name = "ZINC00077329"
@@ -55,7 +55,7 @@ def test_collect_equ_samples(ff):
 )
 def test_collect_work_values(ff, nr_of_switches):
     """test if we are able to collect samples as anticipated"""
-    from endstate_rew.analysis import _collect_work_values
+    from endstate_correction.analysis import _collect_work_values
 
     print(ff)
     path = f"data/ZINC00077329/switching_{ff}/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
@@ -76,7 +76,7 @@ def test_collect_work_values(ff, nr_of_switches):
 )
 def test_equilibrium_free_energy(ff, ddG):
     "test that u_kn can be calculated and that results are consistent whether we reload mbar pickle or regernerate it"
-    from endstate_rew.analysis import calculate_u_kn
+    from endstate_correction.analysis import calculate_u_kn
     from pymbar import MBAR
 
     name = "ZINC00077329"
@@ -123,8 +123,8 @@ def test_equilibrium_free_energy(ff, ddG):
 )
 def test_plotting_equilibrium_free_energy(ff):
     "Test that plotting functions can be called"
-    from endstate_rew.analysis import calculate_u_kn
-    from endstate_rew.analysis import (
+    from endstate_correction.analysis import calculate_u_kn
+    from endstate_correction.analysis import (
         plot_overlap_for_equilibrium_free_energy,
         plot_results_for_equilibrium_free_energy,
     )
@@ -158,7 +158,7 @@ def test_plotting_equilibrium_free_energy(ff):
     ],
 )
 def test_collect_results(ff):
-    from endstate_rew.analysis import (
+    from endstate_correction.analysis import (
         collect_results_from_neq_and_equ_free_energy_calculations,
     )
 

@@ -6,8 +6,8 @@ from openmm.app import DCDReporter, PDBFile
 
 import numpy as np
 import torch
-from endstate_rew.constant import zinc_systems
-from endstate_rew.system import (
+from endstate_correction.constant import zinc_systems
+from endstate_correction.system import (
     generate_samples,
     generate_molecule,
     initialize_simulation_with_charmmff,
@@ -59,7 +59,9 @@ elif ff == "charmmff" and smiles:
 else:
     raise RuntimeError("Only openff can be used with SMILES input")
 # initialize working directory
-w_dir = f"/data/shared/projects/endstate_rew/{name}/sampling_{ff}/run{run_id:0>2d}/"
+w_dir = (
+    f"/data/shared/projects/endstate_correction/{name}/sampling_{ff}/run{run_id:0>2d}/"
+)
 os.makedirs(w_dir, exist_ok=True)
 print(f"saving to: {w_dir}")
 # select a random conformation
@@ -72,7 +74,7 @@ print(f"select conf_id: {conf_id}")
 if ff == "openff":
     sim = initialize_simulation_with_openff(
         molecule,
-        w_dir=f"/data/shared/projects/endstate_rew/{name}/",
+        w_dir=f"/data/shared/projects/endstate_correction/{name}/",
         conf_id=conf_id,
     )
 elif ff == "charmmff":

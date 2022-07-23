@@ -1,6 +1,6 @@
 import numpy as np
 from openmm import unit
-import endstate_rew
+import endstate_correction
 import pathlib
 from openmm.app import (
     CharmmParameterSet,
@@ -9,15 +9,15 @@ from openmm.app import (
     CharmmCrdFile,
 )
 
-path = pathlib.Path(endstate_rew.__file__).resolve().parent
+path = pathlib.Path(endstate_correction.__file__).resolve().parent
 hipen_testsystem = f"{path}/data/hipen_data"
 
-path = pathlib.Path(endstate_rew.__file__).resolve().parent
+path = pathlib.Path(endstate_correction.__file__).resolve().parent
 jctc_testsystem = f"{path}/data/jctc_data"
 
 
 def test_generate_simulation_instances_with_charmmff():
-    from endstate_rew.system import create_charmm_system, get_energy, read_box
+    from endstate_correction.system import create_charmm_system, get_energy, read_box
 
     ########################################################
     ########################################################

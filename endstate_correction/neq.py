@@ -5,8 +5,8 @@ from openmm import unit
 from tqdm import tqdm
 from typing import Tuple
 
-from endstate_rew.constant import distance_unit, temperature
-from endstate_rew.system import get_positions
+from endstate_correction.constant import distance_unit, temperature
+from endstate_correction.system import get_positions
 
 
 def perform_switching(
