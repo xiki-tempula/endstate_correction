@@ -1,36 +1,58 @@
-import pytest
-from endstate_rew.constant import check_implementation
-
-
-@pytest.mark.parametrize(
-    "ff",
-    [("charmmff"), ("openff")],
+from openmm.app import (
+    CharmmParameterSet,
+    CharmmPsfFile,
+    PDBFile,
+    CharmmCrdFile,
 )
-def test_sampling(ff):
-    from endstate_rew.system import (
-        generate_samples,
-        generate_molecule,
-        initialize_simulation_with_openff,
-        initialize_simulation_with_charmmff,
+import endstate_rew
+import pathlib
+
+# define path to test systems
+path = pathlib.Path(endstate_rew.__file__).resolve().parent
+hipen_testsystem = f"{path}/data/hipen_data"
+
+path = pathlib.Path(endstate_rew.__file__).resolve().parent
+jctc_testsystem = f"{path}/data/jctc_data"
+
+
+def test_sampling():
+    from endstate_rew.system import generate_samples, create_charmm_system, read_box
+
+    ########################################################
+    ########################################################
+    # ----------------- vacuum-- ---------------------------
+
+    system_name = "ZINC00079729"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    crd = CharmmCrdFile(f"{hipen_testsystem}/{system_name}/{system_name}.crd")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
 
-    # generate molecule
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    m = generate_molecule(forcefield=ff, smiles=smiles)
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    sim.context.setPositions(crd.positions)
+    generate_samples(sim, 1, 50)
 
-    if ff == "charmmff":
-        # initialize simulation for all three cases
-        sim = initialize_simulation_with_charmmff(m, at_endstate="mm", zinc_id=name)
-        generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_charmmff(m, at_endstate="qml", zinc_id=name)
-        generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_charmmff(m, zinc_id=name)
-        generate_samples(sim, 1, 50)
-    else:
-        sim = initialize_simulation_with_openff(m, at_endstate="mm")
-        generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_openff(m, at_endstate="qml")
-        generate_samples(sim, 1, 50)
-        sim = initialize_simulation_with_openff(m)
-        generate_samples(sim, 1, 50)
+    ########################################################
+    ########################################################
+    # ----------------- waterbox ---------------------------
+    # get all relevant files
+
+    system_name = "1_octanol"
+    psf = CharmmPsfFile(
+        f"{jctc_testsystem}/{system_name}/charmm-gui/openmm/step3_input.psf"
+    )
+    pdb = PDBFile(f"{jctc_testsystem}/{system_name}/charmm-gui/openmm/step3_input.pdb")
+    params = CharmmParameterSet(
+        f"{jctc_testsystem}/{system_name}/charmm-gui/unk/unk.rtf",
+        f"{jctc_testsystem}/{system_name}/charmm-gui/unk/unk.prm",
+        f"{jctc_testsystem}/toppar/top_all36_cgenff.rtf",
+        f"{jctc_testsystem}/toppar/par_all36_cgenff.prm",
+        f"{jctc_testsystem}/toppar/toppar_water_ions.str",
+    )
+    psf = read_box(psf, f"{jctc_testsystem}/{system_name}/charmm-gui/input.config.dat")
+    sim = create_charmm_system(psf=psf, parameters=params, env="waterbox", tlc="UNK")
+    sim.context.setPositions(pdb.positions)
+    generate_samples(sim, 1, 50)
