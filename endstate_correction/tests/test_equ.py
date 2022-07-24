@@ -30,9 +30,12 @@ def load_equ_samples(
         if len(file) == 2:
             raise RuntimeError("Multiple traj files present. Abort.")
         if len(file) == 0:
-            print("WARNING! Incomplete equ sampling. Proceed with cautions.")
+            raise RuntimeError(
+                "WARNING! Incomplete equ sampling. Proceed with cautions."
+            )
 
-        trajs.append(md.open(file[0]).read()[0] * unit.nanometer)
+        trajs.append(md.open(file[0]).read()[0] * unit.angstrom)
+        print(trajs[-1][0])
     return trajs
 
 
@@ -73,17 +76,13 @@ def test_equilibrium_free_energy():
     # load samples
     trajs = load_equ_samples(system_name)
     # calculate u_kn
-    N_k, u_kn = calculate_u_kn(
-        sim=sim,
-        trajs=trajs,
-        every_nth_frame=40,
-    )
+    N_k, u_kn = calculate_u_kn(sim=sim, trajs=trajs, every_nth_frame=50)
 
     # calculate free energy
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], -2364884.1054409626, rtol=1e-06)
+    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
 
     # save N_k and u_kn
     pickle_path = f"{path}/mbar_20.pickle"
@@ -95,4 +94,4 @@ def test_equilibrium_free_energy():
     mbar = MBAR(u_kn, N_k)
     f = mbar.getFreeEnergyDifferences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], -2364884.1054409626, rtol=1e-06)
+    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)

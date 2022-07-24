@@ -37,7 +37,7 @@ def _collect_equ_samples(
 def calculate_u_kn(
     trajs: list,
     sim: Simulation,
-    every_nth_frame: int = 2,
+    every_nth_frame: int = 10,
 ) -> np.ndarray:
 
     """

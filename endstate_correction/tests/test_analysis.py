@@ -27,9 +27,11 @@ def test_plotting_equilibrium_free_energy():
         plot_overlap_for_equilibrium_free_energy,
         plot_results_for_equilibrium_free_energy,
     )
-    from endstate_correction.equ import calculate_u_kn, _collect_equ_samples
+    from endstate_correction.equ import calculate_u_kn
+    from .test_equ import load_equ_samples
+
     """test if we are able to plot overlap and """
-    
+
     ########################################################
     ########################################################
     # ----------------- vacuum -----------------------------
@@ -48,10 +50,9 @@ def test_plotting_equilibrium_free_energy():
     sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
     trajs = load_equ_samples(system_name)
 
-
     N_k, u_kn = calculate_u_kn(
         trajs=trajs,
-        every_nth_frame=20,
+        every_nth_frame=50,
         sim=sim,
     )
 
