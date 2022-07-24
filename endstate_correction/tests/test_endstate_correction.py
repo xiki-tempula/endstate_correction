@@ -12,7 +12,7 @@ def test_endstate_correction_imported():
 
 
 def test_FEP_protocoll():
-
+    """Perform FEP uni- and bidirectional protocoll"""
     from endstate_correction.protocoll import perform_endstate_correction, Protocoll
     from .test_neq import load_endstate_system_and_samples
 
@@ -55,6 +55,7 @@ def test_FEP_protocoll():
 
 
 def test_NEQ_protocoll():
+    """Perform NEQ uni- and bidirectional protocoll"""
     from endstate_correction.protocoll import perform_endstate_correction, Protocoll
     from .test_neq import load_endstate_system_and_samples
 
@@ -99,6 +100,7 @@ def test_NEQ_protocoll():
 
 
 def test_EQU_protocoll():
+    """Perform equilibrium free energy protocoll"""
     from endstate_correction.protocoll import perform_endstate_correction, Protocoll
     from .test_equ import load_equ_samples
     from openmm.app import CharmmParameterSet, CharmmPsfFile
@@ -132,13 +134,13 @@ def test_EQU_protocoll():
     ####################################################
 
     fep_protocoll = Protocoll(
-        method="EQU",
-        sim=sim,
-        trajectories=trajs,
+        method="EQU", sim=sim, trajectories=trajs, equ_every_nth_frame=50
     )
 
     r = perform_endstate_correction(fep_protocoll)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
-    assert len(r.W_mm_to_qml) == fep_protocoll.nr_of_switches
+    assert len(r.W_mm_to_qml) == 0
     assert len(r.W_qml_to_mm) == 0
+    # test that mbar instance was created
+    r.equ_mbar.getFreeEnergyDifferences()
