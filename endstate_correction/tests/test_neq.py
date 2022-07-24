@@ -35,7 +35,6 @@ def load_endstate_system_and_samples(
 
     sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
     sim.context.setPositions(crd.positions)
-    # data/ZINC00079729/sampling_charmmff/run01/ZINC00079729_samples_5000_steps_1000_lamb_0.0000.pickle
     n_samples = 5_000
     n_steps_per_sample = 1_000
     ###########################################################################################
@@ -44,12 +43,12 @@ def load_endstate_system_and_samples(
         f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000.dcd",
     ).read()
 
-    mm_samples.extend(xyz * unit.nanometer)
+    mm_samples.extend(xyz * unit.angstrom)  # NOTE: this is in angstrom!
     qml_samples = []
     xyz, unitcell_lengths, _ = mdtraj.open(
         f"data/{system_name}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000.dcd",
     ).read()
-    qml_samples.extend(xyz * unit.nanometer)
+    qml_samples.extend(xyz * unit.angstrom)  # NOTE: this is in angstrom!
 
     return sim, mm_samples, qml_samples
 

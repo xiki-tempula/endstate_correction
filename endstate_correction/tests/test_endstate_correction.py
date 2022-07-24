@@ -8,7 +8,7 @@ import sys
 
 def test_endstate_correction_imported():
     """Sample test, will always pass so long as import statement worked."""
-    assert "endstate_correction" in sys.modules
+    assert "endstate_correction" in sys.modules  
 
 
 def test_FEP_protocoll():

@@ -21,10 +21,10 @@ class Protocoll:
 
 @dataclass
 class Results:
-    dE_mm_to_qml: List = field(default_factory=lambda: [])
-    dE_qml_to_mm: List = field(default_factory=lambda: [])
-    W_mm_to_qml: List = field(default_factory=lambda: [])
-    W_qml_to_mm: List = field(default_factory=lambda: [])
+    dE_mm_to_qml: np.array = np.array([])
+    dE_qml_to_mm: np.array = np.array([])
+    W_mm_to_qml: np.array = np.array([])
+    W_qml_to_mm: np.array = np.array([])
     equ_mbar: MBAR = None
 
 
