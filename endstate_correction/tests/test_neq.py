@@ -25,7 +25,6 @@ def load_endstate_system_and_samples(
     path = pathlib.Path(endstate_correction.__file__).resolve().parent
     hipen_testsystem = f"{path}/data/hipen_data"
 
-    system_name = "ZINC00079729"
     psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
     crd = CharmmCrdFile(f"{hipen_testsystem}/{system_name}/{system_name}.crd")
     params = CharmmParameterSet(
@@ -73,7 +72,7 @@ def test_switching():
         sim, lambdas=lambs, samples=samples_mm[:1], nr_of_switches=1
     )
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -10081964.667892333
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), -5898579.579181526
     )
     lambs = np.linspace(1, 0, 2)
 
@@ -83,7 +82,7 @@ def test_switching():
     print(dE_list)
 
     assert np.isclose(
-        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 10081964.66789233
+        dE_list[0].value_in_unit(unit.kilojoule_per_mole), 5898579.579181526
     )
 
     # perform NEQ switching

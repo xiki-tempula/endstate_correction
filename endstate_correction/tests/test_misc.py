@@ -5,6 +5,7 @@ import glob
 
 
 def test_converting():
+    """Convert pickle trajectory to dcd file"""
     path = pathlib.Path(endstate_correction.__file__).resolve().parent
 
     system_name = "ZINC00079729"

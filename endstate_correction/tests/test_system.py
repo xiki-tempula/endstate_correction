@@ -17,6 +17,7 @@ jctc_testsystem = f"{path}/data/jctc_data"
 
 
 def test_generate_simulation_instances_with_charmmff():
+    """Test if we can generate a simulation instance with charmmff"""
     from endstate_correction.system import create_charmm_system, get_energy, read_box
 
     ########################################################
