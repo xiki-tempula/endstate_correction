@@ -40,7 +40,7 @@ def perform_endstate_correction(protocoll: Protocoll):
         )
     if protocoll.method.upper() in [
         "FEP",
-        "EQU",
+        "NEQ",
     ] and protocoll.direction.lower() not in ["bidirectional", "unidirectional"]:
         raise AttributeError(
             "Only `bidirectional` or `unidirectional` protocolls are supported"
