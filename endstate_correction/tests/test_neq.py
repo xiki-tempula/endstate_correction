@@ -9,6 +9,16 @@ from openmm import unit
 from openmm.app import Simulation
 
 
+def test_collect_work_values():
+    """test if we are able to collect samples as anticipated"""
+    from endstate_correction.analysis import _collect_work_values
+
+    nr_of_switches = 200
+    path = f"data/ZINC00077329/switching_charmmff/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
+    ws = _collect_work_values(path)
+    assert len(ws) == nr_of_switches
+
+
 def load_endstate_system_and_samples(
     system_name: str,
 ) -> Tuple[Simulation, list, list]:

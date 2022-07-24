@@ -1,24 +1,9 @@
-import glob
 import pathlib
-import pickle
 
 import endstate_correction
-import mdtraj as md
-import numpy as np
-from endstate_correction.equ import calculate_u_kn
 from endstate_correction.system import create_charmm_system
 from openmm import unit
 from openmm.app import CharmmParameterSet, CharmmPsfFile
-
-
-def test_collect_work_values():
-    """test if we are able to collect samples as anticipated"""
-    from endstate_correction.analysis import _collect_work_values
-
-    nr_of_switches = 200
-    path = f"data/ZINC00077329/switching_charmmff/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
-    ws = _collect_work_values(path)
-    assert len(ws) == nr_of_switches
 
 
 def test_plotting_equilibrium_free_energy():
@@ -58,3 +43,42 @@ def test_plotting_equilibrium_free_energy():
 
     plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
     plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
+
+
+def test_FEP_protocoll():
+    """Perform FEP uni- and bidirectional protocoll"""
+    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+    from .test_neq import load_endstate_system_and_samples
+    from endstate_correction.analysis import plot_endstate_correction_results
+
+    system_name = "ZINC00079729"
+    # start with FEP
+    sim, mm_samples, qml_samples = load_endstate_system_and_samples(
+        system_name=system_name
+    )
+
+    ####################################################
+    # ----------------------- FEP ----------------------
+    ####################################################
+
+    fep_protocoll = Protocoll(
+        method="FEP",
+        direction="unidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=50,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    plot_endstate_correction_results(system_name, r, "results_fep_unidirectional.png")
+
+    fep_protocoll = Protocoll(
+        method="FEP",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=50,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    plot_endstate_correction_results(system_name, r, "results_fep_bidirectional.png")

@@ -105,9 +105,9 @@ def plot_endstate_correction_results(
         print(f"Zwanzig's equation (from qml to mm): {EXP(results.dE_qml_to_mm)}")
         multiple_results += 1
     if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
-        print(f"Zwanzig's equation: {EXP(results.dEs_from_mm_to_qml)}")
+        print(f"Zwanzig's equation: {EXP(results.dE_mm_to_qml)}")
         print(
-            f"Zwanzig's equation bidirectional: {BAR(results.dEs_from_mm_to_qml, results.dEs_from_qml_to_mm)}"
+            f"Zwanzig's equation bidirectional: {BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)}"
         )
         multiple_results += 1
     ##############################################
