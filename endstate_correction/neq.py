@@ -1,9 +1,10 @@
+import pickle
 import random
+from typing import Tuple
 
 import numpy as np
 from openmm import unit
 from tqdm import tqdm
-from typing import Tuple
 
 from endstate_correction.constant import distance_unit, temperature
 from endstate_correction.system import get_positions
@@ -64,3 +65,11 @@ def perform_switching(
             endstate_samples.append(get_positions(sim))
         ws.append(w)
     return np.array(ws) * unit.kilojoule_per_mole, endstate_samples
+
+
+def _collect_work_values(file: str) -> list:
+
+    ws = pickle.load(open(file, "rb")).value_in_unit(unit.kilojoule_per_mole)
+    number_of_samples = len(ws)
+    print(f"Number of samples used: {number_of_samples}")
+    return ws * unit.kilojoule_per_mole

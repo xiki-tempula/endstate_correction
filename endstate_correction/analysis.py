@@ -2,118 +2,20 @@ import glob
 import os
 import pickle
 from collections import namedtuple
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
 import seaborn as sns
-from matplotlib.offsetbox import (AnnotationBbox, DrawingArea, OffsetImage,
-                                  TextArea)
+from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 from matplotlib.ticker import FormatStrFormatter
-from openmm import unit
-from openmm.app import Simulation
 from pymbar import BAR, EXP
 from scipy.stats import wasserstein_distance
-from tqdm import tqdm
 
-from endstate_correction.constant import (check_implementation, kBT,
-                                          zinc_systems)
-
-
-def _collect_equ_samples(
-    file_list: list, every_nth_frame: int = 10
-) -> Tuple[list, np.array]:
-
-    """
-    Collect equilibrium samples
-
-    Returns:
-        Tuple(coordinates, N_k)
-    """
-
-    coordinates = []
-    N_k = np.zeros(len(file_list))
-
-    # loop over lambda scheme and collect samples in nanometer
-    for idx, xyz in enumerate(file_list):
-
-        xyz = xyz[1_000:]  # remove the first 1k samples
-        xyz = xyz[::every_nth_frame]  # take only every nth sample
-        N_k[idx] = len(xyz)
-        coordinates.extend([c_.value_in_unit(unit.nanometer) for c_ in xyz])
-
-    number_of_samples = len(coordinates)
-    print(f"Number of samples loaded: {number_of_samples}")
-    return coordinates * unit.nanometer, N_k
-
-
-def calculate_u_kn(
-    path_to_files: str,
-    trajs: list,
-    sim: Simulation,
-    every_nth_frame: int = 2,
-    reload: bool = True,
-    override: bool = False,
-) -> np.ndarray:
-
-    """
-    Calculate the u_kn matrix to be used by the mbar estimator
-
-    Args:
-        path_to_files (str): path to location where samples are stored
-        name (str): name of the system (used in the sample files)
-        every_nth_frame (int, optional): prune the samples further by taking only every nth sample. Defaults to 2.
-        reload (bool, optional): do you want to reload a previously saved mbar pickle file if present (every time the free energy is calculated the mbar pickle file is saved --- only loading is optional)
-        override (bool, optional) : override
-    Returns:
-        Tuple(np.array, np.ndarray): (N_k, u_kn)
-    """
-
-    from os import path
-
-    pickle_path = f"{path_to_files}/mbar_{every_nth_frame}.pickle"
-    if path.isfile(pickle_path) and reload:  # if already generated reuse
-        print(f"trying to load: {pickle_path}")
-        N_k, u_kn = pickle.load(open(pickle_path, "rb"))
-        print(f"Reusing pregenerated mbar object: {pickle_path}")
-    else:
-        # initialize simulation
-        # first, modify path to point to openff molecule object
-        w_dir = path_to_files.split("/")
-        w_dir = "/".join(w_dir[:-3])
-        # initialize simualtion and reload if already generated
-        lambda_scheme = np.linspace(0, 1, 11)
-        samples, N_k = _collect_equ_samples(trajs, every_nth_frame)
-
-        samples = np.array(
-            samples.value_in_unit(unit.nanometer)
-        )  # positions in nanometer
-        u_kn = np.zeros(
-            (len(N_k), int(N_k[0] * len(N_k))), dtype=np.float64
-        )  # NOTE: assuming that N_k[0] is the maximum number of samples drawn from any state k
-        for k, lamb in enumerate(lambda_scheme):
-            sim.context.setParameter("lambda_interpolate", lamb)
-            us = []
-            for x in tqdm(range(len(samples))):
-                sim.context.setPositions(samples[x])
-                u_ = sim.context.getState(getEnergy=True).getPotentialEnergy()
-                us.append(u_)
-            us = np.array([u / kBT for u in us], dtype=np.float64)
-            u_kn[k] = us
-
-        if not path.isfile(pickle_path) or override == True:
-            pickle.dump((N_k, u_kn), open(f"{pickle_path}", "wb+"))
-
-    # total number of samples
-    total_nr_of_samples = 0
-    for n in N_k:
-        total_nr_of_samples += n
-
-    assert total_nr_of_samples != 0  # make sure that there are samples present
-
-    return (N_k, u_kn)
+from endstate_correction.constant import kBT, zinc_systems
+from endstate_correction.neq import _collect_work_values
 
 
 def plot_overlap_for_equilibrium_free_energy(
@@ -187,14 +89,6 @@ def plot_results_for_equilibrium_free_energy(
     plt.close()
 
 
-def _collect_work_values(file: str) -> list:
-
-    ws = pickle.load(open(file, "rb")).value_in_unit(unit.kilojoule_per_mole)
-    number_of_samples = len(ws)
-    print(f"Number of samples used: {number_of_samples}")
-    return ws * unit.kilojoule_per_mole
-
-
 def collect_results_from_neq_and_equ_free_energy_calculations(
     w_dir: str,
     forcefield: str,
@@ -221,8 +115,10 @@ def collect_results_from_neq_and_equ_free_energy_calculations(
     from endstate_correction.analysis import _collect_equ_samples
     from endstate_correction.neq import perform_switching
     from endstate_correction.system import (
-        generate_molecule, initialize_simulation_with_charmmff,
-        initialize_simulation_with_openff)
+        generate_molecule,
+        initialize_simulation_with_charmmff,
+        initialize_simulation_with_openff,
+    )
 
     # collect equ results
     equ_samples_path = f"{w_dir}/sampling_{forcefield}/run{run_id:0>2d}"
