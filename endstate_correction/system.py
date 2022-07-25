@@ -46,7 +46,6 @@ def create_charmm_system(
     implementation, platform = check_implementation()
 
     ff = "charmmff"
-    platform = "CUDA"
     ###################
     print(f"{ff=}")
     print(f"{platform=}")
