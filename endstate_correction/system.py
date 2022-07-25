@@ -36,7 +36,7 @@ def create_charmm_system(
     psf: CharmmPsfFile,
     parameters: CharmmParameterSet,
     env: str,
-    tlc: str,
+    ml_atoms: list,
 ):
 
     ###################
@@ -57,9 +57,6 @@ def create_charmm_system(
     else:
         mm_system = psf.createSystem(parameters, nonbondedMethod=PME)
 
-    # TODO: check lingand automatically
-    chains = list(psf.topology.chains())
-    ml_atoms = [atom.index for atom in chains[0].atoms()]
     print(f"{ml_atoms=}")
 
     #####################

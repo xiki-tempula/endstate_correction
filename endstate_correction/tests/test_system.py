@@ -33,8 +33,13 @@ def test_generate_simulation_instances_with_charmmff():
         f"{hipen_testsystem}/par_all36_cgenff.prm",
         f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
-
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    # set up system
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
     sim.context.setPositions(crd.positions)
 
     ############################
@@ -70,8 +75,13 @@ def test_generate_simulation_instances_with_charmmff():
         f"{jctc_testsystem}/toppar/par_all36_cgenff.prm",
         f"{jctc_testsystem}/toppar/toppar_water_ions.str",
     )
-
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    # define system
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
     sim.context.setPositions(pdb.positions)
 
     ############################
@@ -110,8 +120,13 @@ def test_generate_simulation_instances_with_charmmff():
         f"{jctc_testsystem}/toppar/toppar_water_ions.str",
     )
     psf = read_box(psf, f"{jctc_testsystem}/{system_name}/charmm-gui/input.config.dat")
-
-    sim = create_charmm_system(psf=psf, parameters=params, env="waterbox", tlc="UNK")
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    # define system
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="waterbox", ml_atoms=ml_atoms
+    )
     sim.context.setPositions(pdb.positions)
 
     ############################

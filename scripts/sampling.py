@@ -1,99 +1,66 @@
 # general imports
-import os
-import sys
-from openmm.app import DCDReporter, PDBFile
-
-
+from endstate_correction.constant import (
+    temperature,
+)
+from endstate_correction.system import create_charmm_system
 import numpy as np
-import torch
-from endstate_correction.constant import zinc_systems
-from endstate_correction.system import (
-    generate_samples,
-    generate_molecule,
-    initialize_simulation_with_charmmff,
-    initialize_simulation_with_openff,
+from openmm.app import (
+    PME,
+    CharmmParameterSet,
+    CharmmPsfFile,
+    PDBFile,
+    DCDReporter,
+)
+from endstate_correction.equ import generate_samples
+import endstate_correction
+
+########################################################
+########################################################
+# ------------ set up the waterbox system --------------
+# we use a system that is shipped with the repo
+package_path = endstate_correction.__path__[0]
+system_name = "1_octanol"
+# define the output directory
+output_base = f"{system_name}/"
+parameter_base = f"{package_path}/data/jctc_data"
+# load the charmm specific files (psf, pdb, rtf, prm and str files)
+psf = CharmmPsfFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.psf")
+pdb = PDBFile(f"{parameter_base}/{system_name}/charmm-gui/openmm/step3_input.pdb")
+params = CharmmParameterSet(
+    f"{parameter_base}/{system_name}/charmm-gui/unk/unk.rtf",
+    f"{parameter_base}/{system_name}/charmm-gui/unk/unk.prm",
+    f"{parameter_base}/toppar/top_all36_cgenff.rtf",
+    f"{parameter_base}/toppar/par_all36_cgenff.prm",
+    f"{parameter_base}/toppar/toppar_water_ions.str",
 )
 
-### set number of CPU threads used by pytorch
-num_threads = 2
-torch.set_num_threads(num_threads)
+# define region that should be treated with the qml
+chains = list(psf.topology.chains())
+ml_atoms = [atom.index for atom in chains[0].atoms()]
+# set up the treatment of the system for the specific environment
+env = "waterbox"
+# define system
+sim = create_charmm_system(psf=psf, parameters=params, env=env, ml_atoms=ml_atoms)
 
-###################
-# parse command line arguments
-if len(sys.argv) > 2:
-    print("Simulating zink system")
-    run_id = int(sys.argv[1])
-    zink_id = int(sys.argv[2])
-    name, smiles = zinc_systems[zink_id]
-else:
-    run_id = int(sys.argv[1])
-    name = "2cle"
-    smiles = "ClCCOCCCl"
-###################
-ff = "charmmff"  # "openff" #"charmmff"  # openff
+##############################################################
+# ------------------ Start equilibrium sampling ---------------
+# define equilibirum sampling control parameters
+run_id = 1
 n_samples = 5_000
-n_steps_per_sample = 5
-n_lambdas = 11
-platform = "CUDA"
-###################
-###################
-print(f"{zink_id=}")
-print(f"{name=}")
-print(f"{smiles=}")
-print(f"{run_id=}")
-print(f"{ff=}")
-print(f"{platform=}")
-print(f"{n_lambdas=}")
-
-assert ff == "openff" or ff == "charmmff"
-lambs = np.linspace(0, 1, n_lambdas)
-assert len(lambs) == n_lambdas
-assert lambs[0] == 0.0
-assert lambs[-1] == 1.0
-###################
-# generate mol
-if ff == "openff" and smiles:
-    molecule = generate_molecule(forcefield=ff, smiles=smiles)
-elif ff == "charmmff" and smiles:
-    molecule = generate_molecule(forcefield=ff, name=name)
-else:
-    raise RuntimeError("Only openff can be used with SMILES input")
-# initialize working directory
-w_dir = (
-    f"/data/shared/projects/endstate_correction/{name}/sampling_{ff}/run{run_id:0>2d}/"
-)
-os.makedirs(w_dir, exist_ok=True)
-print(f"saving to: {w_dir}")
-# select a random conformation
-from random import randint
-
-conf_id = 2  # randint(0, molecule.n_conformers - 1)
-print(f"select conf_id: {conf_id}")
-###################
-# initialize simulation depending on ff keyword
-if ff == "openff":
-    sim = initialize_simulation_with_openff(
-        molecule,
-        w_dir=f"/data/shared/projects/endstate_correction/{name}/",
-        conf_id=conf_id,
-    )
-elif ff == "charmmff":
-    sim = initialize_simulation_with_charmmff(
-        molecule, zinc_id=name, conf_id=conf_id, minimize=False
-    )
-else:
-    raise RuntimeError("Either openff or charmmff. Abort.")
-###################
-PDBFile.writeFile(
-    sim.topology, molecule.conformers[conf_id], file=open(f"{w_dir}/{name}.pdb", "w")
-)
-# perform lambda protocoll
-for lamb in [1.0]:
-    trajectory_file = f"{w_dir}/{name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}.dcd"
+n_steps_per_sample = 1_000
+# define lambda states
+lambs = np.linspace(0, 1, 11)
+for lamb in lambs:
     print(f"{lamb=}")
+    trajectory_file = f"{output_base}/equilibrium_samples/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
+
+    print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
     sim.context.setParameter("lambda_interpolate", lamb)
-    # add reporter
+    # set coordinates
+    sim.context.setPositions(pdb.positions)
+    sim.context.setVelocitiesToTemperature(temperature)
+    # collect samples
     sim.reporters.append(
         DCDReporter(
             trajectory_file,
@@ -101,10 +68,7 @@ for lamb in [1.0]:
         )
     )
 
-    # set coordinates
-    sim.context.setPositions(molecule.conformers[conf_id])
-    # collect samples
     samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
-    print(f"traj saved to: {trajectory_file}")
+    sim.reporters.clear()

@@ -8,7 +8,7 @@ import sys
 
 def test_endstate_correction_imported():
     """Sample test, will always pass so long as import statement worked."""
-    assert "endstate_correction" in sys.modules  
+    assert "endstate_correction" in sys.modules
 
 
 def test_FEP_protocoll():
@@ -123,8 +123,13 @@ def test_EQU_protocoll():
         f"{hipen_testsystem}/par_all36_cgenff.prm",
         f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
 
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
 
     # load all equ samples
     trajs = load_equ_samples(system_name=system_name)

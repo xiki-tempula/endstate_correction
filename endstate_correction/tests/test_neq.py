@@ -42,8 +42,10 @@ def load_endstate_system_and_samples(
         f"{hipen_testsystem}/par_all36_cgenff.prm",
         f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
-
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms)
     sim.context.setPositions(crd.positions)
     n_samples = 5_000
     n_steps_per_sample = 1_000

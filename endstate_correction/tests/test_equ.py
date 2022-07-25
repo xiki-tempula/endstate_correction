@@ -70,9 +70,12 @@ def test_equilibrium_free_energy():
         f"{hipen_testsystem}/par_all36_cgenff.prm",
         f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
 
     # create a charmm system given the defininition above
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms)
     # load samples
     trajs = load_equ_samples(system_name)
     # calculate u_kn
