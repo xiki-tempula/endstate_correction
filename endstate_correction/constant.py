@@ -73,7 +73,6 @@ from typing import Tuple
 def check_implementation() -> Tuple[str, str]:
     try:
         from NNPOps import OptimizedTorchANI as _
-
         implementation = "nnpops"
         platform = "CUDA"
     except ModuleNotFoundError:

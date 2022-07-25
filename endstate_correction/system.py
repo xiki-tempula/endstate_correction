@@ -45,9 +45,7 @@ def create_charmm_system(
     potential = MLPotential("ani2x")
     implementation, platform = check_implementation()
 
-    ff = "charmmff"
     ###################
-    print(f"{ff=}")
     print(f"{platform=}")
     print(f"{env=}")
     ###################
