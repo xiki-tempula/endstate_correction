@@ -17,6 +17,7 @@ dependencies:
   - pymbar
   - torchani
   - seaborn
+  - pytorch=1.11.0
 
     # Testing
   - pytest
