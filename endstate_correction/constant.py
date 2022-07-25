@@ -78,7 +78,7 @@ def check_implementation() -> Tuple[str, str]:
         platform = "CUDA"
     except ModuleNotFoundError:
         platform = "CPU"
-        implementation = "nnpops"
+        implementation = "torchani"
 
     print(implementation, platform)
     return implementation, platform
