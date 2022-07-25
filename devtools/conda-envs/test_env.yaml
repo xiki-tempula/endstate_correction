@@ -14,7 +14,7 @@ dependencies:
 #  - nnpops
 #  - cudatoolkit=11.3
   - tqdm
-  - pymbar
+  - pymbar=3.0.7
   - torchani
   - seaborn
   - pytorch=1.11.0
