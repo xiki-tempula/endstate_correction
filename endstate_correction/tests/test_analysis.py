@@ -2,7 +2,6 @@ import pathlib
 
 import endstate_correction
 from endstate_correction.system import create_charmm_system
-from openmm import unit
 from openmm.app import CharmmParameterSet, CharmmPsfFile
 
 
@@ -50,7 +49,7 @@ def test_plotting_equilibrium_free_energy():
     plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
 
 
-def test_FEP_protocoll():
+def test_plot_results_for_FEP_protocoll():
     """Perform FEP uni- and bidirectional protocoll"""
     from endstate_correction.protocoll import perform_endstate_correction, Protocoll
     from .test_neq import load_endstate_system_and_samples

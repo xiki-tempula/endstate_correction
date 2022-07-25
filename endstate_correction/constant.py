@@ -73,12 +73,16 @@ from typing import Tuple
 def check_implementation() -> Tuple[str, str]:
     try:
         from NNPOps import OptimizedTorchANI as _
-
         implementation = "nnpops"
         platform = "CUDA"
     except ModuleNotFoundError:
+        import torch
+
+        torch.set_num_threads(2)
         platform = "CPU"
         implementation = "torchani"
 
+    platform = "CPU"
+    implementation = "torchani"
     print(implementation, platform)
     return implementation, platform
