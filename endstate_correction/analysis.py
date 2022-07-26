@@ -105,7 +105,6 @@ def plot_endstate_correction_results(
         print(f"Zwanzig's equation (from qml to mm): {EXP(results.dE_qml_to_mm)}")
         multiple_results += 1
     if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
-        print(f"Zwanzig's equation: {EXP(results.dE_mm_to_qml)}")
         print(
             f"Zwanzig's equation bidirectional: {BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)}"
         )
@@ -211,37 +210,37 @@ def plot_endstate_correction_results(
     if multiple_results > 1:
         ax_index += 1
         axs[ax_index].set_title(rf"{name} - offset $\Delta$G(MM$\rightarrow$QML)")
-        ddG_list, dddG_list, names = [], [], [""]
+        ddG_list, dddG_list, names = [], [], []
 
         if results.equ_mbar:
             # Equilibrium free energy
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.extend(["Equilibrium", ""])
+            names.append("Equilibrium")
         if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
             # Crooks' equation
             ddG, dddG = BAR(results.W_mm_to_qml, results.W_qml_to_mm)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.extend(["Crooks", ""])
+            names.append("Crooks")
         if results.W_mm_to_qml.size:
             # Jarzynski's equation
             ddG, dddG = EXP(results.W_mm_to_qml)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.extend(["Jazynski", ""])
+            names.append("Jazynski")
         if results.dE_mm_to_qml.size:
             # FEP
             ddG, dddG = EXP(results.dE_mm_to_qml)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.extend(["FEP+EXP", ""])
+            names.append("FEP+EXP")
         if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
             # FEP + BAR
-            ddG, dddG = BAR(results.dE_qml_to_mm, results.dE_mm_to_qml)
+            ddG, dddG = BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.extend(["FEP+BAR", ""])
+            names.append("FEP+BAR")
 
         axs[ax_index].errorbar(
             [i for i in range(len(ddG_list))],
@@ -250,7 +249,10 @@ def plot_endstate_correction_results(
             dddG_list,
             fmt="o",
         )
-        axs[ax_index].set_xticklabels(names)
+        print([i for i in range(len(names))])
+        axs[ax_index].set_xticks([i for i in range(len(names))], labels=names)
+        # axs[ax_index].set_xticklabels(names)
+
         axs[ax_index].set_ylabel("kT")
         axs[ax_index].set_ylim([-5, 5])
         axs[ax_index].axhline(y=0.0, color=c1, linestyle=":")
