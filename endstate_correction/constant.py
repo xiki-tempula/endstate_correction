@@ -81,8 +81,7 @@ def check_implementation() -> Tuple[str, str]:
 
         torch.set_num_threads(2)
         platform = "CPU"
-        implementation = "nnpops"
+        implementation = "torchani"
 
-    platform = "CPU"
     print(implementation, platform)
     return implementation, platform

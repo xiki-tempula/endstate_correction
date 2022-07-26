@@ -86,3 +86,45 @@ def test_plot_results_for_FEP_protocoll():
 
     r = perform_endstate_correction(fep_protocoll)
     plot_endstate_correction_results(system_name, r, "results_fep_bidirectional.png")
+
+
+def test_plot_results_for_NEQ_protocoll():
+    """Perform FEP uni- and bidirectional protocoll"""
+    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+    from .test_neq import load_endstate_system_and_samples
+    from endstate_correction.analysis import plot_endstate_correction_results
+    import pickle
+
+    system_name = "ZINC00079729"
+    # start with FEP
+    sim, mm_samples, qml_samples = load_endstate_system_and_samples(
+        system_name=system_name
+    )
+
+    ####################################################
+    # ----------------------- NEQ ----------------------
+    ####################################################
+
+    fep_protocoll = Protocoll(
+        method="NEQ",
+        direction="unidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    pickle.dump(r, open(f"neq_unid.pickle", "wb"))
+    plot_endstate_correction_results(system_name, r, "results_neq_unidirectional.png")
+
+    fep_protocoll = Protocoll(
+        method="NEQ",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    pickle.dump(r, open(f"neq_bid.pickle", "wb"))
+    plot_endstate_correction_results(system_name, r, "results_neq_bidirectional.png")

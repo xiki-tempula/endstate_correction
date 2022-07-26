@@ -164,7 +164,7 @@ def plot_endstate_correction_results(
         sns.histplot(
             ax=axs[ax_index],
             alpha=0.5,
-            data=results.W_mm_to_qml * -1,
+            data=results.W_mm_to_qml,
             kde=True,
             stat="density",
             label=r"$\Delta$W(MM$\rightarrow$QML)",
@@ -175,7 +175,7 @@ def plot_endstate_correction_results(
         sns.histplot(
             ax=axs[ax_index],
             alpha=0.5,
-            data=results.dE_mm_to_qml * -1,
+            data=results.dE_mm_to_qml,
             kde=True,
             stat="density",
             label=r"$\Delta$E(MM$\rightarrow$QML)",
@@ -186,7 +186,7 @@ def plot_endstate_correction_results(
         sns.histplot(
             ax=axs[ax_index],
             alpha=0.5,
-            data=results.W_qml_to_mm,
+            data=results.W_qml_to_mm * -1,
             kde=True,
             stat="density",
             label=r"$\Delta$W(QML$\rightarrow$MM)",
@@ -197,7 +197,7 @@ def plot_endstate_correction_results(
         sns.histplot(
             ax=axs[ax_index],
             alpha=0.5,
-            data=results.dE_qml_to_mm,
+            data=results.dE_qml_to_mm * -1,
             kde=True,
             stat="density",
             label=r"$\Delta$E(QML$\rightarrow$MM)",
