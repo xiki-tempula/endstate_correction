@@ -53,6 +53,7 @@ def perform_endstate_correction(protocoll: Protocoll):
         ####################################################
         # ------------------- FEP ---------------------------
         ####################################################
+        # from MM to QML
         lambs = np.linspace(0, 1, 2)
         if (
             protocoll.direction.lower() == "bidirectional"
@@ -71,6 +72,8 @@ def perform_endstate_correction(protocoll: Protocoll):
                 / kBT
             )
             # perform switching from qml to mm
+            lambs = np.linspace(1, 0, 2)
+
             dEs_from_qml_to_mm = np.array(
                 perform_switching(
                     sim,

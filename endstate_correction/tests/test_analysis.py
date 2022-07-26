@@ -81,7 +81,7 @@ def test_plot_results_for_FEP_protocoll():
         direction="bidirectional",
         sim=sim,
         trajectories=[mm_samples, qml_samples],
-        nr_of_switches=50,
+        nr_of_switches=100,
     )
 
     r = perform_endstate_correction(fep_protocoll)
