@@ -96,7 +96,7 @@ def test_plot_results_for_NEQ_protocoll():
     import pickle
 
     system_name = "ZINC00079729"
-    # start with FEP
+    # start with NEQ
     sim, mm_samples, qml_samples = load_endstate_system_and_samples(
         system_name=system_name
     )
@@ -113,9 +113,15 @@ def test_plot_results_for_NEQ_protocoll():
         nr_of_switches=100,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
-    pickle.dump(r, open(f"neq_unid.pickle", "wb"))
-    plot_endstate_correction_results(system_name, r, "results_neq_unidirectional.png")
+    # r = perform_endstate_correction(fep_protocoll)
+    # pickle.dump(r, open(f"neq_unid.pickle", "wb"))
+
+    r = pickle.load(
+        open(f"data/{system_name}/switching_charmmff/neq_unid.pickle", "rb")
+    )
+    plot_endstate_correction_results(
+        system_name, r, "{system_name}_results_neq_unidirectional.png"
+    )
 
     fep_protocoll = Protocoll(
         method="NEQ",
@@ -125,6 +131,10 @@ def test_plot_results_for_NEQ_protocoll():
         nr_of_switches=100,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
-    pickle.dump(r, open(f"neq_bid.pickle", "wb"))
-    plot_endstate_correction_results(system_name, r, "results_neq_bidirectional.png")
+    # r = perform_endstate_correction(fep_protocoll)
+    # pickle.dump(r, open(f"neq_bid.pickle", "wb"))
+
+    r = pickle.load(open(f"data/{system_name}/switching_charmmff/neq_bid.pickle", "rb"))
+    plot_endstate_correction_results(
+        system_name, r, "{system_name}_results_neq_bidirectional.png"
+    )
