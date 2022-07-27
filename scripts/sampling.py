@@ -2,7 +2,7 @@
 from endstate_correction.constant import (
     temperature,
 )
-from endstate_correction.system import create_charmm_system
+from endstate_correction.system import create_charmm_system, read_box
 import numpy as np
 from openmm.app import (
     PME,
@@ -20,6 +20,7 @@ import endstate_correction
 # we use a system that is shipped with the repo
 package_path = endstate_correction.__path__[0]
 system_name = "1_octanol"
+env = "waterbox"
 # define the output directory
 output_base = f"{system_name}/"
 parameter_base = f"{package_path}/data/jctc_data"
@@ -33,12 +34,13 @@ params = CharmmParameterSet(
     f"{parameter_base}/toppar/par_all36_cgenff.prm",
     f"{parameter_base}/toppar/toppar_water_ions.str",
 )
+# set up the treatment of the system for the specific environment
+if env == "waterbox":
+    psf = read_box(psf, f"{parameter_base}/{system_name}/charmm-gui/input.config.dat")
 
 # define region that should be treated with the qml
 chains = list(psf.topology.chains())
 ml_atoms = [atom.index for atom in chains[0].atoms()]
-# set up the treatment of the system for the specific environment
-env = "waterbox"
 # define system
 sim = create_charmm_system(psf=psf, parameters=params, env=env, ml_atoms=ml_atoms)
 
