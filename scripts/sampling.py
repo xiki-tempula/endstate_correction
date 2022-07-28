@@ -14,6 +14,7 @@ from openmm.app import (
 from endstate_correction.equ import generate_samples
 import endstate_correction
 import os
+from openmm import OpenMMException
 
 ########################################################
 ########################################################
@@ -65,7 +66,15 @@ for lamb in lambs:
     sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(pdb.positions)
-    sim.context.setVelocitiesToTemperature(temperature)
+    try:
+        from endstate_correction.equ import _seed_velocities, _get_masses
+
+        sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+    except OpenMMException:
+        from endstate_correction.equ import _seed_velocities, _get_masses
+
+        sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+
     # collect samples
     sim.reporters.append(
         DCDReporter(
