@@ -2,12 +2,17 @@
 import json
 
 import openmm as mm
-from tqdm import tqdm
 from openmm import unit
 from openmm.app import PME, CharmmParameterSet, CharmmPsfFile, NoCutoff, Simulation
 from openmmml import MLPotential
+from tqdm import tqdm
 
-from endstate_correction.constant import collision_rate, stepsize, temperature
+from endstate_correction.constant import (
+    collision_rate,
+    stepsize,
+    temperature,
+    check_implementation,
+)
 
 
 def read_box(psf, filename: str):
@@ -31,17 +36,16 @@ def create_charmm_system(
     psf: CharmmPsfFile,
     parameters: CharmmParameterSet,
     env: str,
-    tlc: str,
+    ml_atoms: list,
 ):
 
     ###################
     print(f"Generating charmm system in {env}")
     assert env in ("waterbox", "vacuum", "complex")
     potential = MLPotential("ani2x")
-    ff = "charmmff"
-    platform = "CUDA"
+    implementation, platform = check_implementation()
+
     ###################
-    print(f"{ff=}")
     print(f"{platform=}")
     print(f"{env=}")
     ###################
@@ -51,9 +55,6 @@ def create_charmm_system(
     else:
         mm_system = psf.createSystem(parameters, nonbondedMethod=PME)
 
-    # TODO: check lingand automatically
-    chains = list(psf.topology.chains())
-    ml_atoms = [atom.index for atom in chains[0].atoms()]
     print(f"{ml_atoms=}")
 
     #####################

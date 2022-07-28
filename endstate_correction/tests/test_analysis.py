@@ -1,175 +1,140 @@
-import numpy as np
-import torch
-import pytest
-import os
+import pathlib
 
-### set number of CPU threads used by pytorch
-num_threads = 2
-torch.set_num_threads(num_threads)
+import endstate_correction
+from endstate_correction.system import create_charmm_system
+from openmm.app import CharmmParameterSet, CharmmPsfFile
 
 
-@pytest.mark.parametrize(
-    "ff",
-    ["charmmff", "openff"],
-)
-def test_collect_equ_samples(ff):
-    """test if we are able to collect samples as anticipated"""
-    from endstate_correction.analysis import _collect_equ_samples
-
-    lambs = np.linspace(0, 1, 11)
-    name = "ZINC00077329"
-    path = f"data/{name}/sampling_{ff}/run01/"
-    samples, N_k = _collect_equ_samples(path, name=name, lambda_scheme=lambs)
-
-    print(N_k)
-    assert N_k[0] == 2000
-    assert len(samples) == 22000
-
-    samples, N_k = _collect_equ_samples(
-        path, name=name, lambda_scheme=lambs, only_endstates=True
-    )
-    print(N_k)
-    assert N_k[0] == 2000
-    assert N_k[-1] == 2000
-    assert len(samples) == 4000
-
-    lambs = [0, 1]
-    samples, N_k = _collect_equ_samples(
-        path, name=name, lambda_scheme=lambs, only_endstates=True
-    )
-
-    print(N_k)
-    assert N_k[0] == 2000
-    assert N_k[-1] == 2000
-    assert len(samples) == 4000
-
-    mm_samples = samples[: int(N_k[0])]
-    qml_samples = samples[int(N_k[0]) :]
-    assert len(mm_samples) == 2_000
-    assert len(qml_samples) == 2_000
-
-
-@pytest.mark.parametrize(
-    "ff, nr_of_switches",
-    [("charmmff", 200), pytest.param("openff", 200, marks=pytest.mark.xfail)],
-)
-def test_collect_work_values(ff, nr_of_switches):
-    """test if we are able to collect samples as anticipated"""
-    from endstate_correction.analysis import _collect_work_values
-
-    print(ff)
-    path = f"data/ZINC00077329/switching_{ff}/ZINC00077329_neq_ws_from_mm_to_qml_{nr_of_switches}_5001.pickle"
-    ws = _collect_work_values(path)
-    assert len(ws) == nr_of_switches
-
-
-@pytest.mark.skipif(
-    os.getenv("CI") == "true",
-    reason="Runs out of time on MacOS",  # TODO: FIXME!
-)
-@pytest.mark.parametrize(
-    "ff, ddG",
-    [
-        ("charmmff", -940544.0390218807),
-        ("openff", -940689.0530839318),
-    ],
-)
-def test_equilibrium_free_energy(ff, ddG):
-    "test that u_kn can be calculated and that results are consistent whether we reload mbar pickle or regernerate it"
-    from endstate_correction.analysis import calculate_u_kn
-    from pymbar import MBAR
-
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    path = f"data/{name}/sampling_{ff}/run01/"
-
-    N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield=ff,
-        path_to_files=path,
-        name=name,
-        every_nth_frame=100,
-        reload=False,
-        override=True,
-    )
-
-    mbar = MBAR(u_kn, N_k)
-    f = mbar.getFreeEnergyDifferences()
-    assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], ddG, rtol=1e-06)
-
-    N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield="charmmff",
-        path_to_files=path,
-        name=name,
-        every_nth_frame=100,
-        reload=True,
-        override=False,
-    )
-
-    mbar = MBAR(u_kn, N_k)
-    f = mbar.getFreeEnergyDifferences()
-    assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], ddG, rtol=1e-06)
-
-
-@pytest.mark.parametrize(
-    "ff",
-    [
-        ("charmmff"),
-        ("openff"),
-    ],
-)
-def test_plotting_equilibrium_free_energy(ff):
+def test_plotting_equilibrium_free_energy():
     "Test that plotting functions can be called"
-    from endstate_correction.analysis import calculate_u_kn
     from endstate_correction.analysis import (
         plot_overlap_for_equilibrium_free_energy,
         plot_results_for_equilibrium_free_energy,
     )
+    from endstate_correction.equ import calculate_u_kn
+    from .test_equ import load_equ_samples
 
-    name = "ZINC00077329"
-    smiles = "Cn1cc(Cl)c(/C=N/O)n1"
-    path = f"data/{name}/sampling_{ff}/run01/"
+    """test if we are able to plot overlap and """
+
+    ########################################################
+    ########################################################
+    # ----------------- vacuum -----------------------------
+    # get all relevant files
+    path = pathlib.Path(endstate_correction.__file__).resolve().parent
+    hipen_testsystem = f"{path}/data/hipen_data"
+
+    system_name = "ZINC00077329"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
+    )
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
+    trajs = load_equ_samples(system_name)
 
     N_k, u_kn = calculate_u_kn(
-        smiles=smiles,
-        forcefield=ff,
-        path_to_files=path,
-        name=name,
-        every_nth_frame=100,
-        reload=False,
+        trajs=trajs,
+        every_nth_frame=50,
+        sim=sim,
     )
 
-    plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
-    plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=name)
+    plot_overlap_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
+    plot_results_for_equilibrium_free_energy(N_k=N_k, u_kn=u_kn, name=system_name)
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true",
-    reason="Requires input data that are not provided in the repo",
-)
-@pytest.mark.parametrize(
-    "ff",
-    [
-        ("charmmff"),
-        pytest.param("openff", marks=pytest.mark.xfail),
-    ],
-)
-def test_collect_results(ff):
-    from endstate_correction.analysis import (
-        collect_results_from_neq_and_equ_free_energy_calculations,
+def test_plot_results_for_FEP_protocoll():
+    """Perform FEP uni- and bidirectional protocoll"""
+    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+    from .test_neq import load_endstate_system_and_samples
+    from endstate_correction.analysis import plot_endstate_correction_results
+
+    system_name = "ZINC00079729"
+    # start with FEP
+    sim, mm_samples, qml_samples = load_endstate_system_and_samples(
+        system_name=system_name
     )
 
-    name = "ZINC00079729"
-    smiles = "S=c1cc(-c2ccc(Cl)cc2)ss1"
-    path = f"data/{name}/"
+    ####################################################
+    # ----------------------- FEP ----------------------
+    ####################################################
 
-    collect_results_from_neq_and_equ_free_energy_calculations(
-        w_dir=path,
-        forcefield=ff,
-        run_id=1,
-        smiles=smiles,
-        name=name,
+    fep_protocoll = Protocoll(
+        method="FEP",
+        direction="unidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=50,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    plot_endstate_correction_results(system_name, r, "results_fep_unidirectional.png")
+
+    fep_protocoll = Protocoll(
+        method="FEP",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    r = perform_endstate_correction(fep_protocoll)
+    plot_endstate_correction_results(system_name, r, "results_fep_bidirectional.png")
+
+
+def test_plot_results_for_NEQ_protocoll():
+    """Perform FEP uni- and bidirectional protocoll"""
+    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+    from .test_neq import load_endstate_system_and_samples
+    from endstate_correction.analysis import plot_endstate_correction_results
+    import pickle
+
+    system_name = "ZINC00079729"
+    # start with NEQ
+    sim, mm_samples, qml_samples = load_endstate_system_and_samples(
+        system_name=system_name
+    )
+
+    ####################################################
+    # ----------------------- NEQ ----------------------
+    ####################################################
+
+    fep_protocoll = Protocoll(
+        method="NEQ",
+        direction="unidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    # r = perform_endstate_correction(fep_protocoll)
+    # pickle.dump(r, open(f"neq_unid.pickle", "wb"))
+
+    r = pickle.load(
+        open(f"data/{system_name}/switching_charmmff/neq_unid.pickle", "rb")
+    )
+    plot_endstate_correction_results(
+        system_name, r, "{system_name}_results_neq_unidirectional.png"
+    )
+
+    fep_protocoll = Protocoll(
+        method="NEQ",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    # r = perform_endstate_correction(fep_protocoll)
+    # pickle.dump(r, open(f"neq_bid.pickle", "wb"))
+
+    r = pickle.load(open(f"data/{system_name}/switching_charmmff/neq_bid.pickle", "rb"))
+    plot_endstate_correction_results(
+        system_name, r, "{system_name}_results_neq_bidirectional.png"
     )

@@ -11,12 +11,13 @@ dependencies:
   - openmm-torch
   - openff-toolkit
   - openmmtools
-#  - nnpops
+  - nnpops
 #  - cudatoolkit=11.3
   - tqdm
-  - pymbar
+  - pymbar=3.0.7
   - torchani
   - seaborn
+  - pytorch=1.11.0
 
     # Testing
   - pytest

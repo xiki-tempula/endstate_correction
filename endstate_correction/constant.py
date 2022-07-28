@@ -77,6 +77,9 @@ def check_implementation() -> Tuple[str, str]:
         implementation = "nnpops"
         platform = "CUDA"
     except ModuleNotFoundError:
+        import torch
+
+        torch.set_num_threads(2)
         platform = "CPU"
         implementation = "torchani"
 

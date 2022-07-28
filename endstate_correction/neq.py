@@ -1,13 +1,14 @@
+import pickle
 import random
+from typing import Tuple
 
 import numpy as np
 from openmm import unit
 from tqdm import tqdm
-from typing import Tuple
 
 from endstate_correction.constant import distance_unit, temperature
 from endstate_correction.system import get_positions
-
+import openmm
 
 def perform_switching(
     sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
@@ -39,8 +40,11 @@ def perform_switching(
         sim.context.setPositions(x)
 
         # reseed velocities
-        sim.context.setVelocitiesToTemperature(temperature)
-
+        try:
+            sim.context.setVelocitiesToTemperature(temperature)
+        except openmm.OpenMMException:
+            from endstate_correction.equ import _seed_velocities, _get_masses
+            sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
         # initialize work
         w = 0.0
         # perform NEQ switching
@@ -62,4 +66,13 @@ def perform_switching(
             w += (u_now - u_before).value_in_unit(unit.kilojoule_per_mole)
         if save_traj:
             endstate_samples.append(get_positions(sim))
+        ws.append(w)
     return np.array(ws) * unit.kilojoule_per_mole, endstate_samples
+
+
+def _collect_work_values(file: str) -> list:
+
+    ws = pickle.load(open(file, "rb")).value_in_unit(unit.kilojoule_per_mole)
+    number_of_samples = len(ws)
+    print(f"Number of samples used: {number_of_samples}")
+    return ws * unit.kilojoule_per_mole

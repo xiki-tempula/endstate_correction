@@ -16,11 +16,12 @@ jctc_testsystem = f"{path}/data/jctc_data"
 
 
 def test_sampling():
+    """Test if we can sample with simulation instance in vacuum and watervox"""
     from endstate_correction.system import (
-        generate_samples,
         create_charmm_system,
         read_box,
     )
+    from endstate_correction.equ import generate_samples
 
     ########################################################
     ########################################################
@@ -34,15 +35,20 @@ def test_sampling():
         f"{hipen_testsystem}/par_all36_cgenff.prm",
         f"{hipen_testsystem}/{system_name}/{system_name}.str",
     )
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
 
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", tlc="UNK")
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
     sim.context.setPositions(crd.positions)
     generate_samples(sim, 1, 50)
 
     ########################################################
     ########################################################
     # ----------------- waterbox ---------------------------
-    # get all relevant files
+    # get all relevant files and initialize SIMulation
 
     system_name = "1_octanol"
     psf = CharmmPsfFile(
@@ -57,6 +63,10 @@ def test_sampling():
         f"{jctc_testsystem}/toppar/toppar_water_ions.str",
     )
     psf = read_box(psf, f"{jctc_testsystem}/{system_name}/charmm-gui/input.config.dat")
-    sim = create_charmm_system(psf=psf, parameters=params, env="waterbox", tlc="UNK")
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    # set up system
+    sim = create_charmm_system(psf=psf, parameters=params, env="waterbox", ml_atoms=ml_atoms)
     sim.context.setPositions(pdb.positions)
     generate_samples(sim, 1, 50)
