@@ -13,6 +13,7 @@ from openmm.app import (
 )
 from endstate_correction.equ import generate_samples
 import endstate_correction
+import os
 
 ########################################################
 ########################################################
@@ -52,6 +53,7 @@ n_samples = 5_000
 n_steps_per_sample = 1_000
 # path where samples should be stored
 base = f"{output_base}/equilibrium_samples/run{run_id:0>2d}"
+os.makedirs(base, exist_ok=True)
 # define lambda states
 lambs = np.linspace(0, 1, 11)
 for lamb in lambs:
