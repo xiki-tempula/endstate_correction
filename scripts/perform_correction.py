@@ -48,10 +48,10 @@ sim = create_charmm_system(psf=psf, parameters=params, env=env, ml_atoms=ml_atom
 # ------------------- load samples ---------------------#
 n_samples = 5_000
 n_steps_per_sample = 1_000
-traj_base = f"../data/{system_name}/"
+traj_base = f"{system_name}/"
 mm_samples = []
 traj = mdtraj.load_dcd(
-    f"{traj_base}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd",
+    f"{traj_base}/equilibrium_samples/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_0.0000_{env}.dcd",
     top=psf_file,
 )
 traj.image_molecules()
@@ -59,7 +59,7 @@ mm_samples.extend(traj.xyz * unit.nanometer)  # NOTE: this is in nanometer!
 ###############################
 qml_samples = []
 traj = mdtraj.load_dcd(
-    f"{traj_base}/sampling_charmmff/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd",
+    f"{traj_base}/equilibrium_samples/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd",
     top=psf_file,
 )
 traj.image_molecules()
