@@ -67,9 +67,7 @@ for lamb in lambs:
     # set coordinates
     sim.context.setPositions(pdb.positions)
     try:
-        from endstate_correction.equ import _seed_velocities, _get_masses
-
-        sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
+        sim.context.setVelocitiesToTemperature(temperature)
     except OpenMMException:
         from endstate_correction.equ import _seed_velocities, _get_masses
 
