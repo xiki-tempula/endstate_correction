@@ -50,11 +50,13 @@ sim = create_charmm_system(psf=psf, parameters=params, env=env, ml_atoms=ml_atom
 run_id = 1
 n_samples = 5_000
 n_steps_per_sample = 1_000
+# path where samples should be stored
+base = f"{output_base}/equilibrium_samples/run{run_id:0>2d}"
 # define lambda states
 lambs = np.linspace(0, 1, 11)
 for lamb in lambs:
     print(f"{lamb=}")
-    trajectory_file = f"{output_base}/equilibrium_samples/run{run_id:0>2d}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
+    trajectory_file = f"{base}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
 
     print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
