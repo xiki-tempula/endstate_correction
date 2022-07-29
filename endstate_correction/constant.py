@@ -83,5 +83,14 @@ def check_implementation() -> Tuple[str, str]:
         platform = "CPU"
         implementation = "torchani"
 
+    try:
+        import openmm as mm
+        from openmm import OpenMMException
+
+        platform = mm.Platform.getPlatformByName(platform)
+    except OpenMMException:
+        print("#------------ FALL BACK TO CPU PLATFORM -----------#")
+        platform = "CPU"
+
     print(implementation, platform)
     return implementation, platform

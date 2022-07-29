@@ -3,8 +3,14 @@ import pathlib
 import endstate_correction
 from endstate_correction.system import create_charmm_system
 from openmm.app import CharmmParameterSet, CharmmPsfFile
+import pytest
+import os
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
 def test_plotting_equilibrium_free_energy():
     "Test that plotting functions can be called"
     from endstate_correction.analysis import (
