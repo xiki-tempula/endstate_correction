@@ -62,7 +62,10 @@ traj = mdtraj.load_dcd(
     f"{traj_base}/equilibrium_samples/run01/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_1.0000_{env}.dcd",
     top=psf_file,
 )
-traj.image_molecules()
+
+if env == "waterbox":
+    traj.image_molecules()
+
 qml_samples.extend(traj.xyz * unit.nanometer)  # NOTE: this is in nanometer!
 
 ####################################################
