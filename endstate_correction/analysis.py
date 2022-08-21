@@ -12,7 +12,7 @@ from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextA
 from matplotlib.ticker import FormatStrFormatter
 from pymbar import BAR, EXP
 from scipy.stats import wasserstein_distance
-from endstate_correction.protocoll import Results
+from endstate_correction.protocol import Results
 from endstate_correction.constant import kBT, zinc_systems
 
 
@@ -249,7 +249,7 @@ def plot_endstate_correction_results(
             dddG_list,
             fmt="o",
         )
-        print([i for i in range(len(names))])
+
         axs[ax_index].set_xticks([i for i in range(len(names))], labels=names)
         # axs[ax_index].set_xticklabels(names)
 
