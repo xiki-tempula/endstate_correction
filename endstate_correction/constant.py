@@ -71,6 +71,8 @@ from typing import Tuple
 
 
 def check_implementation() -> Tuple[str, str]:
+    # check whether the CUDA platform is available and if yes,
+    # if also the NNPOPS implementation of torchani is installed
     try:
         from NNPOps import OptimizedTorchANI as _
 
@@ -87,7 +89,8 @@ def check_implementation() -> Tuple[str, str]:
         import openmm as mm
         from openmm import OpenMMException
 
-        platform = mm.Platform.getPlatformByName(platform)
+        # test if platform is possible, otherwise return 'CPU'
+        _ = mm.Platform.getPlatformByName(platform)
     except OpenMMException:
         print("#------------ FALL BACK TO CPU PLATFORM -----------#")
         platform = "CPU"
