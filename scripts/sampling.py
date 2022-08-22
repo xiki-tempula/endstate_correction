@@ -56,7 +56,8 @@ n_steps_per_sample = 1_000
 base = f"{output_base}/equilibrium_samples/run{run_id:0>2d}"
 os.makedirs(base, exist_ok=True)
 # define lambda states
-lambs = np.linspace(0, 1, 11)
+nr_lambda_states = 11
+lambs = np.linspace(0, 1, nr_lambda_states)
 for lamb in lambs:
     print(f"{lamb=}")
     trajectory_file = f"{base}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
