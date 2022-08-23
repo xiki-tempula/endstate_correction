@@ -3,7 +3,8 @@ Unit and regression test for the endstate_correction package.
 """
 
 # Import package, test suite, and other packages as needed
-import sys, pickle
+import sys, pickle, os
+import pytest
 
 
 def test_endstate_correction_imported():
@@ -185,6 +186,10 @@ def test_EQU_protocol():
     r.equ_mbar.getFreeEnergyDifferences()
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
 def test_ALL_protocol():
     """Perform FEP uni- and bidirectional protocol"""
     from endstate_correction.protocol import Protocol, perform_endstate_correction
@@ -201,18 +206,19 @@ def test_ALL_protocol():
     # ---------------- All corrections -----------------
     ####################################################
 
-    fep_protocol = Protocol(
+    protocol = Protocol(
         method="All",
         direction="bidirectional",
         sim=sim,
         trajectories=[mm_samples, qml_samples],
         nr_of_switches=100,
     )
-    r = perform_endstate_correction(fep_protocol)
+
+    r = perform_endstate_correction(protocol)
     pickle.dump(
         r,
         open(
-            f"data/{system_name}/switching_charmmff/{system_name}all_corrections.pickle",
+            f"data/{system_name}/switching_charmmff/{system_name}_all_corrections.pickle",
             "wb",
         ),
     )

@@ -187,5 +187,4 @@ def test_plot_results_for_all_protocol():
         )
     )
     print(r)
-    assert False
     plot_endstate_correction_results(system_name, r, f"{system_name}_results_all.png")
