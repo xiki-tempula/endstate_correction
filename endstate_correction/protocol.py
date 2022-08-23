@@ -31,7 +31,7 @@ def perform_endstate_correction(protocol: Protocol):
     from endstate_correction.neq import perform_switching
     from endstate_correction.constant import kBT
 
-    print(protocol)
+    print(protocol.method)
     # check that all necessary keywords are present
     if protocol.method.upper() not in ["FEP", "NEQ", "ALL"]:
         raise AttributeError(

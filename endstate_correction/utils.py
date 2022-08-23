@@ -21,4 +21,3 @@ def convert_pickle_to_dcd_file(
     PDBFile.writeFile(topology, positions.positions, file=open(pdb_output_path, "w"))
     traj = md.Trajectory(traj, topology=topology)
     traj.save_dcd(dcd_output_path)
-    print("Finished converting ...")
