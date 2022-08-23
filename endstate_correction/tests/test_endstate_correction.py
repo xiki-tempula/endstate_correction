@@ -54,7 +54,10 @@ def test_FEP_protocol():
     assert len(r.W_mm_to_qml) == 0
     assert len(r.W_qml_to_mm) == 0
 
-
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
 def test_NEQ_protocol():
     """Perform NEQ uni- and bidirectional protocol"""
     from endstate_correction.protocol import perform_endstate_correction, Protocol
@@ -133,7 +136,10 @@ def test_NEQ_protocol():
         ),
     )
 
-
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
 def test_EQU_protocol():
     """Perform equilibrium free energy protocol"""
     from endstate_correction.protocol import perform_endstate_correction, Protocol
