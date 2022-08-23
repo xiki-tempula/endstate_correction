@@ -15,8 +15,6 @@ class Protocol:
     direction: str = "None"
     nr_of_switches: int = -1
     neq_switching_length: int = 5_000
-    equ_nr_of_lambda_states: int = 11
-    equ_every_nth_frame: int = 10
 
 
 @dataclass
@@ -35,9 +33,9 @@ def perform_endstate_correction(protocol: Protocol):
 
     print(protocol)
     # check that all necessary keywords are present
-    if protocol.method.upper() not in ["FEP", "EQU", "NEQ", "ALL"]:
+    if protocol.method.upper() not in ["FEP", "NEQ", "ALL"]:
         raise AttributeError(
-            "Only `FEP`, `EQU`, `NEQ` or 'ALL'  are supported methods for endstate corrections"
+            "Only `FEP`, 'NEQ` or 'ALL'  are supported methods for endstate corrections"
         )
     if protocol.method.upper() in [
         "FEP",
@@ -166,23 +164,5 @@ def perform_endstate_correction(protocol: Protocol):
 
         else:
             raise RuntimeError()
-    if protocol.method.upper() == "EQU" or protocol.method.upper() == "ALL":
-        ####################################################
-        # ------------------- EQU ---------------------------
-        ####################################################
-        from pymbar import MBAR
-        from endstate_correction.equ import calculate_u_kn
-
-        print("#####################################################")
-        print("# ------------------- EQU ---------------------------")
-        print("#####################################################")
-
-        lambs = np.linspace(0, 1, protocol.equ_every_nth_frame)
-        N_k, u_kn = calculate_u_kn(
-            protocol.trajectories,
-            sim=protocol.sim,
-            every_nth_frame=protocol.equ_every_nth_frame,
-        )
-        r.equ_mbar = MBAR(u_kn, N_k)
 
     return r
