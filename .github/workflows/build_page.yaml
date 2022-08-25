@@ -97,10 +97,6 @@ jobs:
           branch: gh-pages
           directory: gh-pages
           
-
-  refresh:
-    runs-on: ubuntu-latest
-    steps:
       - name: Trigger GitHub pages rebuild
         run: |
           curl --fail --request POST \
