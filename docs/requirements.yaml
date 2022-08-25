@@ -1,12 +1,35 @@
-name: docs
+name: test
 channels:
+  - conda-forge
+  - defaults
 dependencies:
     # Base depends
   - python
   - pip
 
+  - openmm
+  - openmm-torch
+  - openff-toolkit
+  - openmmtools
+  - nnpops
+  - cudatoolkit=11.3
+  - tqdm
+  - pymbar=3.0.7
+  - torchani
+  - seaborn
+  - pytorch=1.11.0
 
+  # Documentation
+  - sphinx
+  - sphinx_rtd_theme
+
+# Testing
+#   - pytest
+#   - pytest-cov
+#   - codecov
+#   - black
 
     # Pip-only installs
-  #- pip:
-
+  - pip:
+     - git+https://github.com/openmm/openmm-ml.git
+  #  - codecov
