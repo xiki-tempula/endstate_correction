@@ -96,10 +96,3 @@ jobs:
         with:
           branch: gh-pages
           directory: gh-pages
-          
-      - name: Trigger GitHub pages rebuild
-        run: |
-          curl --fail --request POST \
-            --url https://api.github.com/repos/${{ github.repository }}/pages/builds \
-            --header "Authorization: Bearer $USER_TOKEN"         
-  
