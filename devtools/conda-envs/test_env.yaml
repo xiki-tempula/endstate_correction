@@ -18,7 +18,6 @@ dependencies:
   - torchani
   - seaborn
   - pytorch=1.11.0
-  - myst-parser
   # Testing
   - pytest
   - pytest-cov
