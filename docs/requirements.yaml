@@ -22,12 +22,7 @@ dependencies:
   # Documentation
   - sphinx
   - sphinx_rtd_theme
-
-# Testing
-#   - pytest
-#   - pytest-cov
-#   - codecov
-#   - black
+  - myst-parser
 
     # Pip-only installs
   - pip:
