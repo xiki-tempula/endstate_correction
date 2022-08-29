@@ -3,7 +3,8 @@ Unit and regression test for the endstate_correction package.
 """
 
 # Import package, test suite, and other packages as needed
-import sys
+import sys, pickle, os
+import pytest
 
 
 def test_endstate_correction_imported():
@@ -11,9 +12,9 @@ def test_endstate_correction_imported():
     assert "endstate_correction" in sys.modules
 
 
-def test_FEP_protocoll():
-    """Perform FEP uni- and bidirectional protocoll"""
-    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+def test_FEP_protocol():
+    """Perform FEP uni- and bidirectional protocol"""
+    from endstate_correction.protocol import perform_endstate_correction, Protocol
     from .test_neq import load_endstate_system_and_samples
 
     # start with FEP
@@ -25,7 +26,7 @@ def test_FEP_protocoll():
     # ----------------------- FEP ----------------------
     ####################################################
 
-    fep_protocoll = Protocoll(
+    fep_protocol = Protocol(
         method="FEP",
         direction="unidirectional",
         sim=sim,
@@ -33,13 +34,13 @@ def test_FEP_protocoll():
         nr_of_switches=50,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
-    assert len(r.dE_mm_to_qml) == fep_protocoll.nr_of_switches
+    r = perform_endstate_correction(fep_protocol)
+    assert len(r.dE_mm_to_qml) == fep_protocol.nr_of_switches
     assert len(r.dE_qml_to_mm) == 0
     assert len(r.W_mm_to_qml) == 0
     assert len(r.W_qml_to_mm) == 0
 
-    fep_protocoll = Protocoll(
+    fep_protocol = Protocol(
         sim=sim,
         method="FEP",
         direction="bidirectional",
@@ -47,28 +48,32 @@ def test_FEP_protocoll():
         nr_of_switches=50,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
-    assert len(r.dE_mm_to_qml) == fep_protocoll.nr_of_switches
-    assert len(r.dE_qml_to_mm) == fep_protocoll.nr_of_switches
+    r = perform_endstate_correction(fep_protocol)
+    assert len(r.dE_mm_to_qml) == fep_protocol.nr_of_switches
+    assert len(r.dE_qml_to_mm) == fep_protocol.nr_of_switches
     assert len(r.W_mm_to_qml) == 0
     assert len(r.W_qml_to_mm) == 0
 
-
-def test_NEQ_protocoll():
-    """Perform NEQ uni- and bidirectional protocoll"""
-    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
+def test_NEQ_protocol():
+    """Perform NEQ uni- and bidirectional protocol"""
+    from endstate_correction.protocol import perform_endstate_correction, Protocol
     from .test_neq import load_endstate_system_and_samples
 
+    system_name = "ZINC00079729"
     # start with FEP
     sim, mm_samples, qml_samples = load_endstate_system_and_samples(
-        system_name="ZINC00079729"
+        system_name=system_name
     )
 
     ####################################################
     # ----------------------- NEQ ----------------------
     ####################################################
 
-    fep_protocoll = Protocoll(
+    fep_protocol = Protocol(
         method="NEQ",
         direction="unidirectional",
         sim=sim,
@@ -77,13 +82,13 @@ def test_NEQ_protocoll():
         neq_switching_length=100,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
+    r = perform_endstate_correction(fep_protocol)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
-    assert len(r.W_mm_to_qml) == fep_protocoll.nr_of_switches
+    assert len(r.W_mm_to_qml) == fep_protocol.nr_of_switches
     assert len(r.W_qml_to_mm) == 0
 
-    fep_protocoll = Protocoll(
+    fep_protocol = Protocol(
         method="NEQ",
         direction="bidirectional",
         sim=sim,
@@ -92,16 +97,52 @@ def test_NEQ_protocoll():
         neq_switching_length=100,
     )
 
-    r = perform_endstate_correction(fep_protocoll)
+    r = perform_endstate_correction(fep_protocol)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
-    assert len(r.W_mm_to_qml) == fep_protocoll.nr_of_switches
-    assert len(r.W_qml_to_mm) == fep_protocoll.nr_of_switches
+    assert len(r.W_mm_to_qml) == fep_protocol.nr_of_switches
+    assert len(r.W_qml_to_mm) == fep_protocol.nr_of_switches
 
+    # generate data for plotting tests
+    fep_protocol = Protocol(
+        method="NEQ",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
 
-def test_EQU_protocoll():
-    """Perform equilibrium free energy protocoll"""
-    from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+    r = perform_endstate_correction(fep_protocol)
+    pickle.dump(
+        r,
+        open(
+            f"data/{system_name}/switching_charmmff/{system_name}_neq_bid.pickle", "wb"
+        ),
+    )
+
+    fep_protocol = Protocol(
+        method="NEQ",
+        direction="unidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    r = perform_endstate_correction(fep_protocol)
+    pickle.dump(
+        r,
+        open(
+            f"data/{system_name}/switching_charmmff/{system_name}_neq_unid.pickle", "wb"
+        ),
+    )
+
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
+def test_EQU_protocol():
+    """Perform equilibrium free energy protocol"""
+    from endstate_correction.protocol import perform_endstate_correction, Protocol
     from .test_equ import load_equ_samples
     from openmm.app import CharmmParameterSet, CharmmPsfFile
     import pathlib
@@ -135,17 +176,55 @@ def test_EQU_protocoll():
     trajs = load_equ_samples(system_name=system_name)
 
     ####################################################
-    # ----------------------- NEQ ----------------------
+    # ----------------------- EQU ----------------------
     ####################################################
 
-    fep_protocoll = Protocoll(
+    fep_protocol = Protocol(
         method="EQU", sim=sim, trajectories=trajs, equ_every_nth_frame=50
     )
 
-    r = perform_endstate_correction(fep_protocoll)
+    r = perform_endstate_correction(fep_protocol)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
     assert len(r.W_mm_to_qml) == 0
     assert len(r.W_qml_to_mm) == 0
     # test that mbar instance was created
     r.equ_mbar.getFreeEnergyDifferences()
+
+
+@pytest.mark.skipif(
+    os.getenv("CI") == "true",
+    reason="Skipping tests that take too long in github actions",
+)
+def test_ALL_protocol():
+    """Perform FEP uni- and bidirectional protocol"""
+    from endstate_correction.protocol import Protocol, perform_endstate_correction
+    from .test_neq import load_endstate_system_and_samples
+    import pickle
+
+    system_name = "ZINC00079729"
+    # start with NEQ
+    sim, mm_samples, qml_samples = load_endstate_system_and_samples(
+        system_name=system_name
+    )
+
+    ####################################################
+    # ---------------- All corrections -----------------
+    ####################################################
+
+    protocol = Protocol(
+        method="All",
+        direction="bidirectional",
+        sim=sim,
+        trajectories=[mm_samples, qml_samples],
+        nr_of_switches=100,
+    )
+
+    r = perform_endstate_correction(protocol)
+    pickle.dump(
+        r,
+        open(
+            f"data/{system_name}/switching_charmmff/{system_name}_all_corrections.pickle",
+            "wb",
+        ),
+    )
