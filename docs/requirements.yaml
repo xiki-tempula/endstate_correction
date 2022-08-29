@@ -22,9 +22,10 @@ dependencies:
   # Documentation
   - sphinx
   - sphinx_rtd_theme
+  - myst-parser
 
-# Testing
-#   - pytest
+  # Testing
+  - pytest
 #   - pytest-cov
 #   - codecov
 #   - black
