@@ -6,6 +6,8 @@ endstate_correction
 [![Github release](https://badgen.net/github/release/wiederm/endstate_correction)](https://github.com/florianj77/wiederm/endstate_correction/)
 [![GitHub license](https://img.shields.io/github/license/wiederm/endstate_correction?color=green)](https://github.com/wiederm/endstate_correction/blob/main/LICENSE)
 [![GH Pages](https://github.com/wiederm/endstate_correction/actions/workflows/build_page.yaml/badge.svg)](https://github.com/wiederm/endstate_correction/actions/workflows/build_page.yaml)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/wiederm/endstate_correction.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/wiederm/endstate_correction/context:python)
+[![docs stable](https://img.shields.io/badge/docs-stable-5077AB.svg?logo=read%20the%20docs)](https://wiederm.github.io/endstate_correction/)
 
 [//]: <[![GitHub forks](https://img.shields.io/github/forks/wiederm/endstate_correction)](https://github.com/wiederm/endstate_correction/network)>
 [//]: <[![Github tag](https://badgen.net/github/tag/wiederm/endstate_correction)](https://github.com/wiederm/endstate_correction/tags/)>
