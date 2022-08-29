@@ -1,4 +1,4 @@
 # Apply override to all files in the directory (source: https://github.com/github/linguist/blob/master/docs/overrides.md)
 data/** linguist-vendored
 endstate_correction/data/** linguist-vendored
-endstate_correction/notebooks/** linguist-vendored
+notebooks/** linguist-vendored
