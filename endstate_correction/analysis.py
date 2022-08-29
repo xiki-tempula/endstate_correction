@@ -12,7 +12,7 @@ from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextA
 from matplotlib.ticker import FormatStrFormatter
 from pymbar import BAR, EXP
 from scipy.stats import wasserstein_distance
-from endstate_correction.protocoll import Results
+from endstate_correction.protocol import Results
 from endstate_correction.constant import kBT, zinc_systems
 
 
@@ -155,7 +155,7 @@ def plot_endstate_correction_results(
         palett_as_hex[6],
     )
 
-    axs[ax_index].set_title(rf"{name} - distribution of $\Delta$W and $\Delta$E")
+    axs[ax_index].set_title(rf"{name} - distribution of W and $\Delta$E")
     axs[ax_index].ticklabel_format(
         axis="x", style="sci", useOffset=True, scilimits=(0, 0)
     )
@@ -167,7 +167,7 @@ def plot_endstate_correction_results(
             data=results.W_mm_to_qml,
             kde=True,
             stat="density",
-            label=r"$\Delta$W(MM$\rightarrow$QML)",
+            label=r"W(MM$\rightarrow$QML)",
             color=c1,
         )
 
@@ -189,7 +189,7 @@ def plot_endstate_correction_results(
             data=results.W_qml_to_mm * -1,
             kde=True,
             stat="density",
-            label=r"$\Delta$W(QML$\rightarrow$MM)",
+            label=r"W(QML$\rightarrow$MM)",
             color=c3,
         )
 
@@ -222,25 +222,25 @@ def plot_endstate_correction_results(
             ddG, dddG = BAR(results.W_mm_to_qml, results.W_qml_to_mm)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.append("Crooks")
+            names.append("NEQ+Crooks")
         if results.W_mm_to_qml.size:
             # Jarzynski's equation
             ddG, dddG = EXP(results.W_mm_to_qml)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
-            names.append("Jazynski")
-        if results.dE_mm_to_qml.size:
-            # FEP
-            ddG, dddG = EXP(results.dE_mm_to_qml)
-            ddG_list.append(ddG)
-            dddG_list.append(dddG)
-            names.append("FEP+EXP")
+            names.append("NEQ+Jazynski")
         if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
             # FEP + BAR
             ddG, dddG = BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("FEP+BAR")
+        if results.dE_mm_to_qml.size:
+            # FEP
+            ddG, dddG = EXP(results.dE_mm_to_qml)
+            ddG_list.append(ddG)
+            dddG_list.append(dddG)
+            names.append("FEP+EXP")
 
         axs[ax_index].errorbar(
             [i for i in range(len(ddG_list))],
@@ -249,7 +249,7 @@ def plot_endstate_correction_results(
             dddG_list,
             fmt="o",
         )
-        print([i for i in range(len(names))])
+
         axs[ax_index].set_xticks([i for i in range(len(names))], labels=names)
         # axs[ax_index].set_xticklabels(names)
 
@@ -258,9 +258,9 @@ def plot_endstate_correction_results(
         axs[ax_index].axhline(y=0.0, color=c1, linestyle=":")
 
     ######################################################################
-    # ------------------- Plot cummulative stddev ------------------------
+    # ------------------- Plot cumulative stddev ------------------------
     ax_index += 1
-    axs[ax_index].set_title(rf"{name} - cummulative stddev of $\Delta$W and $\Delta$E")
+    axs[ax_index].set_title(rf"{name} - cumulative stddev of W and $\Delta$E")
 
     if results.W_mm_to_qml.size:
         cum_stddev_ws_from_mm_to_qml = [
@@ -269,7 +269,7 @@ def plot_endstate_correction_results(
         ]
         axs[ax_index].plot(
             cum_stddev_ws_from_mm_to_qml,
-            label=r"stddev $\Delta$W(MM$\rightarrow$QML)",
+            label=r"stddev W(MM$\rightarrow$QML)",
             color=c1,
         )
 
@@ -280,7 +280,7 @@ def plot_endstate_correction_results(
         ]
         axs[ax_index].plot(
             cum_stddev_ws_from_qml_to_mm,
-            label=r"stddev $\Delta$W(QML$\rightarrow$MM)",
+            label=r"stddev W(QML$\rightarrow$MM)",
             color=c3,
         )
 

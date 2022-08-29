@@ -8,7 +8,7 @@ from openmm.app import (
 )
 from endstate_correction.analysis import plot_endstate_correction_results
 import endstate_correction
-from endstate_correction.protocoll import perform_endstate_correction, Protocoll
+from endstate_correction.protocol import perform_endstate_correction, Protocol
 import mdtraj
 from openmm import unit
 
@@ -75,7 +75,7 @@ qml_samples.extend(traj.xyz * unit.nanometer)  # NOTE: this is in nanometer!
 # ----------------------- FEP ----------------------
 ####################################################
 
-fep_protocoll = Protocoll(
+fep_protocol = Protocol(
     method="NEQ",
     direction="bidirectional",
     sim=sim,
@@ -84,5 +84,5 @@ fep_protocoll = Protocoll(
     neq_switching_length=100,
 )
 
-r = perform_endstate_correction(fep_protocoll)
+r = perform_endstate_correction(fep_protocol)
 plot_endstate_correction_results(system_name, r, "results_neq_bidirectional.png")
