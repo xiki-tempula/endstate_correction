@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from openmm.app import Simulation
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List
 
 from pymbar import MBAR

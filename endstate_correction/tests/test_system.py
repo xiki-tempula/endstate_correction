@@ -147,3 +147,33 @@ def test_generate_simulation_instances_with_charmmff():
     e_sim_qml_endstate = get_energy(sim).value_in_unit(unit.kilojoule_per_mole)
     print(e_sim_qml_endstate)
     assert np.isclose(e_sim_qml_endstate, -1067965.9293421314)
+
+
+def test_simulating():
+    """Test if we can generate a simulation instance with charmmff"""
+    from endstate_correction.system import create_charmm_system
+    from endstate_correction.equ import generate_samples
+
+    ########################################################
+    ########################################################
+    # ----------------- vacuum -----------------------------
+    # get all relevant files
+
+    system_name = "ZINC00079729"
+    psf = CharmmPsfFile(f"{hipen_testsystem}/{system_name}/{system_name}.psf")
+    crd = CharmmCrdFile(f"{hipen_testsystem}/{system_name}/{system_name}.crd")
+    params = CharmmParameterSet(
+        f"{hipen_testsystem}/top_all36_cgenff.rtf",
+        f"{hipen_testsystem}/par_all36_cgenff.prm",
+        f"{hipen_testsystem}/{system_name}/{system_name}.str",
+    )
+    # define region that should be treated with the qml
+    chains = list(psf.topology.chains())
+    ml_atoms = [atom.index for atom in chains[0].atoms()]
+    # set up system
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
+    sim.context.setPositions(crd.positions)
+    samples = generate_samples(sim, 10, 10)
+    assert len(samples) == 10
