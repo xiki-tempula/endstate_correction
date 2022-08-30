@@ -75,46 +75,46 @@ def test_NEQ_protocol():
     # ----------------------- NEQ ----------------------
     ####################################################
 
-    fep_protocol = Protocol(
+    protocol = Protocol(
         method="NEQ",
         direction="unidirectional",
         sim=sim,
         trajectories=[mm_samples, qml_samples],
-        nr_of_switches=50,
-        neq_switching_length=100,
+        nr_of_switches=10,
+        neq_switching_length=50,
     )
 
-    r = perform_endstate_correction(fep_protocol)
+    r = perform_endstate_correction(protocol)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
-    assert len(r.W_mm_to_qml) == fep_protocol.nr_of_switches
+    assert len(r.W_mm_to_qml) == protocol.nr_of_switches
     assert len(r.W_qml_to_mm) == 0
 
-    fep_protocol = Protocol(
+    protocol = Protocol(
         method="NEQ",
         direction="bidirectional",
         sim=sim,
         trajectories=[mm_samples, qml_samples],
-        nr_of_switches=50,
-        neq_switching_length=100,
+        nr_of_switches=10,
+        neq_switching_length=50,
     )
 
-    r = perform_endstate_correction(fep_protocol)
+    r = perform_endstate_correction(protocol)
     assert len(r.dE_mm_to_qml) == 0
     assert len(r.dE_qml_to_mm) == 0
-    assert len(r.W_mm_to_qml) == fep_protocol.nr_of_switches
-    assert len(r.W_qml_to_mm) == fep_protocol.nr_of_switches
+    assert len(r.W_mm_to_qml) == protocol.nr_of_switches
+    assert len(r.W_qml_to_mm) == protocol.nr_of_switches
 
-    # generate data for plotting tests
-    fep_protocol = Protocol(
-        method="NEQ",
-        direction="bidirectional",
-        sim=sim,
-        trajectories=[mm_samples, qml_samples],
-        nr_of_switches=100,
-    )
+    # # generate data for plotting tests
+    # protocol = Protocol(
+    #     method="NEQ",
+    #     direction="bidirectional",
+    #     sim=sim,
+    #     trajectories=[mm_samples, qml_samples],
+    #     nr_of_switches=100,
+    # )
 
-    r = perform_endstate_correction(fep_protocol)
+    # r = perform_endstate_correction(protocol)
     # pickle.dump(
     #     r,
     #     open(
@@ -122,15 +122,15 @@ def test_NEQ_protocol():
     #     ),
     # )
 
-    fep_protocol = Protocol(
-        method="NEQ",
-        direction="unidirectional",
-        sim=sim,
-        trajectories=[mm_samples, qml_samples],
-        nr_of_switches=100,
-    )
+    # protocol = Protocol(
+    #     method="NEQ",
+    #     direction="unidirectional",
+    #     sim=sim,
+    #     trajectories=[mm_samples, qml_samples],
+    #     nr_of_switches=100,
+    # )
 
-    r = perform_endstate_correction(fep_protocol)
+    # r = perform_endstate_correction(protocol)
     # pickle.dump(
     #     r,
     #     open(
