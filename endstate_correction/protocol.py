@@ -63,6 +63,9 @@ def perform_endstate_correction(protocol: Protocol):
             ####################################################
             # ------------------- bidirectional-----------------
             # perform switching from mm to qml
+
+            assert len(protocol.trajectories) == 2
+
             print("Performing bidirectional protocol ...")
             lambs = np.linspace(0, 1, 2)
             dEs_from_mm_to_qml = np.array(
@@ -119,6 +122,9 @@ def perform_endstate_correction(protocol: Protocol):
             ####################################################
             # ------------------- bidirectional-----------------
             # perform switching from mm to qml
+
+            assert len(protocol.trajectories) == 2
+
             print("Performing bidirectional protocol ...")
             lambs = np.linspace(0, 1, protocol.neq_switching_length)
             Ws_from_mm_to_qml = np.array(
