@@ -18,7 +18,6 @@ dependencies:
   - torchani
   - seaborn
   - pytorch=1.11.0
-
   # Testing
   - pytest
   - pytest-cov
@@ -28,5 +27,4 @@ dependencies:
     # Pip-only installs
   - pip:
      - git+https://github.com/openmm/openmm-ml.git
-     - myst-parser
   #  - codecov
