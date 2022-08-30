@@ -52,36 +52,37 @@ sim = create_charmm_system(psf=psf, parameters=params, env=env, ml_atoms=ml_atom
 run_id = 1
 n_samples = 5_000
 n_steps_per_sample = 1_000
-# path where samples should be stored
+# path where samples should be stored (will be created if it doesn't exist)
 base = f"{output_base}/equilibrium_samples/run{run_id:0>2d}"
 os.makedirs(base, exist_ok=True)
 # define lambda states
-nr_lambda_states = 11
+nr_lambda_states = 2  # samples equilibrium distribution at both endstates
 lambs = np.linspace(0, 1, nr_lambda_states)
+# perform sampling for each lambda state
 for lamb in lambs:
     print(f"{lamb=}")
+    # define where to store samples
     trajectory_file = f"{base}/{system_name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{env}.dcd"
-
     print(f"Trajectory saved to: {trajectory_file}")
     # set lambda
     sim.context.setParameter("lambda_interpolate", lamb)
     # set coordinates
     sim.context.setPositions(pdb.positions)
+    # try to set velocities using openMM, fall back to manual velocity seeding if it fails
     try:
         sim.context.setVelocitiesToTemperature(temperature)
     except OpenMMException:
         from endstate_correction.equ import _seed_velocities, _get_masses
 
         sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
-
-    # collect samples
+    # define DCDReporter
     sim.reporters.append(
         DCDReporter(
             trajectory_file,
             n_steps_per_sample,
         )
     )
-
+    # perform sampling
     samples = generate_samples(
         sim, n_samples=n_samples, n_steps_per_sample=n_steps_per_sample
     )
