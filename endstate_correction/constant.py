@@ -1,3 +1,6 @@
+"""Predefined units and system names."""
+
+
 from openmm import unit
 from openmmtools.constants import kB
 

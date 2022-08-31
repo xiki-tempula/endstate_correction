@@ -1,3 +1,6 @@
+"""Provide functions for the endstate correction workflow."""
+
+
 from dataclasses import dataclass
 from openmm.app import Simulation
 import numpy as np
@@ -9,6 +12,8 @@ from pymbar import MBAR
 
 @dataclass
 class Protocol:
+    """Defining the endstate correction protocol"""
+
     method: str
     sim: Simulation
     trajectories: List
@@ -19,6 +24,8 @@ class Protocol:
 
 @dataclass
 class Results:
+    """Provides a dataclass containing the results of a protocol"""
+
     dE_mm_to_qml: np.array = np.array([])
     dE_qml_to_mm: np.array = np.array([])
     W_mm_to_qml: np.array = np.array([])
@@ -26,7 +33,21 @@ class Results:
     equ_mbar: MBAR = None
 
 
-def perform_endstate_correction(protocol: Protocol):
+def perform_endstate_correction(protocol: Protocol) -> Results:
+    """Perform endstate correction using the provided protocol.
+
+    Args:
+        protocol (Protocol): defines the endstatte correction
+
+    Raises:
+        AttributeError: _description_
+        AttributeError: _description_
+        RuntimeError: _description_
+        RuntimeError: _description_
+
+    Returns:
+        Results: results generated using the passed protocol
+    """
 
     from endstate_correction.neq import perform_switching
     from endstate_correction.constant import kBT

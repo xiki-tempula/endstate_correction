@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+"""Provide the analysis functions."""
+
 import glob
 import os
 import pickle
@@ -11,9 +12,8 @@ import seaborn as sns
 from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 from matplotlib.ticker import FormatStrFormatter
 from pymbar import BAR, EXP
-from scipy.stats import wasserstein_distance
 from endstate_correction.protocol import Results
-from endstate_correction.constant import kBT, zinc_systems
+from endstate_correction.constant import zinc_systems
 
 
 def plot_overlap_for_equilibrium_free_energy(

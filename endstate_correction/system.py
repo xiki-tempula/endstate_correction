@@ -55,9 +55,11 @@ def create_charmm_system(
         env (str): either complex, waterbox or vacuum
         ml_atoms (list): list of atoms described by the QML potential
 
+
     Returns:
         Simulation: openMM simulation instance
     """
+
     ###################
     print(f"Generating charmm system in {env}")
     assert env in ("waterbox", "vacuum", "complex")

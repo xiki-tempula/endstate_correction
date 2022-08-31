@@ -1,3 +1,5 @@
+"""Provide the functions for equilibrium sampling."""
+
 from typing import Tuple
 from openmm import unit
 import numpy as np

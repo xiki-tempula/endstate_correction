@@ -1,3 +1,6 @@
+"""Provide the functions for non-equilibrium switching."""
+
+
 import pickle
 import random
 from typing import Tuple
@@ -9,6 +12,7 @@ from tqdm import tqdm
 from endstate_correction.constant import distance_unit, temperature
 from endstate_correction.system import get_positions
 import openmm
+
 
 def perform_switching(
     sim, lambdas: list, samples: list, nr_of_switches: int = 50, save_traj: bool = False
@@ -44,6 +48,7 @@ def perform_switching(
             sim.context.setVelocitiesToTemperature(temperature)
         except openmm.OpenMMException:
             from endstate_correction.equ import _seed_velocities, _get_masses
+
             sim.context.setVelocities(_seed_velocities(_get_masses(sim.system)))
         # initialize work
         w = 0.0
