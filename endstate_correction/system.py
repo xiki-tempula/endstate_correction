@@ -3,7 +3,14 @@ import json
 
 import openmm as mm
 from openmm import unit
-from openmm.app import PME, CharmmParameterSet, CharmmPsfFile, NoCutoff, Simulation
+from openmm.app import (
+    PME,
+    CharmmParameterSet,
+    CharmmPsfFile,
+    CharmmCrdFile,
+    NoCutoff,
+    Simulation,
+)
 from openmmml import MLPotential
 from tqdm import tqdm
 
@@ -15,7 +22,37 @@ from endstate_correction.constant import (
 )
 
 
-def read_box(psf, filename: str):
+def gen_box(psf: CharmmPsfFile, crd: CharmmCrdFile) -> CharmmPsfFile:
+    """
+    Function to create psf file containing information about the box used (only for waterbox or commplex simulations). Usful
+    when information about box size is not available (e.g. when using TF)
+    """
+    coords = crd.positions
+
+    min_crds = [coords[0][0], coords[0][1], coords[0][2]]
+    max_crds = [coords[0][0], coords[0][1], coords[0][2]]
+
+    for coord in coords:
+        min_crds[0] = min(min_crds[0], coord[0])
+        min_crds[1] = min(min_crds[1], coord[1])
+        min_crds[2] = min(min_crds[2], coord[2])
+        max_crds[0] = max(max_crds[0], coord[0])
+        max_crds[1] = max(max_crds[1], coord[1])
+        max_crds[2] = max(max_crds[2], coord[2])
+
+    boxlx = max_crds[0] - min_crds[0]
+    boxly = max_crds[1] - min_crds[1]
+    boxlz = max_crds[2] - min_crds[2]
+
+    psf.setBox(boxlx, boxly, boxlz)
+    return psf
+
+
+def read_box(psf: CharmmPsfFile, filename: str) -> CharmmPsfFile:
+    """
+    Reads in box information from e.g. sysinfo.dat file containing the boxlengths (x,y,z)
+    """
+
     try:
         sysinfo = json.load(open(filename, "r"))
         boxlx, boxly, boxlz = map(float, sysinfo["dimensions"][:3])
