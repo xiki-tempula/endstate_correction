@@ -3,7 +3,7 @@ Endstate correction from MM to QML potential
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/wiederm/endstate_correction/workflows/CI/badge.svg)](https://github.com/wiederm/endstate_correction/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/wiederm/endstate_correction/branch/main/graph/badge.svg)](https://codecov.io/gh/wiederm/endstate_correction/branch/main)
-[![Github release](https://badgen.net/github/release/wiederm/endstate_correction)](https://github.com/florianj77/wiederm/endstate_correction/)
+[![Github release](https://badgen.net/github/release/wiederm/endstate_correction)](https://github.com/wiederm/endstate_correction/)
 [![GitHub license](https://img.shields.io/github/license/wiederm/endstate_correction?color=green)](https://github.com/wiederm/endstate_correction/blob/main/LICENSE)
 [![GH Pages](https://github.com/wiederm/endstate_correction/actions/workflows/build_page.yaml/badge.svg)](https://github.com/wiederm/endstate_correction/actions/workflows/build_page.yaml)
 [![CodeQL](https://github.com/wiederm/endstate_correction/actions/workflows/codeql.yml/badge.svg)](https://github.com/wiederm/endstate_correction/actions/workflows/codeql.yml)
