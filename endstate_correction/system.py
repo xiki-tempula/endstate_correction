@@ -49,8 +49,14 @@ def gen_box(psf: CharmmPsfFile, crd: CharmmCrdFile) -> CharmmPsfFile:
 
 
 def read_box(psf: CharmmPsfFile, filename: str) -> CharmmPsfFile:
-    """
-    Reads in box information from e.g. sysinfo.dat file containing the boxlengths (x,y,z)
+    """set waterbox dimensions given the sysinfo.dat file containing the boxlengths (x,y,z) provided by CHARMM-GUI
+
+    Args:
+        psf (CharmmPsfFile): topology instance
+        filename (str): filename for sysinfo file
+
+    Returns:
+        CharmmPsfFile: topology instance with box dimensions set
     """
 
     try:
@@ -74,13 +80,25 @@ def create_charmm_system(
     parameters: CharmmParameterSet,
     env: str,
     ml_atoms: list,
-):
+) -> Simulation:
+    """Generate an openMM simulation object using CHARMM topology and parameter files
+
+    Args:
+        psf (CharmmPsfFile): topology instance
+        parameters (CharmmParameterSet): parameter instance
+        env (str): either complex, waterbox or vacuum
+        ml_atoms (list): list of atoms described by the QML potential
+
+
+    Returns:
+        Simulation: openMM simulation instance
+    """
 
     ###################
     print(f"Generating charmm system in {env}")
     assert env in ("waterbox", "vacuum", "complex")
     potential = MLPotential("ani2x")
-    implementation, platform = check_implementation()
+    _, platform = check_implementation()
 
     ###################
     print(f"{platform=}")
@@ -115,14 +133,3 @@ def get_positions(sim):
 def get_energy(sim):
     """get energy of system in a state"""
     return sim.context.getState(getEnergy=True).getPotentialEnergy()
-
-
-def generate_samples(sim, n_samples: int = 1_000, n_steps_per_sample: int = 10_000):
-    """generate samples using a defined system"""
-
-    print(f"Generate samples with mixed System: {n_samples=}, {n_steps_per_sample=}")
-    samples = []
-    for _ in tqdm(range(n_samples)):
-        sim.step(n_steps_per_sample)
-        samples.append(get_positions(sim))
-    return samples
