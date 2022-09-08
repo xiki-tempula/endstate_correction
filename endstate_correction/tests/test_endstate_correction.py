@@ -174,11 +174,11 @@ def test_ALL_protocol():
     assert len(r.W_mm_to_qml) == protocol.nr_of_switches
     assert len(r.W_qml_to_mm) == protocol.nr_of_switches
 
-    assert not np.isclose(r.dE_mm_to_qml[0], r.dE_qml_to_mm[0])
-    assert not np.isclose(r.dE_mm_to_qml[0], r.W_mm_to_qml[0])
-    assert not np.isclose(r.dE_mm_to_qml[0], r.W_qml_to_mm[0])
+    assert not np.isclose(r.dE_mm_to_qml[0], r.dE_qml_to_mm[0], rtol=1e-8)
+    assert not np.isclose(r.dE_mm_to_qml[0], r.W_mm_to_qml[0], rtol=1e-8)
+    assert not np.isclose(r.dE_mm_to_qml[0], r.W_qml_to_mm[0], rtol=1e-8)
 
-    assert not np.isclose(r.W_qml_to_mm[0], r.W_mm_to_qml[0])
+    assert not np.isclose(r.W_qml_to_mm[0], r.W_mm_to_qml[0], rtol=1e-8)
 
 
 def test_each_protocol():

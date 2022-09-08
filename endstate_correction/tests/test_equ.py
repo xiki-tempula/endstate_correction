@@ -75,7 +75,9 @@ def test_equilibrium_free_energy():
     ml_atoms = [atom.index for atom in chains[0].atoms()]
 
     # create a charmm system given the defininition above
-    sim = create_charmm_system(psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms)
+    sim = create_charmm_system(
+        psf=psf, parameters=params, env="vacuum", ml_atoms=ml_atoms
+    )
     # load samples
     trajs = load_equ_samples(system_name)
     # calculate u_kn
@@ -83,7 +85,7 @@ def test_equilibrium_free_energy():
 
     # calculate free energy
     mbar = MBAR(u_kn, N_k)
-    f = mbar.getFreeEnergyDifferences()
+    f = mbar.compute_free_energy_differences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
     assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
 
@@ -95,6 +97,6 @@ def test_equilibrium_free_energy():
     (N_k, u_kn) = pickle.load(open(pickle_path, "rb"))
     # calculate again
     mbar = MBAR(u_kn, N_k)
-    f = mbar.getFreeEnergyDifferences()
+    f = mbar.compute_free_energy_differences()
     assert np.isclose(mbar.f_k[-1], f[0][0][-1])
     assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
