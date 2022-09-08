@@ -11,7 +11,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 from matplotlib.ticker import FormatStrFormatter
-from pymbar import BAR, EXP
+from pymbar import bar, exp
 from endstate_correction.protocol import Results
 from endstate_correction.constant import zinc_systems
 
@@ -33,7 +33,7 @@ def plot_overlap_for_equilibrium_free_energy(
 
     mbar = MBAR(u_kn, N_k)
     plt.figure(figsize=[8, 8], dpi=300)
-    overlap = mbar.computeOverlap()["matrix"]
+    overlap = mbar.compute_overlap()["matrix"]
     sns.heatmap(
         overlap,
         cmap="Blues",
@@ -67,15 +67,15 @@ def plot_results_for_equilibrium_free_energy(
 
     mbar = MBAR(u_kn, N_k)
     print(
-        f'ddG = {mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"][0][-1]} +- {mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0][-1]}'
+        f'ddG = {mbar.compute_free_energy_differences()["Delta_f"][0][-1]} +- {mbar.compute_free_energy_differences()["dDelta_f"][0][-1]}'
     )
 
     plt.figure(figsize=[8, 8], dpi=300)
-    r = mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"]
+    r = mbar.compute_free_energy_differences()["Delta_f"]
 
     x = [a for a in np.linspace(0, 1, len(r[0]))]
     y = r[0]
-    y_error = mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][0]
+    y_error = mbar.compute_free_energy_differences()["dDelta_f"][0]
     print()
     plt.errorbar(x, y, yerr=y_error, label="ddG +- stddev [kT]")
     plt.legend()
@@ -99,36 +99,32 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- FEP ------------------
     if results.dE_mm_to_qml.size:
-        print(f"Zwanzig's equation (from mm to qml): {EXP(results.dE_mm_to_qml)}")
+        print(f"Zwanzig's equation (from mm to qml): {exp(results.dE_mm_to_qml)}")
         multiple_results += 1
     if results.dE_qml_to_mm.size:
-        print(f"Zwanzig's equation (from qml to mm): {EXP(results.dE_qml_to_mm)}")
+        print(f"Zwanzig's equation (from qml to mm): {exp(results.dE_qml_to_mm)}")
         multiple_results += 1
     if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
         print(
-            f"Zwanzig's equation bidirectional: {BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)}"
+            f"Zwanzig's equation bidirectional: {bar(results.dE_mm_to_qml, results.dE_qml_to_mm)}"
         )
         multiple_results += 1
     ##############################################
     # ---------------------- NEQ ------------------
     if results.W_mm_to_qml.size:
-        print(f"Jarzynski's equation (from mm to qml): {EXP(results.W_mm_to_qml)}")
+        print(f"Jarzynski's equation (from mm to qml): {exp(results.W_mm_to_qml)}")
         multiple_results += 1
     if results.W_qml_to_mm.size:
-        print(f"Jarzynski's equation (from qml to mm): {EXP(results.W_qml_to_mm)}")
+        print(f"Jarzynski's equation (from qml to mm): {exp(results.W_qml_to_mm)}")
         multiple_results += 1
     if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
-        print(f"Crooks' equation: {BAR(results.W_mm_to_qml, results.W_qml_to_mm)}")
+        print(f"Crooks' equation: {bar(results.W_mm_to_qml, results.W_qml_to_mm)}")
         multiple_results += 1
     ##############################################
     # ---------------------- EQU ------------------
     if results.equ_mbar:
-        ddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["Delta_f"][0][
-            -1
-        ]
-        dddG = results.equ_mbar.getFreeEnergyDifferences(return_dict=True)["dDelta_f"][
-            0
-        ][-1]
+        ddG = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
+        dddG = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
         print(f"Equilibrium free energy: {ddG}+/-{dddG}")
         multiple_results += 1
     print("#--------------------------------------#")
@@ -219,29 +215,35 @@ def plot_endstate_correction_results(
             names.append("Equilibrium")
         if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
             # Crooks' equation
-            ddG, dddG = BAR(results.W_mm_to_qml, results.W_qml_to_mm)
+            r = bar(results.W_mm_to_qml, results.W_qml_to_mm)
+            ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("NEQ+Crooks")
         if results.W_mm_to_qml.size:
             # Jarzynski's equation
-            ddG, dddG = EXP(results.W_mm_to_qml)
+            r = exp(results.W_mm_to_qml)
+            ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("NEQ+Jazynski")
         if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
-            # FEP + BAR
-            ddG, dddG = BAR(results.dE_mm_to_qml, results.dE_qml_to_mm)
+            # FEP + bar
+            r = bar(results.dE_mm_to_qml, results.dE_qml_to_mm)
+            ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("FEP+BAR")
         if results.dE_mm_to_qml.size:
             # FEP
-            ddG, dddG = EXP(results.dE_mm_to_qml)
+            r = exp(results.dE_mm_to_qml)
+            ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("FEP+EXP")
 
+        print("#################")
+        print(ddG_list)
         axs[ax_index].errorbar(
             [i for i in range(len(ddG_list))],
             # ddG_list - np.min(ddG_list),
