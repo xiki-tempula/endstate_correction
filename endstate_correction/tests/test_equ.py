@@ -86,8 +86,9 @@ def test_equilibrium_free_energy():
     # calculate free energy
     mbar = MBAR(u_kn, N_k)
     f = mbar.compute_free_energy_differences()
-    assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
+    print(f)
+    assert np.isclose(mbar.f_k[-1], f["Delta_f"][0][-1])
+    assert np.isclose(f["Delta_f"][0][-1], -940544.0390218807, rtol=1e-06)
 
     # save N_k and u_kn
     pickle_path = f"{path}/mbar_20.pickle"
@@ -98,5 +99,5 @@ def test_equilibrium_free_energy():
     # calculate again
     mbar = MBAR(u_kn, N_k)
     f = mbar.compute_free_energy_differences()
-    assert np.isclose(mbar.f_k[-1], f[0][0][-1])
-    assert np.isclose(f[0][0][-1], -940544.0390218807, rtol=1e-06)
+    assert np.isclose(mbar.f_k[-1], f["Delta_f"][0][-1])
+    assert np.isclose(f["Delta_f"][0][-1], -940544.0390218807, rtol=1e-06)
