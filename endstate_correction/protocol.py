@@ -1,7 +1,6 @@
 """Provide functions for the endstate correction workflow."""
 
 
-from dataclasses import dataclass
 from openmm.app import Simulation
 import numpy as np
 from dataclasses import dataclass
