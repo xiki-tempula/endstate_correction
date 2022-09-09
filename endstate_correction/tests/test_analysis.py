@@ -6,7 +6,6 @@ from openmm.app import CharmmParameterSet, CharmmPsfFile
 import pytest
 import os
 
-
 @pytest.mark.skipif(
     os.getenv("CI") == "true",
     reason="Skipping tests that take too long in github actions",
@@ -80,6 +79,7 @@ def test_plot_results_for_FEP_protocol():
     )
 
     r = perform_endstate_correction(fep_protocol)
+    print(r)
     plot_endstate_correction_results(
         system_name, r, f"{system_name}_results_fep_unidirectional.png"
     )
@@ -154,7 +154,7 @@ def test_plot_results_for_NEQ_protocol():
 
 def test_plot_results_for_all_protocol():
     """Perform FEP uni- and bidirectional protocol"""
-    from endstate_correction.protocol import Protocol, perform_endstate_correction
+    from endstate_correction.protocol import Protocol
     from .test_neq import load_endstate_system_and_samples
     from endstate_correction.analysis import (
         plot_endstate_correction_results,
