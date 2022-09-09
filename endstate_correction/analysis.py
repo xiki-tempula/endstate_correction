@@ -287,9 +287,13 @@ def plot_endstate_correction_results(
         )
 
     if results.dE_mm_to_qml.size:
+        if results.W_mm_to_qml.size or results.W_qml_to_mm.size:
+            size = max(results.W_mm_to_qml.size, results.W_qml_to_mm.size)
+        else:
+            size = results.dE_mm_to_qml.size
         cum_stddev_dEs_from_mm_to_qml = [
             results.dE_mm_to_qml[:x].std()
-            for x in range(1, len(results.dE_mm_to_qml) + 1)
+            for x in range(1, size + 1)
         ]
         axs[ax_index].plot(
             cum_stddev_dEs_from_mm_to_qml,
@@ -298,9 +302,13 @@ def plot_endstate_correction_results(
         )
 
     if results.dE_qml_to_mm.size:
+        if results.W_mm_to_qml.size or results.W_qml_to_mm.size:
+            size = max(results.W_mm_to_qml.size, results.W_qml_to_mm.size)
+        else:
+            size = results.dE_mm_to_qml.size
         cum_stddev_dEs_from_qml_to_mm = [
             results.dE_qml_to_mm[:x].std()
-            for x in range(1, len(results.dE_qml_to_mm) + 1)
+            for x in range(1, size + 1)
         ]
         axs[ax_index].plot(
             cum_stddev_dEs_from_qml_to_mm,
