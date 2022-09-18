@@ -122,9 +122,9 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- EQU ------------------
     if results.equ_mbar:
-        ddG = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
-        dddG = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
-        print(f"Equilibrium free energy: {ddG}+/-{dddG}")
+        ddG_equ = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
+        dddG_equ = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
+        print(f"Equilibrium free energy: {ddG_equ}+/-{dddG_equ}")
         multiple_results += 1
     print("#--------------------------------------#")
 
@@ -209,11 +209,12 @@ def plot_endstate_correction_results(
 
         if results.equ_mbar:
             # Equilibrium free energy
-            ddG_list.append(ddG)
-            dddG_list.append(dddG)
+            ddG_list.append(ddG_equ)
+            dddG_list.append(dddG_equ)
             names.append("Equilibrium")
         if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
             # Crooks' equation
+            ddG, dddG = -1, -1
             r = bar(results.W_mm_to_qml, results.W_qml_to_mm)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
@@ -221,6 +222,7 @@ def plot_endstate_correction_results(
             names.append("NEQ+Crooks")
         if results.W_mm_to_qml.size:
             # Jarzynski's equation
+            ddG, dddG = -1, -1
             r = exp(results.W_mm_to_qml)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
@@ -228,13 +230,15 @@ def plot_endstate_correction_results(
             names.append("NEQ+Jazynski")
         if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
             # FEP + bar
+            ddG, dddG = -1, -1
             r = bar(results.dE_mm_to_qml, results.dE_qml_to_mm)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("FEP+BAR")
         if results.dE_mm_to_qml.size:
-            # FEP
+            # FEP + EXP
+            ddG, dddG = -1, -1
             r = exp(results.dE_mm_to_qml)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
