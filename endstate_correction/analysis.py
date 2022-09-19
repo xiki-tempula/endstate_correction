@@ -1,8 +1,7 @@
 """Provide the analysis functions."""
 
-import glob
+from dataclasses import dataclass
 import os
-import pickle
 
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -123,9 +122,9 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- EQU ------------------
     if results.equ_mbar:
-        ddG = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
-        dddG = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
-        print(f"Equilibrium free energy: {ddG}+/-{dddG}")
+        ddG_equ = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
+        dddG_equ = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
+        print(f"Equilibrium free energy: {ddG_equ}+/-{dddG_equ}")
         multiple_results += 1
     print("#--------------------------------------#")
 
@@ -210,11 +209,12 @@ def plot_endstate_correction_results(
 
         if results.equ_mbar:
             # Equilibrium free energy
-            ddG_list.append(ddG)
-            dddG_list.append(dddG)
+            ddG_list.append(ddG_equ)
+            dddG_list.append(dddG_equ)
             names.append("Equilibrium")
         if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
             # Crooks' equation
+            ddG, dddG = -1, -1
             r = bar(results.W_mm_to_qml, results.W_qml_to_mm)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
@@ -222,6 +222,7 @@ def plot_endstate_correction_results(
             names.append("NEQ+Crooks")
         if results.W_mm_to_qml.size:
             # Jarzynski's equation
+            ddG, dddG = -1, -1
             r = exp(results.W_mm_to_qml)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
@@ -229,13 +230,15 @@ def plot_endstate_correction_results(
             names.append("NEQ+Jazynski")
         if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
             # FEP + bar
+            ddG, dddG = -1, -1
             r = bar(results.dE_mm_to_qml, results.dE_qml_to_mm)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
             dddG_list.append(dddG)
             names.append("FEP+BAR")
         if results.dE_mm_to_qml.size:
-            # FEP
+            # FEP + EXP
+            ddG, dddG = -1, -1
             r = exp(results.dE_mm_to_qml)
             ddG, dddG = r["Delta_f"], r["dDelta_f"]
             ddG_list.append(ddG)
@@ -292,8 +295,7 @@ def plot_endstate_correction_results(
         else:
             size = results.dE_mm_to_qml.size
         cum_stddev_dEs_from_mm_to_qml = [
-            results.dE_mm_to_qml[:x].std()
-            for x in range(1, size + 1)
+            results.dE_mm_to_qml[:x].std() for x in range(1, size + 1)
         ]
         axs[ax_index].plot(
             cum_stddev_dEs_from_mm_to_qml,
@@ -307,8 +309,7 @@ def plot_endstate_correction_results(
         else:
             size = results.dE_mm_to_qml.size
         cum_stddev_dEs_from_qml_to_mm = [
-            results.dE_qml_to_mm[:x].std()
-            for x in range(1, size + 1)
+            results.dE_qml_to_mm[:x].std() for x in range(1, size + 1)
         ]
         axs[ax_index].plot(
             cum_stddev_dEs_from_qml_to_mm,
@@ -374,76 +375,6 @@ def save_mol_pic(zinc_id: str, ff: str):
     if not os.path.isdir(f"mol_pics_{ff}"):
         os.makedirs(f"mol_pics_{ff}")
     d.WriteDrawingText(f"mol_pics_{ff}/{name}_{ff}.png")
-
-
-# get trajectory
-def get_traj(
-    samples: str,
-    name: str,
-    ff: str,
-    w_dir: str,
-    switching: bool,
-    switching_length: int = 5,
-):
-
-    # get sampling data
-    if not switching:
-
-        # depending on endstate, get correct label
-        if samples == "mm":
-            endstate = "0.0000"
-        elif samples == "qml":
-            endstate = "1.0000"
-
-        # get pickle files for traj
-        pickle_files = glob.glob(
-            f"{w_dir}/{name}/sampling_{ff}/run*/{name}_samples_5000_steps_1000_lamb_{endstate}.pickle"
-        )
-
-        # list for collecting sampling data
-        coordinates = []
-
-        # generate traj instance only if at least one pickle file exists
-        if pickle_files:
-            for run in pickle_files:
-                # load pickle file
-                coord = pickle.load(open(run, "rb"))
-                # check, if sampling data is complete (MODIFY IF NR OF SAMPLING STEPS != 5000)
-                if len(coord) == 5000:
-                    # remove first 1k samples
-                    coordinates.extend(coord[1000:])
-                    # load topology from pdb file
-                    top = md.load("mol.pdb").topology
-                    # generate trajectory instance
-                    traj = md.Trajectory(xyz=coordinates, topology=top)
-                    return traj
-                else:
-                    print(f"{run} file contains incomplete sampling data")
-
-    # get trajectory data after switching
-    else:
-
-        if switching_length == 5:
-            swi_length = "5001"
-        elif switching_length == 10:
-            swi_length = "10001"
-        elif switching_length == 20:
-            swi_length = "20001"
-
-        # get pickle file for traj
-        pickle_file = f"{w_dir}/{name}/switching_{ff}/{name}_samples_5000_steps_1000_lamb_{samples}_endstate_nr_samples_500_switching_length_{swi_length}.pickle"
-
-        if os.path.isfile(pickle_file):
-            # load pickle file
-            coordinates = pickle.load(open(pickle_file, "rb"))
-            # load topology from pdb file
-            top = md.load("mol.pdb").topology
-            # generate trajectory instance
-            traj = md.Trajectory(xyz=coordinates, topology=top)
-
-            return traj
-        else:
-            print("No pickle file found.")
 
 
 # get indices of dihedral bonds
@@ -519,33 +450,10 @@ def get_indices(rot_bond: int, rot_bond_list: list, bonds: list):
 
 
 # plot torsion profiles
-def vis_torsions(
-    zinc_id: int,
-    ff: str,
-    w_dir: str = "/data/shared/projects/endstate_correction/",
-    switching: bool = False,
-    switching_length: int = 5,
-):
-    ############################################ LOAD MOLECULE AND GET BOND INFO ##########################################################################################
-
-    # get zinc_id(name of the zinc system)
-    name, _ = zinc_systems[zinc_id]
-
-    print(
-        f"################################## SYSTEM {name} ##################################"
-    )
-
-    # generate mol from name
-    mol = generate_molecule(forcefield=ff, name=name)
-
-    # write mol as pdb
-    # NOTE: pdb file is needed for mdtraj, which reads the topology in get_traj()
-    # this is not very elegant # FIXME: try to load topology directly
-    mol.to_file("mol.pdb", file_format="pdb")
+def visualize_torsion_profile(mol, trajectories: dataclass):
 
     # get all bonds
     bonds = mol.bonds
-
     # get all rotatable bonds
     rot_bond_list = mol.find_rotatable_bonds()
     print(len(rot_bond_list), "rotatable bonds found.")
@@ -582,39 +490,10 @@ def vis_torsions(
             all_indices.extend(indices)
 
             # check if traj data can be retrieved
-            traj_mm = get_traj(
-                samples="mm",
-                name=name,
-                ff=ff,
-                w_dir=w_dir,
-                switching=False,
-            )
-            traj_qml = get_traj(
-                samples="qml",
-                name=name,
-                ff=ff,
-                w_dir=w_dir,
-                switching=False,
-            )
+            traj_mm = trajectories.equilibrium_mm_trajectory
+            traj_qml = trajectories.equilibrium_qml_trajectory
 
             # if also 'post-switching' data has to be plotted, check if it can be retrieved
-            if switching:
-                traj_mm_switching = get_traj(
-                    samples="mm",
-                    name=name,
-                    ff=ff,
-                    w_dir=w_dir,
-                    switching=True,
-                    switching_length=switching_length,
-                )
-                traj_qml_switching = get_traj(
-                    samples="qml",
-                    name=name,
-                    ff=ff,
-                    w_dir=w_dir,
-                    switching=True,
-                    switching_length=switching_length,
-                )
 
             # if both, mm and qml samples are found, compute dihedrals
             if traj_mm and traj_qml:
