@@ -98,10 +98,10 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- FEP ------------------
     if results.dE_mm_to_qml.size:
-        print(f"Zwanzig's equation (from mm to qml): {exp(results.dE_mm_to_qml)}")
+        print(f"Zwanzig's equation (from mm to qml): {exp(results.dE_mm_to_qml)['Delta_f']}")
         multiple_results += 1
     if results.dE_qml_to_mm.size:
-        print(f"Zwanzig's equation (from qml to mm): {exp(results.dE_qml_to_mm)}")
+        print(f"Zwanzig's equation (from qml to mm): {exp(results.dE_qml_to_mm)['Delta_f']}")
         multiple_results += 1
     if results.dE_mm_to_qml.size and results.dE_qml_to_mm.size:
         print(
@@ -111,10 +111,10 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- NEQ ------------------
     if results.W_mm_to_qml.size:
-        print(f"Jarzynski's equation (from mm to qml): {exp(results.W_mm_to_qml)}")
+        print(f"Jarzynski's equation (from mm to qml): {exp(results.W_mm_to_qml)['Delta_f']}")
         multiple_results += 1
     if results.W_qml_to_mm.size:
-        print(f"Jarzynski's equation (from qml to mm): {exp(results.W_qml_to_mm)}")
+        print(f"Jarzynski's equation (from qml to mm): {exp(results.W_qml_to_mm)['Delta_f']}")
         multiple_results += 1
     if results.W_mm_to_qml.size and results.W_qml_to_mm.size:
         print(f"Crooks' equation: {bar(results.W_mm_to_qml, results.W_qml_to_mm)}")
