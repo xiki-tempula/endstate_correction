@@ -80,8 +80,8 @@ def create_charmm_system(
     parameters: CharmmParameterSet,
     env: str,
     ml_atoms: list,
-    r_off: int = 1.2,
-    r_on: int = 1.0,
+    r_off: int = 1.0,
+    r_on: int = 0,
 ) -> Simulation:
     """Generate an openMM simulation object using CHARMM topology and parameter files
 
