@@ -113,8 +113,8 @@ def create_charmm_system(
         mm_system = psf.createSystem(
             parameters,
             nonbondedMethod=PME,
-            nonbondedCutoff=r_off * nanometers,
-            switchDistance=r_on * nanometers,
+            nonbondedCutoff=r_off * unit.nanometers,
+            switchDistance=r_on * unit.nanometers,
         )
 
     print(f"{ml_atoms=}")
