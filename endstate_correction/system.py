@@ -80,6 +80,8 @@ def create_charmm_system(
     parameters: CharmmParameterSet,
     env: str,
     ml_atoms: list,
+    r_off: int = 1.2,
+    r_on: int = 1.0,
 ) -> Simulation:
     """Generate an openMM simulation object using CHARMM topology and parameter files
 
@@ -96,7 +98,7 @@ def create_charmm_system(
 
     ###################
     print(f"Generating charmm system in {env}")
-    assert env in ("waterbox", "vacuum", "complex")
+
     potential = MLPotential("ani2x")
     _, platform = check_implementation()
 
@@ -108,7 +110,12 @@ def create_charmm_system(
     if env == "vacuum":
         mm_system = psf.createSystem(parameters, nonbondedMethod=NoCutoff)
     else:
-        mm_system = psf.createSystem(parameters, nonbondedMethod=PME)
+        mm_system = psf.createSystem(
+            parameters,
+            nonbondedMethod=PME,
+            nonbondedCutoff=r_off * nanometers,
+            switchDistance=r_on * nanometers,
+        )
 
     print(f"{ml_atoms=}")
 
