@@ -1,7 +1,7 @@
 from openmm import unit
 from openmm.app import CharmmParameterSet, CharmmPsfFile
 
-from base import EndstateCorrectionBase
+from .base import EndstateCorrectionBase
 from ..system import read_box
 
 
@@ -20,4 +20,4 @@ class EndstateCorrectionCHARMM(EndstateCorrectionBase):
             "switchDistance": self.protocol.switchDistance * unit.nanometers,
             **kwargs,
         }
-        return super().createSystem(env, **kwargs)
+        return super().createSystem(**kwargs)

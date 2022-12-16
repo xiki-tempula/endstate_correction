@@ -33,16 +33,19 @@ class EndstateCorrectionBase(abc.ABC):
         self.env = env
         self._mm_topology = None
 
-        mm_system = self.createSystem(self.env)
+        mm_system = self.createSystem()
         ml_potential = MLPotential(potential)
         ml_system = ml_potential.createMixedSystem(
-            self.get_mm_topology(), mm_system, ml_atoms, interpolate=interpolate
+            self.get_mm_topology().topology,
+            mm_system,
+            ml_atoms,
+            interpolate=interpolate,
         )
         integrator = self.get_integrator()
         _, platform = check_implementation()
         platform = Platform.getPlatformByName(platform)
         self.simulation = Simulation(
-            self.get_mm_topology(), ml_system, integrator, platform=platform
+            self.get_mm_topology().topology, ml_system, integrator, platform=platform
         )
 
     def get_mm_topology(self) -> Topology:
