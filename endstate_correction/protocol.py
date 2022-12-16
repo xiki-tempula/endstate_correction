@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
+import pandas as pd
 from openmm.app import Simulation
 from pymbar import MBAR
 
@@ -22,6 +23,8 @@ class BSSProtocol:
     rlist: float  # short-range cutoff nanometers.
     collision_rate: float  # 1/picosecond
     switchDistance: float  # nanometers
+    lam: pd.Series  # Current lambda
+    restart: bool  # Whether to reset the velocity or not
 
 
 @dataclass

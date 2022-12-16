@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from importlib_resources import files
 
@@ -31,18 +32,26 @@ def setup(tmp_path_factory):
     )
     protocol = BSSProtocol(
         timestep=2,
-        runtime=1,
+        runtime=0.0002,  # 10 * 10 steps
         temperature=300,
         pressure=1,
-        report_interval=1000,
-        restart_interval=1000,
+        report_interval=10,
+        restart_interval=50,
         rlist=1,
         collision_rate=1,
         switchDistance=0,
+        restart=False,
+        lam=pd.Series(data={"ml-lambda": 0}),
     )
     simulation = EndstateCorrectionCHARMM(
-        top, env=env, ml_atoms=list(range(27)), protocol=protocol
+        top,
+        env=env,
+        ml_atoms=list(range(27)),
+        protocol=protocol,
+        name=system_name,
+        work_dir=output_base,
     )
+    simulation.start()
     return simulation
 
 
