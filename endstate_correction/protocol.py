@@ -1,12 +1,27 @@
 """Provide functions for the endstate correction workflow."""
 
 
-from openmm.app import Simulation
-import numpy as np
 from dataclasses import dataclass
 from typing import List
 
+import numpy as np
+from openmm.app import Simulation
 from pymbar import MBAR
+
+
+@dataclass
+class BSSProtocol:
+    """This is a dataclass mimicking the BioSimSpace.Protocol."""
+
+    timestep: int  # fs
+    runtime: float  # ns
+    temperature: float  # K
+    pressure: float  # atm
+    report_interval: int  # The frequency at which energy are recorded (In integration steps).
+    restart_interval: int  # The frequency at which frames are recorded (In integration steps).
+    rlist: float  # short-range cutoff nanometers.
+    collision_rate: float  # 1/picosecond
+    switchDistance: float  # nanometers
 
 
 @dataclass
