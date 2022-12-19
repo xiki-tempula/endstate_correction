@@ -31,8 +31,8 @@ def setup(tmp_path_factory):
         Crd=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.pdb"),
     )
     protocol = BSSProtocol(
-        timestep=2,
-        runtime=0.0002,  # 10 * 10 steps
+        timestep=1,
+        runtime=0.0001,  # 10 * 10 steps
         temperature=300,
         pressure=1,
         report_interval=10,
@@ -56,4 +56,5 @@ def setup(tmp_path_factory):
 
 
 def test_sanity(setup):
-    pass
+    """Test if the setup is fine."""
+    assert isinstance(setup, EndstateCorrectionCHARMM)
