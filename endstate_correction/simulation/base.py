@@ -80,9 +80,9 @@ class EndstateCorrectionBase(abc.ABC):
 
     def get_integrator(self) -> Integrator:
         return LangevinIntegrator(
-            self.protocol.temperature,
-            self.protocol.collision_rate,
-            self.protocol.timestep,
+            self.protocol.temperature * unit.kelvin,
+            self.protocol.collision_rate / unit.picosecond,
+            self.protocol.timestep * unit.femtoseconds,
         )
 
     def _createSystem(self, **kwargs):
@@ -117,6 +117,7 @@ class EndstateCorrectionBase(abc.ABC):
         self.logger.info(f"{lamb=}")
         # define where to store samples
         trajectory_file = f"{base}/{self.name}_samples_{n_samples}_steps_{n_steps_per_sample}_lamb_{lamb:.4f}_{self.env}.dcd"
+        self._traj_file = trajectory_file
         self.logger.info(f"Trajectory saved to: {trajectory_file}")
         # set lambda
         self.simulation.context.setParameter("lambda_interpolate", lamb)

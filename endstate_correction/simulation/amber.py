@@ -1,9 +1,14 @@
-from openmm.app import AmberPrmtopFile
+from openmm.app import AmberPrmtopFile, AmberInpcrdFile
 
-from base import EndstateCorrectionBase
+from .base import EndstateCorrectionBase
 
 
 class EndstateCorrectionAMBER(EndstateCorrectionBase):
-    # TODO: implement this
     def _get_mm_topology(self) -> AmberPrmtopFile:
-        pass
+        psf = AmberPrmtopFile(self.top.PRM7)
+        return psf
+
+    def _get_mm_coordinate(self) -> AmberInpcrdFile:
+        return AmberInpcrdFile(self.top.RST7)
+
+

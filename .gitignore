@@ -106,3 +106,5 @@ ENV/
 *profraw
 
 .idea/
+
+**/.DS_Store
