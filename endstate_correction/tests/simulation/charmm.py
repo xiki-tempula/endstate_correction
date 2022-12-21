@@ -41,8 +41,8 @@ class TestEndstateCorrectionCharmm():
         parameter_base = package_path / "data" / "jctc_data"
         # load the charmm specific files (psf, pdb, rtf, prm and str files)
         top = CHARMMTopology(
-            Psf=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.psf"),
-            ParameterSet=[
+            psf=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.psf"),
+            parameter_set=[
                 str(parameter_base / system_name / "charmm-gui/unk/unk.rtf"),
                 str(parameter_base / system_name / "charmm-gui/unk/unk.prm"),
                 str(parameter_base / "toppar/top_all36_cgenff.rtf"),
@@ -51,7 +51,7 @@ class TestEndstateCorrectionCharmm():
             ],
             input_config=str(
                 parameter_base / system_name / "charmm-gui/input.config.dat"),
-            Crd=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.pdb"),
+            crd=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.pdb"),
         )
 
         simulation = EndstateCorrectionCHARMM(
@@ -84,8 +84,8 @@ class TestEndstateCorrectionAmber(TestEndstateCorrectionCharmm):
         parameter_base = package_path / "data" / "amber"
         # load the charmm specific files (psf, pdb, rtf, prm and str files)
         top = AMBERTopology(
-            PRM7=str(parameter_base / f'{system_name}.prm7'),
-            RST7=str(parameter_base / f'{system_name}.rst7')
+            prm7=str(parameter_base / f'{system_name}.prm7'),
+            rst7=str(parameter_base / f'{system_name}.rst7')
         )
 
         simulation = EndstateCorrectionAMBER(
