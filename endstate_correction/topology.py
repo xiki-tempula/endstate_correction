@@ -6,15 +6,15 @@ from typing import List
 class AMBERTopology:
     """This is a dataclass for amber topology."""
 
-    rst7: str
-    prm7: str
+    rst7_file_path: str
+    prm7_file_path: str
 
 
 @dataclass
 class CHARMMTopology:
     """This is a dataclass for CHARMM topology."""
 
-    psf: str
-    crd: str
+    psf_file_path: str
+    crd_file_path: str
     parameter_set: List[str]
     input_config: str

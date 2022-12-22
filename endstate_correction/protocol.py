@@ -14,10 +14,10 @@ from pymbar import MBAR
 class BSSProtocol:
     """This is a dataclass mimicking the BioSimSpace.Protocol."""
 
-    timestep: int  # fs
-    runtime: float  # ns
-    temperature: float  # K
-    pressure: float  # atm
+    timestep: unit.Quantity  # fs
+    n_integration_steps: int  # ns
+    temperature: unit.Quantity  # K
+    pressure: unit.Quantity  # atm
     report_interval: int  # The frequency at which energy are recorded (In integration steps).
     restart_interval: int  # The frequency at which frames are recorded (In integration steps).
     rlist: float  # short-range cutoff nanometers.
