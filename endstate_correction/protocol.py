@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from openmm.app import Simulation
 from pymbar import MBAR
+from openmm import unit
 
 
 @dataclass
@@ -21,8 +22,8 @@ class BSSProtocol:
     report_interval: int  # The frequency at which energy are recorded (In integration steps).
     restart_interval: int  # The frequency at which frames are recorded (In integration steps).
     rlist: float  # short-range cutoff nanometers.
-    collision_rate: float  # 1/picosecond
-    switchDistance: float  # nanometers
+    collision_rate: unit.Quantity  # 1/picosecond
+    switchDistance: unit.Quantity  # nanometers
     lam: pd.Series  # Current lambda
     restart: bool  # Whether to reset the velocity or not
 

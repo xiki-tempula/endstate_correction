@@ -80,9 +80,9 @@ class EndstateCorrectionBase(abc.ABC):
 
     def get_integrator(self) -> Integrator:
         return LangevinIntegrator(
-            self.protocol.temperature * unit.kelvin,
-            self.protocol.collision_rate / unit.picosecond,
-            self.protocol.timestep * unit.femtoseconds,
+            self.protocol.temperature,
+            self.protocol.collision_rate,
+            self.protocol.timestep,
         )
 
     def _createSystem(self, **kwargs):
