@@ -101,7 +101,7 @@ class EndstateCorrectionBase(abc.ABC):
     def start(self):
 
         # path where samples should be stored (will be created if it doesn't exist)
-        base = f"{self.work_dir}/equilibrium_samples/{self.name}"
+        base = f"{self.work_dir}/equilibrium_samples/"
         os.makedirs(base, exist_ok=True)
         # define lambda states
         lamb = self.protocol.lam["ml-lambda"]
@@ -131,7 +131,7 @@ class EndstateCorrectionBase(abc.ABC):
         self.simulation.reporters.append(
             DCDReporter(
                 trajectory_file,
-                self.protocol.report_interval,
+                self.protocol.restart_interval,
             )
         )
         # perform sampling
