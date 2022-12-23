@@ -31,6 +31,7 @@ class EndstateCorrectionBase(abc.ABC):
         name: str = "endstate_correction",
         work_dir: str = "./",
         potential: str = "ani2x",
+        implementation:str = "nnpops",
         interpolate: bool = True,
     ):
         self.logger = logging.getLogger("EndstateCorrectionBase")
