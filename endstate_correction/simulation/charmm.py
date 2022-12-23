@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from openmm import unit
-from openmm.app import CharmmParameterSet, CharmmPsfFile, PDBFile, CharmmCrdFile
+from openmm.app import CharmmCrdFile, CharmmParameterSet, CharmmPsfFile, \
+    PDBFile
 
 from .base import EndstateCorrectionBase
 from ..system import read_box
@@ -14,10 +17,15 @@ class EndstateCorrectionCHARMM(EndstateCorrectionBase):
         return psf
 
     def _get_initial_coordinates(self) -> unit.Quantity:
-        try:
+        ext = Path(self.top.crd_file_path).suffix.lower()
+        if ext == ".pdb":
             coord = CharmmCrdFile(self.top.crd_file_path)
-        except:
+        elif ext == ".crd":
             coord = PDBFile(self.top.crd_file_path)
+        else:
+            raise NotImplementedError(
+                "The file extension {ext} cannot be recognised. Only support (.pdb or .crd)."
+            )
 
         return coord.positions
 
