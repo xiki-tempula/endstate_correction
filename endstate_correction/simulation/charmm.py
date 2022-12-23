@@ -18,9 +18,9 @@ class EndstateCorrectionCHARMM(EndstateCorrectionBase):
 
     def _get_initial_coordinates(self) -> unit.Quantity:
         ext = Path(self.top.crd_file_path).suffix.lower()
-        if ext == ".pdb":
+        if ext == ".crd":
             coord = CharmmCrdFile(self.top.crd_file_path)
-        elif ext == ".crd":
+        elif ext == ".pdb":
             coord = PDBFile(self.top.crd_file_path)
         else:
             raise NotImplementedError(
