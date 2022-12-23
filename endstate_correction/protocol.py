@@ -42,38 +42,56 @@ class BSSProtocol:
         :param lam: Current lambda
         :param restart: Whether to reset the velocity or not
         """
-        if isinstance(timestep, type(unit.femtosecond)):
-            self.timestep = timestep
+        if isinstance(timestep, unit.Quantity):
+            try:
+                self.timestep = timestep.value_in_unit(unit.femtosecond)
+            except Exception as e:
+                raise ValueError(f"`timestep` should be a time unit.") from e
         else:
             self.timestep = timestep * unit.femtosecond
 
         self.n_integration_steps = n_integration_steps
 
-        if isinstance(temperature, type(unit.kelvin)):
-            self.temperature = temperature
+        if isinstance(temperature, unit.Quantity):
+            try:
+                self.temperature = temperature.value_in_unit(unit.kelvin)
+            except Exception as e:
+                raise ValueError(f"`temperature` should be a temperature unit.") from e
         else:
             self.temperature = temperature * unit.kelvin
 
-        if isinstance(pressure, type(unit.atmosphere)):
-            self.pressure = pressure
+        if isinstance(pressure, unit.Quantity):
+            try:
+                self.pressure = pressure.value_in_unit(unit.atmosphere)
+            except Exception as e:
+                raise ValueError(f"`pressure` should be a pressure unit.") from e
         else:
             self.pressure = pressure * unit.atmosphere
 
         self.report_interval = report_interval
         self.restart_interval = restart_interval
 
-        if isinstance(rlist, type(unit.nanometer)):
-            self.rlist = rlist
+        if isinstance(rlist, unit.Quantity):
+            try:
+                self.rlist = rlist.value_in_unit(unit.nanometer)
+            except Exception as e:
+                raise ValueError(f"`rlist` should be a length unit.") from e
         else:
             self.rlist = rlist * unit.nanometer
 
-        if isinstance(collision_rate, type(1 / unit.picosecond)):
-            self.collision_rate = collision_rate
+        if isinstance(collision_rate, unit.Quantity):
+            try:
+                self.collision_rate = collision_rate.value_in_unit(1 / unit.picosecond)
+            except Exception as e:
+                raise ValueError(f"`collision_rate` should be a 1/time unit.") from e
         else:
             self.collision_rate = collision_rate / unit.picosecond
 
-        if isinstance(switchDistance, type(unit.nanometer)):
-            self.switchDistance = switchDistance
+        if isinstance(switchDistance, unit.Quantity):
+            try:
+                self.collision_rate = collision_rate.value_in_unit(unit.nanometer)
+            except Exception as e:
+                raise ValueError(f"`switchDistance` should be a length unit.") from e
         else:
             self.switchDistance = switchDistance * unit.nanometer
 

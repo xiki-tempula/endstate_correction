@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from openmm import unit
-from openmm.app import CharmmCrdFile, CharmmParameterSet, CharmmPsfFile, \
-    PDBFile
+from openmm.app import CharmmCrdFile, CharmmParameterSet, CharmmPsfFile, PDBFile
 
 from .base import EndstateCorrectionBase
 from ..system import read_box
