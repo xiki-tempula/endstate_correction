@@ -6,18 +6,16 @@ from typing import List, Literal, Union
 from openmm import Integrator, LangevinIntegrator, OpenMMException, Platform
 from openmm import unit
 from openmm.app import (
-    AmberInpcrdFile,
     AmberPrmtopFile,
     CharmmPsfFile,
     DCDReporter,
     NoCutoff,
-    PDBFile,
     PME,
     Simulation,
     Topology,
 )
 from openmmml import MLPotential
-import numpy as np
+
 from ..constant import check_implementation
 from ..protocol import BSSProtocol
 from ..topology import AMBERTopology, CHARMMTopology
@@ -93,21 +91,20 @@ class EndstateCorrectionBase(abc.ABC):
         else:
             mm_system = self.get_mm_topology().createSystem(
                 nonbondedMethod=PME,
-                nonbondedCutoff=self.protocol.rlist * unit.nanometers,
+                nonbondedCutoff=self.protocol.rlist,
                 **kwargs,
             )
         return mm_system
 
     def start(self):
-
-        # path where samples should be stored (will be created if it doesn't exist)
-        base = f"{self.work_dir}/equilibrium_samples/"
-        os.makedirs(base, exist_ok=True)
         # define lambda states
         lamb = self.protocol.lam["ml-lambda"]
         self.logger.info(f"{lamb=}")
         # define where to store samples
-        trajectory_file = f"{base}/{self.name}_samples_{self.protocol.n_integration_steps}_lamb_{lamb:.4f}_{self.env}.dcd"
+        trajectory_dir = f"{self.work_dir}/lambda_{lamb:.4f}"
+        # path where samples should be stored (will be created if it doesn't exist)
+        os.makedirs(trajectory_dir, exist_ok=True)
+        trajectory_file = f"{self.work_dir}/lambda_{lamb:.4f}/{self.name}.nc"
         self._traj_file = trajectory_file
         self.logger.info(f"Trajectory saved to: {trajectory_file}")
         # set lambda

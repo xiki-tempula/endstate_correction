@@ -2,30 +2,83 @@
 
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from openmm import unit
 from openmm.app import Simulation
 from pymbar import MBAR
-from openmm import unit
 
 
-@dataclass
 class BSSProtocol:
     """This is a dataclass mimicking the BioSimSpace.Protocol."""
 
-    timestep: unit.Quantity  # fs
-    n_integration_steps: int  # ns
-    temperature: unit.Quantity  # K
-    pressure: unit.Quantity  # atm
-    report_interval: int  # The frequency at which energy are recorded (In integration steps).
-    restart_interval: int  # The frequency at which frames are recorded (In integration steps).
-    rlist: float  # short-range cutoff nanometers.
-    collision_rate: unit.Quantity  # 1/picosecond
-    switchDistance: unit.Quantity  # nanometers
-    lam: pd.Series  # Current lambda
-    restart: bool  # Whether to reset the velocity or not
+    def __init__(
+        self,
+        timestep: Union[int, unit.Quantity],
+        n_integration_steps: int,
+        temperature: Union[float, unit.Quantity],
+        pressure: Union[float, unit.Quantity],
+        report_interval: int,
+        restart_interval: int,
+        rlist: Union[float, unit.Quantity],
+        collision_rate: Union[float, unit.Quantity],
+        switchDistance: Union[float, unit.Quantity],
+        lam: pd.Series,
+        restart: bool,
+    ):
+        """Class for storing the run information
+
+        :param timestep: fs
+        :param n_integration_steps:
+        :param temperature: K
+        :param pressure: atm
+        :param report_interval: The frequency at which energy are recorded (In integration steps).
+        :param restart_interval: The frequency at which frames are recorded (In integration steps).
+        :param rlist: short-range cutoff in nanometers.
+        :param collision_rate: 1/picosecond
+        :param switchDistance: nanometers
+        :param lam: Current lambda
+        :param restart: Whether to reset the velocity or not
+        """
+        if isinstance(timestep, type(unit.femtosecond)):
+            self.timestep = timestep
+        else:
+            self.timestep = timestep * unit.femtosecond
+
+        self.n_integration_steps = n_integration_steps
+
+        if isinstance(temperature, type(unit.kelvin)):
+            self.temperature = temperature
+        else:
+            self.temperature = temperature * unit.kelvin
+
+        if isinstance(pressure, type(unit.atmosphere)):
+            self.pressure = pressure
+        else:
+            self.pressure = pressure * unit.atmosphere
+
+        self.report_interval = report_interval
+        self.restart_interval = restart_interval
+
+        if isinstance(rlist, type(unit.nanometer)):
+            self.rlist = rlist
+        else:
+            self.rlist = rlist * unit.nanometer
+
+        if isinstance(collision_rate, type(1 / unit.picosecond)):
+            self.collision_rate = collision_rate
+        else:
+            self.collision_rate = collision_rate / unit.picosecond
+
+        if isinstance(switchDistance, type(unit.nanometer)):
+            self.switchDistance = switchDistance
+        else:
+            self.switchDistance = switchDistance * unit.nanometer
+
+        self.lam = lam
+        self.restart = restart
 
 
 @dataclass

@@ -6,18 +6,21 @@ from importlib_resources import files
 
 import endstate_correction
 from endstate_correction.protocol import BSSProtocol
-from endstate_correction.simulation import EndstateCorrectionCHARMM, EndstateCorrectionAMBER
+from endstate_correction.simulation import (
+    EndstateCorrectionAMBER,
+    EndstateCorrectionCHARMM,
+)
 from endstate_correction.simulation.base import EndstateCorrectionBase
-from endstate_correction.topology import CHARMMTopology, AMBERTopology
+from endstate_correction.topology import AMBERTopology, CHARMMTopology
 
 
-class TestEndstateCorrectionCharmm():
+class TestEndstateCorrectionCharmm:
     @staticmethod
     @pytest.fixture(scope="module")
     def bss_protocol():
         protocol = BSSProtocol(
             timestep=1,
-            runtime=0.0001,  # 10 * 10 steps
+            n_integration_steps=100,  # 10 * 10 steps
             temperature=300,
             pressure=1,
             report_interval=10,
@@ -41,7 +44,9 @@ class TestEndstateCorrectionCharmm():
         parameter_base = package_path / "data" / "jctc_data"
         # load the charmm specific files (psf, pdb, rtf, prm and str files)
         top = CHARMMTopology(
-            psf=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.psf"),
+            psf_file_path=str(
+                parameter_base / system_name / "charmm-gui/openmm/step3_input.psf"
+            ),
             parameter_set=[
                 str(parameter_base / system_name / "charmm-gui/unk/unk.rtf"),
                 str(parameter_base / system_name / "charmm-gui/unk/unk.prm"),
@@ -50,8 +55,11 @@ class TestEndstateCorrectionCharmm():
                 str(parameter_base / "toppar/toppar_water_ions.str"),
             ],
             input_config=str(
-                parameter_base / system_name / "charmm-gui/input.config.dat"),
-            crd=str(parameter_base / system_name / "charmm-gui/openmm/step3_input.pdb"),
+                parameter_base / system_name / "charmm-gui/input.config.dat"
+            ),
+            crd_file_path=str(
+                parameter_base / system_name / "charmm-gui/openmm/step3_input.pdb"
+            ),
         )
 
         simulation = EndstateCorrectionCHARMM(
@@ -60,7 +68,7 @@ class TestEndstateCorrectionCharmm():
             ml_atoms=list(range(27)),
             protocol=bss_protocol,
             name=system_name,
-            work_dir=output_base,
+            work_dir=str(output_base),
         )
         simulation.start()
         return simulation
@@ -71,6 +79,7 @@ class TestEndstateCorrectionCharmm():
 
     def test_dcd(self, setup):
         assert Path(setup._traj_file).is_file()
+
 
 class TestEndstateCorrectionAmber(TestEndstateCorrectionCharmm):
     @staticmethod
@@ -84,8 +93,8 @@ class TestEndstateCorrectionAmber(TestEndstateCorrectionCharmm):
         parameter_base = package_path / "data" / "amber"
         # load the charmm specific files (psf, pdb, rtf, prm and str files)
         top = AMBERTopology(
-            prm7=str(parameter_base / f'{system_name}.prm7'),
-            rst7=str(parameter_base / f'{system_name}.rst7')
+            prm7_file_path=str(parameter_base / f"{system_name}.prm7"),
+            rst7_file_path=str(parameter_base / f"{system_name}.rst7"),
         )
 
         simulation = EndstateCorrectionAMBER(
@@ -94,7 +103,7 @@ class TestEndstateCorrectionAmber(TestEndstateCorrectionCharmm):
             ml_atoms=list(range(5)),
             protocol=bss_protocol,
             name=system_name,
-            work_dir=output_base,
+            work_dir=str(output_base),
         )
         simulation.start()
         return simulation
