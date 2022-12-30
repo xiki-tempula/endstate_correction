@@ -25,11 +25,11 @@ class Protocol:
 class Results:
     """Provides a dataclass containing the results of a protocol"""
 
+    equ_mbar: List[MBAR]
     dE_mm_to_qml: np.array = np.array([])
     dE_qml_to_mm: np.array = np.array([])
     W_mm_to_qml: np.array = np.array([])
     W_qml_to_mm: np.array = np.array([])
-    equ_mbar: MBAR = None
 
 
 def perform_endstate_correction(protocol: Protocol) -> Results:
