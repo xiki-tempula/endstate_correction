@@ -3,7 +3,7 @@
 
 from openmm.app import Simulation
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 from pymbar import MBAR
@@ -25,7 +25,7 @@ class Protocol:
 class Results:
     """Provides a dataclass containing the results of a protocol"""
 
-    equ_mbar: List[MBAR]
+    equ_mbar: List[MBAR] = field(default_factory=list)
     dE_mm_to_qml: np.array = np.array([])
     dE_qml_to_mm: np.array = np.array([])
     W_mm_to_qml: np.array = np.array([])
