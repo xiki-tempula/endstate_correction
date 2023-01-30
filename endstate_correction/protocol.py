@@ -81,7 +81,7 @@ class BSSProtocol:
 
         if isinstance(collision_rate, unit.Quantity):
             try:
-                self.collision_rate = collision_rate.value_in_unit(1 / unit.picosecond)
+                self.collision_rate = collision_rate.value_in_unit(unit.picosecond**-1)
             except Exception as e:
                 raise ValueError(f"`collision_rate` should be a 1/time unit.") from e
         else:
