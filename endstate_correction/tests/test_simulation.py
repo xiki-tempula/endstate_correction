@@ -1,8 +1,10 @@
 from pathlib import Path
+from importlib_resources import files
 
 import pandas as pd
 import pytest
-from importlib_resources import files
+from mdtraj.core.trajectory import Trajectory as mdtraj_trajectory
+from openmm import unit
 
 import endstate_correction
 from endstate_correction.protocol import BSSProtocol
@@ -67,7 +69,7 @@ class TestEndstateCorrectionCharmm:
             env=env,
             ml_atoms=list(range(27)),
             protocol=bss_protocol,
-            name=system_name,
+            name='openMM',
             work_dir=str(output_base),
         )
         simulation.start()
@@ -77,8 +79,14 @@ class TestEndstateCorrectionCharmm:
         """Test if the setup is fine."""
         assert isinstance(setup, EndstateCorrectionBase)
 
-    def test_dcd(self, setup):
+    def test_trajfile_exist(self, setup):
         assert Path(setup._traj_file).is_file()
+
+    def test_traj(self, setup):
+        assert isinstance(setup.get_trajectory(), mdtraj_trajectory)
+
+    def test_get_xyz(self, setup):
+        assert len(setup.get_xyz()) == 2
 
 
 class TestEndstateCorrectionAmber(TestEndstateCorrectionCharmm):
