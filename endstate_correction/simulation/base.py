@@ -1,20 +1,21 @@
 import abc
 import logging
+import mdtraj
 import os
-from typing import List, Literal, Union
-
+from mdtraj.core.trajectory import Trajectory as mdtraj_trajectory
+from mdtraj.reporters import HDF5Reporter
 from openmm import Integrator, LangevinIntegrator, OpenMMException, Platform
 from openmm import unit
 from openmm.app import (
     AmberPrmtopFile,
     CharmmPsfFile,
-    DCDReporter,
     NoCutoff,
     PME,
     Simulation,
     Topology,
 )
 from openmmml import MLPotential
+from typing import List, Literal, Union
 
 from ..constant import check_implementation
 from ..protocol import BSSProtocol
@@ -105,7 +106,7 @@ class EndstateCorrectionBase(abc.ABC):
         trajectory_dir = f"{self.work_dir}/lambda_{lamb:.4f}"
         # path where samples should be stored (will be created if it doesn't exist)
         os.makedirs(trajectory_dir, exist_ok=True)
-        trajectory_file = f"{self.work_dir}/lambda_{lamb:.4f}/{self.name}.dcd"
+        trajectory_file = f"{self.work_dir}/lambda_{lamb:.4f}/{self.name}.h5"
         self._traj_file = trajectory_file
         self.logger.info(f"Trajectory saved to: {trajectory_file}")
         # set lambda
@@ -125,9 +126,9 @@ class EndstateCorrectionBase(abc.ABC):
                     _seed_velocities(_get_masses(self.simulation.system))
                 )
 
-        # define DCDReporter
+        # define HDF5Reporter
         self.simulation.reporters.append(
-            DCDReporter(
+            HDF5Reporter(
                 trajectory_file,
                 self.protocol.restart_interval,
             )
@@ -135,3 +136,16 @@ class EndstateCorrectionBase(abc.ABC):
         # perform sampling
         self.simulation.step(self.protocol.n_integration_steps)
         self.simulation.reporters.clear()
+
+    def get_trajectory(self) -> mdtraj_trajectory:
+        traj = mdtraj.load_hdf5(self._traj_file)
+        if self.env == "waterbox":
+            traj.image_molecules()
+        return traj
+
+    def get_simulation(self) -> Simulation:
+        return self.simulation
+
+    def get_xyz(self) -> List[unit.Quantity]:
+        traj = self.get_trajectory()
+        return [traj.openmm_positions(i) for i in range(traj.n_frames)]
