@@ -74,4 +74,3 @@ class TestPerformCorrection():
 
     def test_sanity(self, perform_correction):
         assert isinstance(perform_correction, Results)
-        r = perform_correction
