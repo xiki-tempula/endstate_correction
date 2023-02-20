@@ -6,7 +6,99 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List
 
+import numpy as np
+import pandas as pd
+from openmm import unit
+from openmm.app import Simulation
 from pymbar import MBAR
+
+
+class BSSProtocol:
+    """This is a dataclass mimicking the BioSimSpace.Protocol."""
+
+    def __init__(
+        self,
+        timestep: Union[int, unit.Quantity],
+        n_integration_steps: int,
+        temperature: Union[float, unit.Quantity],
+        pressure: Union[float, unit.Quantity],
+        report_interval: int,
+        restart_interval: int,
+        rlist: Union[float, unit.Quantity],
+        collision_rate: Union[float, unit.Quantity],
+        switchDistance: Union[float, unit.Quantity],
+        lam: pd.Series,
+        restart: bool,
+    ):
+        """Class for storing the run information
+
+        :param timestep: fs
+        :param n_integration_steps:
+        :param temperature: K
+        :param pressure: atm
+        :param report_interval: The frequency at which energy are recorded (In integration steps).
+        :param restart_interval: The frequency at which frames are recorded (In integration steps).
+        :param rlist: short-range cutoff in nanometers.
+        :param collision_rate: 1/picosecond
+        :param switchDistance: nanometers
+        :param lam: Current lambda
+        :param restart: Whether to reset the velocity or not
+        """
+        if isinstance(timestep, unit.Quantity):
+            try:
+                self.timestep = timestep.value_in_unit(unit.femtosecond)
+            except Exception as e:
+                raise ValueError(f"`timestep` should be a time unit.") from e
+        else:
+            self.timestep = timestep * unit.femtosecond
+
+        self.n_integration_steps = n_integration_steps
+
+        if isinstance(temperature, unit.Quantity):
+            try:
+                self.temperature = temperature.value_in_unit(unit.kelvin)
+            except Exception as e:
+                raise ValueError(f"`temperature` should be a temperature unit.") from e
+        else:
+            self.temperature = temperature * unit.kelvin
+
+        if isinstance(pressure, unit.Quantity):
+            try:
+                self.pressure = pressure.value_in_unit(unit.atmosphere)
+            except Exception as e:
+                raise ValueError(f"`pressure` should be a pressure unit.") from e
+        else:
+            self.pressure = pressure * unit.atmosphere
+
+        self.report_interval = report_interval
+        self.restart_interval = restart_interval
+
+        if isinstance(rlist, unit.Quantity):
+            try:
+                self.rlist = rlist.value_in_unit(unit.nanometer)
+            except Exception as e:
+                raise ValueError(f"`rlist` should be a length unit.") from e
+        else:
+            self.rlist = rlist * unit.nanometer
+
+        if isinstance(collision_rate, unit.Quantity):
+            try:
+                self.collision_rate = collision_rate.value_in_unit(unit.picosecond**-1)
+            except Exception as e:
+                raise ValueError(f"`collision_rate` should be a 1/time unit.") from e
+        else:
+            self.collision_rate = collision_rate / unit.picosecond
+
+        if isinstance(switchDistance, unit.Quantity):
+            try:
+                self.collision_rate = collision_rate.value_in_unit(unit.nanometer)
+            except Exception as e:
+                raise ValueError(f"`switchDistance` should be a length unit.") from e
+        else:
+            self.switchDistance = switchDistance * unit.nanometer
+
+        self.lam = lam
+        self.restart = restart
 
 
 @dataclass

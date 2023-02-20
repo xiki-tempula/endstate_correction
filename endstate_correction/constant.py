@@ -122,8 +122,8 @@ def check_implementation() -> Tuple[str, str]:
     except ModuleNotFoundError:
         import torch
 
-        torch.set_num_threads(2)
-        platform = "CPU"
+        torch.set_num_threads(4)
+        platform = "CUDA"
         implementation = "torchani"
 
     try:

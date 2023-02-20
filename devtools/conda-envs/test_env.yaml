@@ -18,6 +18,7 @@ dependencies:
   - torchani
   - seaborn
   - pytorch=1.11.0
+  - mdtraj
   # Testing
   - pytest
   - pytest-cov
