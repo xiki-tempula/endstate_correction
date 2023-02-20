@@ -1,7 +1,9 @@
 """Provide functions for the endstate correction workflow."""
 
 
-from dataclasses import dataclass
+from openmm.app import Simulation
+import numpy as np
+from dataclasses import dataclass, field
 from typing import List, Union
 
 import numpy as np
@@ -115,11 +117,11 @@ class Protocol:
 class Results:
     """Provides a dataclass containing the results of a protocol"""
 
+    equ_mbar: List[MBAR] = field(default_factory=list)
     dE_mm_to_qml: np.array = np.array([])
     dE_qml_to_mm: np.array = np.array([])
     W_mm_to_qml: np.array = np.array([])
     W_qml_to_mm: np.array = np.array([])
-    equ_mbar: MBAR = None
 
 
 def perform_endstate_correction(protocol: Protocol) -> Results:

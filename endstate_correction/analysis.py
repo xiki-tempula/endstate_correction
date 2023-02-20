@@ -132,8 +132,18 @@ def plot_endstate_correction_results(
     ##############################################
     # ---------------------- EQU ------------------
     if results.equ_mbar:
-        ddG_equ = results.equ_mbar.compute_free_energy_differences()["Delta_f"][0][-1]
-        dddG_equ = results.equ_mbar.compute_free_energy_differences()["dDelta_f"][0][-1]
+        ddG_equ = np.average(
+            [
+                r.compute_free_energy_differences()["Delta_f"][0][-1]
+                for r in results.equ_mbar
+            ]
+        )
+        dddG_equ = np.average(
+            [
+                r.compute_free_energy_differences()["dDelta_f"][0][-1]
+                for r in results.equ_mbar
+            ]
+        )
         print(f"Equilibrium free energy: {ddG_equ}+/-{dddG_equ}")
         multiple_results += 1
     print("#--------------------------------------#")
