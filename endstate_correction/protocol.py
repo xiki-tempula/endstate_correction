@@ -4,7 +4,7 @@
 from openmm.app import Simulation
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
