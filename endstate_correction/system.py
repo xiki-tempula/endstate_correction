@@ -12,7 +12,6 @@ from openmm.app import (
     Simulation,
 )
 from openmmml import MLPotential
-from tqdm import tqdm
 
 from endstate_correction.constant import (
     collision_rate,
